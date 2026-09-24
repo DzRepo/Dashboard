@@ -107,8 +107,10 @@ async function init() {
         });
     }
 
-    // Check for seed data
-    if (state.widgets.length === 0) {
+    // Seed only on true first run (P1-5): an empty `widgets` array can mean the user
+    // deleted every widget, which must stay empty across reloads. `settings.seeded`
+    // is set by seedDashboard() on first run, so it distinguishes the two cases.
+    if (state.widgets.length === 0 && !(state.settings && state.settings.seeded)) {
         seedDashboard();
     }
 }
@@ -2106,6 +2108,11 @@ function addWidget(type) {
  * Seed data for new users
  */
 function seedDashboard() {
+    // Mark first-run seeding so a later intentionally-emptied dashboard is not
+    // re-seeded on reload (P1-5).
+    state.settings = state.settings || {};
+    state.settings.seeded = true;
+
     state.widgets = [
         {
             id: 'seed-clock',
