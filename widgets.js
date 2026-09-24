@@ -503,8 +503,10 @@ function renderClock(widget, container) {
         const timeEl = document.createElement('span');
         timeEl.className = 'clock-time';
         timeEl.dataset.index = index;
-        timeEl.setAttribute('aria-live', 'polite');
-        timeEl.setAttribute('role', 'timer');
+        // P1-6: no aria-live here. role="timer" has an implicit live value of "off",
+        // so the per-second time update is not announced. (Explicitly setting
+        // aria-live="polite" overrode that and made screen readers read the clock
+        // every second.) Discrete events are announced via announceStatus() instead.
 
         // Location name on top; date left, time right below it.
         info.appendChild(labelWrap);
@@ -1599,6 +1601,10 @@ function renderPomodoro(widget, container) {
 
     const timeEl = document.createElement('div');
     timeEl.className = 'pomodoro-time';
+    // P1-6: role="timer" (implicit aria-live "off") — the per-second countdown is not
+    // announced. Session completion is a discrete event and is announced via
+    // announceStatus() in startTick().
+    timeEl.setAttribute('role', 'timer');
 
     const progressEl = document.createElement('div');
     progressEl.className = 'pomodoro-progress';
