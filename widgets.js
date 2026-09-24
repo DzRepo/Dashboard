@@ -1,4 +1,15 @@
 /**
+ * CONVENTION — listeners vs. re-renders
+ * -------------------------------------
+ * Render functions must not attach click/input listeners to elements they may
+ * re-render (i.e. any element recreated by an innerHTML rewrite or a later call to
+ * the same render function). A listener wired once at mount is orphaned the moment
+ * its element is replaced — this was the root cause of P0-1 (Pomodoro) and
+ * P1-3/P1-4 (Weather/Currency Retry). Instead, either:
+ *   1. update text/attributes in place on a stable skeleton (preferred for hot paths), or
+ *   2. expose the action on the widget object and dispatch it from app.js's grid-level
+ *      delegated click handler (handleGridClick), the pattern lists/shortcuts/search use.
+ *
  * C2 — single module-level registry of active tick intervals, keyed by widget id.
  * Replaces the previous three parallel Maps (clockTimers / countdownTimers /
  * pomodoroTimers). Interval ids are unique anyway, so one Map suffices; this
@@ -885,52 +896,48 @@ function renderWeather(widget, container) {
         // Refresh is triggered via the ↻ icon next to the gear (app.js handleWidgetAction).
     }
 
-    // Wire up the buttons (delegated at card level would also work, but these are simple).
-    function wireButtons() {
-        const locate = () => {
-            if (!navigator.geolocation) {
-                setError('Geolocation is not supported by this browser.');
-                return;
-            }
-            setLoading();
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    widget.data.lat = pos.coords.latitude;
-                    widget.data.lon = pos.coords.longitude;
-                    if (!widget.data.city || widget.data.city === 'Your Location') {
-                        // Reverse-geocode via Open-Meteo's free endpoint is not available; keep the label.
-                    }
-                    saveFullState();
-                    fetchWeather(widget.data.lat, widget.data.lon);
-                },
-                (err) => setError('Location denied: ' + err.message),
-                { timeout: 10000 }
-            );
-        };
+    // Button actions.
+    // Convention: render functions must not attach listeners to elements they may
+    // re-render (the error/empty states are rebuilt by renderBody() after wiring ran,
+    // which orphaned the listeners — P1-3). Instead we expose locate/refresh on the
+    // widget and let app.js's grid-level delegated click handler dispatch them, the
+    // same pattern lists/shortcuts/search already use.
+    const locate = () => {
+        if (!navigator.geolocation) {
+            setError('Geolocation is not supported by this browser.');
+            return;
+        }
+        setLoading();
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                widget.data.lat = pos.coords.latitude;
+                widget.data.lon = pos.coords.longitude;
+                if (!widget.data.city || widget.data.city === 'Your Location') {
+                    // Reverse-geocode via Open-Meteo's free endpoint is not available; keep the label.
+                }
+                saveFullState();
+                fetchWeather(widget.data.lat, widget.data.lon);
+            },
+            (err) => setError('Location denied: ' + err.message),
+            { timeout: 10000 }
+        );
+    };
 
-        const refresh = () => {
-            if (widget.data.lat == null || widget.data.lon == null) {
-                locate();
-                return;
-            }
-            fetchWeather(widget.data.lat, widget.data.lon);
-        };
+    const refresh = () => {
+        if (widget.data.lat == null || widget.data.lon == null) {
+            locate();
+            return;
+        }
+        fetchWeather(widget.data.lat, widget.data.lon);
+    };
 
-        // T12: .weather-refresh-btn no longer exists in the body (moved to header).
-        // Expose locate + refresh on the widget so app.js's header ↻ icon can call them.
-        widget.__weatherLocate = locate;
-        widget.__weatherRefresh = refresh;
-
-        body.querySelectorAll('.weather-locate-btn').forEach(b => b.addEventListener('click', locate));
-        const retry = body.querySelector('.weather-retry-btn');
-        if (retry) retry.addEventListener('click', () => {
-            if (widget.data.lat != null && widget.data.lon != null) fetchWeather(widget.data.lat, widget.data.lon);
-            else locate();
-        });
-    }
+    // T12: .weather-refresh-btn no longer exists in the body (moved to header).
+    // Expose locate + refresh on the widget so app.js's header ↻ icon and the
+    // in-card Retry / "Use my location" buttons (via grid delegation) can call them.
+    widget.__weatherLocate = locate;
+    widget.__weatherRefresh = refresh;
 
     renderBody();
-    wireButtons();
 
     // Auto-fetch if we already have coordinates.
     if (widget.data.lat != null && widget.data.lon != null) {
@@ -1925,12 +1932,11 @@ function renderCurrency(widget, container) {
     }
 
     // ── Button wiring ──────────────────────────────────────────────
-    function wireButtons() {
-        const retryBtn = wrap.querySelector('.currency-retry');
-        if (retryBtn) retryBtn.addEventListener('click', fetchRates);
-    }
-
-    wireButtons();
+    // Convention: the error state (and its Retry button) is rendered by renderState()
+    // *after* mount, so wiring it here at once would orphan the listener (P1-4).
+    // Expose fetchRates on the widget and let app.js's grid-level delegated click
+    // handler dispatch .currency-retry clicks — same pattern as weather above.
+    widget.__currencyRetry = fetchRates;
 
     // Fetch on mount (or use cached rates if fresh — < 1 hour old).
     const CACHE_MS = 60 * 60 * 1000; // 1 hour

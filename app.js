@@ -627,6 +627,20 @@ function handleGridClick(e) {
         runPerplexitySearch(widget, q);
         return;
     }
+
+    // Weather: in-card Retry (error state) and "Use my location" (empty state).
+    // These buttons only exist in states rendered *after* mount, so they can't be
+    // wired once at render time — delegate here instead (P1-3).
+    if (target.classList.contains('weather-retry-btn') || target.classList.contains('weather-locate-btn')) {
+        if (typeof widget.__weatherLocate === 'function') widget.__weatherLocate();
+        return;
+    }
+
+    // Currency: in-card Retry (error state) — same delegation pattern (P1-4).
+    if (target.classList.contains('currency-retry')) {
+        if (typeof widget.__currencyRetry === 'function') widget.__currencyRetry();
+        return;
+    }
 }
 
 // ── Delegated input / change handlers for live-updating controls ────────────
