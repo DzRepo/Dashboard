@@ -1757,12 +1757,9 @@ function openSettingsModal() {
 
         root.Dashboard.Storage.reset();            // removes localStorage key (no reload — see storage.js)
         state.widgets = [];
-        state.settings = {
-            theme: 'system',
-            twelvedataApiKey: '',
-            corsProxyUrl: '',
-            background: { type: 'none', imageUrl: null, imageDataUrl: null, overlayOpacity: 0.45, blurPx: 0 }
-        };
+        // P2-11: use the canonical default settings (includes gridColumns/uiScale,
+        // which the old inline copy was missing).
+        state.settings = root.Dashboard.Storage.defaultSettings();
         applySettings();           // re-apply theme/background to match the fresh state
         renderDashboard();         // grid goes empty; user sees a clean slate immediately
         closeModal();

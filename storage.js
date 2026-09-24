@@ -109,6 +109,21 @@ const Storage = {
     },
 
     /**
+     * P2-11: returns a fresh clone of the canonical default settings object.
+     * This is the single source of truth for "what do default settings look like?"
+     * Used by:
+     *   - the v2→v3 migration backfill (storage.js)
+     *   - the Reset handler in app.js (replaces its inline copy, which had drifted)
+     *   - any future code that needs pristine defaults
+     *
+     * Previously the settings shape was duplicated in three places and had already
+     * drifted (the Reset handler's inline copy lacked gridColumns/uiScale).
+     */
+    defaultSettings() {
+        return structuredClone(DEFAULT_STATE.settings);
+    },
+
+    /**
      * Retrieves the dashboard data from localStorage.
      * If none exists, returns a fresh copy of the default state (never the live singleton).
      */
@@ -195,14 +210,14 @@ const Storage = {
 
         if ((data.version || 0) < 3) {
             // ── v2 → v3: add the Twelve Data API key setting (Stock Watchlist).
+            // P2-11: use defaultSettings() as the backfill base so the shape stays
+            // in sync with DEFAULT_STATE (no more inline copy to drift).
             data = {
                 ...this._defaultState(),
                 ...data,
                 version: 3,
                 settings: {
-                    theme: 'system',
-                    twelvedataApiKey: '',
-                    background: { type: 'none', imageUrl: null, imageDataUrl: null, overlayOpacity: 0.45, blurPx: 0 },
+                    ...this.defaultSettings(),
                     ...(data.settings || {})
                 }
             };
