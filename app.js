@@ -1,7 +1,17 @@
 /**
+ * P2-9: wrap the app module in an IIFE that publishes its public API on the shared
+ * Dashboard namespace. Bare cross-file globals are replaced with root.Dashboard.*
+ * references so coupling is explicit.
+ */
+(function (root) {
+    'use strict';
+
+    root.Dashboard = root.Dashboard || {};
+
+/**
  * Application State
  */
-window.state = Storage.getData();
+const state = root.Dashboard.Storage.getData();
 
 /**
  * DOM Elements
@@ -23,7 +33,7 @@ async function _loadBgImageFromIdb() {
     const bg = state.settings && state.settings.background;
     if (!bg || bg.type !== 'upload' || !bg.hasIdbImage) return; // nothing in IDB
     try {
-        const dataUrl = await Storage._idbGetBgImage();
+        const dataUrl = await root.Dashboard.Storage._idbGetBgImage();
         if (typeof dataUrl === 'string' && dataUrl.length > 0) {
             state.settings.background.imageDataUrl = dataUrl;
         }
@@ -41,10 +51,10 @@ async function init() {
 
     // B6: prune habit log entries older than 30 days once at load time and persist,
     // instead of mutating state inside renderHabits on every render (which was never saved).
-    if (typeof pruneHabitsLog === 'function') {
+    if (typeof root.Dashboard.pruneHabitsLog === 'function') {
         let pruned = false;
         for (const w of state.widgets) {
-            if (w && w.type === 'habits' && pruneHabitsLog(w)) pruned = true;
+            if (w && w.type === 'habits' && root.Dashboard.pruneHabitsLog(w)) pruned = true;
         }
         if (pruned) saveFullState();
     }
@@ -320,8 +330,8 @@ function _updateMetaThemeColor() {
 function renderDashboard() {
     // C2: clear any tick timers from the previous render so we don't leak
     // orphaned 1s intervals (see widgetTimers in widgets.js).
-    if (typeof clearAllWidgetTimers === 'function') {
-        clearAllWidgetTimers();
+    if (typeof root.Dashboard.clearAllWidgetTimers === 'function') {
+        root.Dashboard.clearAllWidgetTimers();
     }
 
     dashboardGrid.innerHTML = '';
@@ -424,7 +434,7 @@ function createWidgetElement(widget) {
     
     // Render widget-specific content
     const contentContainer = card.querySelector(`#content-${widget.id}`);
-    createWidgetContent(widget, contentContainer);
+    root.Dashboard.createWidgetContent(widget, contentContainer);
 
     // NOTE: click / keypress handlers for widget content are attached at the
     // dashboardGrid level (see init) so re-renders never stack duplicate listeners.
@@ -501,7 +511,7 @@ function handleGridClick(e) {
         widget.data.items = widget.data.items || [];
         widget.data.items.splice(index, 1);
         saveFullState();
-        renderShortcuts(widget, contentContainer);
+        root.Dashboard.renderShortcuts(widget, contentContainer);
         return;
     }
 
@@ -514,7 +524,7 @@ function handleGridClick(e) {
             widget.data.items = widget.data.items || [];
             widget.data.items.push({ text, completed: false });
             saveFullState();
-            renderLists(widget, contentContainer);
+            root.Dashboard.renderLists(widget, contentContainer);
         }
         return;
     }
@@ -527,7 +537,7 @@ function handleGridClick(e) {
         if (widget.data.items[index]) {
             widget.data.items[index].completed = !widget.data.items[index].completed;
             saveFullState();
-            renderLists(widget, contentContainer);
+            root.Dashboard.renderLists(widget, contentContainer);
         }
         return;
     }
@@ -570,7 +580,7 @@ function handleGridClick(e) {
             }
         }
         saveFullState();
-        renderLists(widget, contentContainer);
+        root.Dashboard.renderLists(widget, contentContainer);
         return;
     }
 
@@ -593,7 +603,7 @@ function handleGridClick(e) {
             }
         }
         // Just close the editor; no state change.
-        renderLists(widget, contentContainer);
+        root.Dashboard.renderLists(widget, contentContainer);
         return;
     }
 
@@ -604,7 +614,7 @@ function handleGridClick(e) {
         widget.data.items = widget.data.items || [];
         widget.data.items.splice(index, 1);
         saveFullState();
-        renderLists(widget, contentContainer);
+        root.Dashboard.renderLists(widget, contentContainer);
         return;
     }
 
@@ -685,7 +695,7 @@ function handleGridChange(e) {
         widget.config = widget.config || {};
         widget.config.engine = target.value;
         saveFullState();
-        renderPerplexity(widget, card.querySelector('.widget-content'));
+        root.Dashboard.renderPerplexity(widget, card.querySelector('.widget-content'));
         return;
     }
 
@@ -704,7 +714,7 @@ function handleGridChange(e) {
     widget.config.sortOrder = target.value; // 'manual' | 'frequent'
 
     saveFullState();
-    renderShortcuts(widget, contentContainer);
+    root.Dashboard.renderShortcuts(widget, contentContainer);
 }
 
 /**
@@ -762,7 +772,7 @@ function handleGridKeypress(e) {
         widget.data.items = widget.data.items || [];
         widget.data.items.push({ text, completed: false });
         saveFullState();
-        renderLists(widget, contentContainer);
+        root.Dashboard.renderLists(widget, contentContainer);
     } else {
         // Perplexity search (Enter in the query box)
         const query = e.target.value.trim();
@@ -826,7 +836,7 @@ function runPerplexitySearch(widget, query) {
     while (rq.length > 10) rq.pop();
 
     // Open the result in a new tab by default.
-    const url = buildSearchUrl(engine, query);
+    const url = root.Dashboard.buildSearchUrl(engine, query);
     window.open(url, config.openInNewTab !== false ? '_blank' : '_self', 'noopener,noreferrer');
 
     saveFullState();
@@ -834,7 +844,7 @@ function runPerplexitySearch(widget, query) {
     const card = dashboardGrid.querySelector(`.widget-card[data-id="${widget.id}"]`);
     if (card) {
         const cc = card.querySelector('.widget-content');
-        renderPerplexity(widget, cc);
+        root.Dashboard.renderPerplexity(widget, cc);
     }
 }
 
@@ -859,9 +869,9 @@ function handleWidgetAction(widget, action) {
     }
 }
 
-window.saveFullState = function() {
-    Storage.saveData(window.state);
-};
+function saveFullState() {
+    root.Dashboard.Storage.saveData(state);
+}
 
 /**
  * Drag and Drop reordering
@@ -1017,7 +1027,7 @@ function commitReorderToEnd(draggedId) {
 function persistReorder() {
     // Keep the position fields in sync with array order.
     state.widgets.forEach((w, i) => { w.position = i; });
-    Storage.saveData(state);
+    root.Dashboard.Storage.saveData(state);
     renderDashboard();
 }
 
@@ -1050,8 +1060,8 @@ function openAddWidgetModal() {
     // automatically without editing this function.
     // C7: each button now carries an optional hint from registry metadata, rendered
     // as a small caption below the label. New types that set `hint` get it for free.
-    const typeButtons = Object.keys(WidgetRegistry).map(type => {
-        const entry = WidgetRegistry[type];
+    const typeButtons = Object.keys(root.Dashboard.WidgetRegistry).map(type => {
+        const entry = root.Dashboard.WidgetRegistry[type];
         const hint = (entry && typeof entry.hint === 'string') ? `<span class="widget-type-hint">${escapeHtml(entry.hint)}</span>` : '';
         return `<button data-type="${type}"><span class="widget-type-label">${escapeHtml(entry.label)}</span>${hint}</button>`;
     }).join('');
@@ -1080,7 +1090,7 @@ function openEditWidgetModal(widget) {
     // editFields() function, so the old per-type `else if` fallbacks (search/clock) were
     // unreachable dead code and are deleted. A new widget type now needs only a registry
     // entry — zero edits here.
-    const entry = WidgetRegistry[widget.type];
+    const entry = root.Dashboard.WidgetRegistry[widget.type];
     let fieldsHtml = '';
     if (entry && typeof entry.editFields === 'function') {
         try { fieldsHtml = entry.editFields(widget); } catch (e) { console.warn('editFields failed', e); }
@@ -1226,7 +1236,7 @@ function openEditWidgetModal(widget) {
                 let url   = (urlEl  && urlEl.value.trim()) || '';
                 if (!label || !url) { alert('Please enter both a label and a URL.'); return; }
                 if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-                if (!Storage.isValidHttpUrl(url)) {
+                if (!root.Dashboard.Storage.isValidHttpUrl(url)) {
                     alert('Invalid URL — only http:// or https:// links are allowed.');
                     return;
                 }
@@ -1238,7 +1248,7 @@ function openEditWidgetModal(widget) {
 
                 // Update the card in place so it shows up immediately.
                 const card = dashboardGrid.querySelector(`.widget-card[data-id="${widget.id}"]`);
-                if (card) renderShortcuts(widget, card.querySelector('.widget-content'));
+                if (card) root.Dashboard.renderShortcuts(widget, card.querySelector('.widget-content'));
 
                 // Clear the form for another entry; keep focus on the label field.
                 if (labelEl) { labelEl.value = ''; }
@@ -1431,7 +1441,7 @@ function openEditWidgetModal(widget) {
 
         // (Type-specific save logic moved to each registry entry's applyEdit — see above.)
 
-        window.saveFullState();
+        saveFullState();
         renderDashboard();
         closeModal();
     });
@@ -1477,9 +1487,9 @@ function openEditWidgetModal(widget) {
 
             state.widgets = state.widgets.filter(w => w.id !== widget.id);
             saveFullState();
-            clearClockTimer(widget.id);
-            clearCountdownTimer(widget.id);
-            if (typeof clearPomodoroTimer === 'function') clearPomodoroTimer(widget.id); // T7
+            root.Dashboard.clearClockTimer(widget.id);
+            root.Dashboard.clearCountdownTimer(widget.id);
+            if (typeof root.Dashboard.clearPomodoroTimer === 'function') root.Dashboard.clearPomodoroTimer(widget.id); // T7
             renderDashboard();
             closeModal();
 
@@ -1493,14 +1503,14 @@ function openEditWidgetModal(widget) {
                 // Re-register any tick timers the widget needs (clock / countdown).
                 if (clone.type === 'clock') {
                     const card = dashboardGrid.querySelector(`.widget-card[data-id="${CSS.escape(clone.id)}"]`);
-                    if (card) { clearClockTimer(clone.id); renderClock(clone, card.querySelector('.widget-content')); }
+                    if (card) { root.Dashboard.clearClockTimer(clone.id); root.Dashboard.renderClock(clone, card.querySelector('.widget-content')); }
                 } else if (clone.type === 'countdown') {
                     const card = dashboardGrid.querySelector(`.widget-card[data-id="${CSS.escape(clone.id)}"]`);
-                    if (card) { clearCountdownTimer(clone.id); renderCountdown(clone, card.querySelector('.widget-content')); }
+                    if (card) { root.Dashboard.clearCountdownTimer(clone.id); root.Dashboard.renderCountdown(clone, card.querySelector('.widget-content')); }
                 } else if (clone.type === 'pomodoro') {
                     // T7: Pomodoro resumes from persisted state on re-render.
                     const card = dashboardGrid.querySelector(`.widget-card[data-id="${CSS.escape(clone.id)}"]`);
-                    if (card) { clearPomodoroTimer(clone.id); renderPomodoro(clone, card.querySelector('.widget-content')); }
+                    if (card) { root.Dashboard.clearPomodoroTimer(clone.id); root.Dashboard.renderPomodoro(clone, card.querySelector('.widget-content')); }
                 }
             });
         });
@@ -1514,15 +1524,12 @@ function openEditWidgetModal(widget) {
  */
 
 /**
- * Small helper to escape HTML for safe insertion into innerHTML.
+ * P2-9: escapeHtml now lives in widgets.js (loaded before registry.js needs it).
+ * We alias it here so the ~20 call-sites in this file read naturally.
  */
-function escapeHtml(value) {
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
+const escapeHtml = root.Dashboard.escapeHtml;
+const escapeAttr = root.Dashboard.escapeAttr;
+const toLocalInputValue = root.Dashboard.toLocalInputValue;
 
 function openSettingsModal() {
     const dashTitle = (state.settings.dashboardTitle && state.settings.dashboardTitle.trim()) ? state.settings.dashboardTitle : 'My Dashboard';
@@ -1711,7 +1718,7 @@ function openSettingsModal() {
         const hOpEl = document.getElementById('header-opacity');
         if (hOpEl) state.settings.headerOpacity = parseInt(hOpEl.value, 10) / 100;
 
-        Storage.saveData(state);
+        root.Dashboard.Storage.saveData(state);
         applySettings();
         if (typeof announceStatus === 'function') announceStatus('Settings saved.');
         closeModal();
@@ -1741,14 +1748,14 @@ function openSettingsModal() {
         colsPreview.addEventListener('change', () => { _applyGridColumns(colsPreview.value); });
     }
 
-    document.getElementById('export-data').addEventListener('click', () => Storage.exportData());
+    document.getElementById('export-data').addEventListener('click', () => root.Dashboard.Storage.exportData());
     document.getElementById('reset-data').addEventListener('click', () => {
         if (!confirm('Are you sure you want to reset the dashboard? You can undo this from the toast that appears after.')) return;
 
         // Snapshot BEFORE we wipe, so Undo can restore everything.
         const snapshot = JSON.parse(JSON.stringify(state));
 
-        Storage.reset();            // removes localStorage key (no reload — see storage.js)
+        root.Dashboard.Storage.reset();            // removes localStorage key (no reload — see storage.js)
         state.widgets = [];
         state.settings = {
             theme: 'system',
@@ -1767,7 +1774,7 @@ function openSettingsModal() {
             // references behind.
             state.widgets = snapshot.widgets;
             state.settings = snapshot.settings;
-            Storage.saveData(state);
+            root.Dashboard.Storage.saveData(state);
             applySettings();
             renderDashboard();
         });
@@ -1781,7 +1788,7 @@ function openSettingsModal() {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = ev => {
-                Storage.importData(ev.target.result);
+                root.Dashboard.Storage.importData(ev.target.result);
                 closeModal();
             };
             reader.readAsText(file);
@@ -1801,21 +1808,21 @@ function openSettingsModal() {
                     // Keep a copy on state for immediate render; persist only the flag + JSON
                     // to localStorage (the data URL itself lives in IDB).
                     const bg = state.settings.background;
-                    Storage._idbSetBgImage(dataUrl).then(() => {
+                    root.Dashboard.Storage._idbSetBgImage(dataUrl).then(() => {
                         bg.type = 'upload';
                         bg.imageDataUrl = dataUrl;   // keep for immediate applySettings()
                         bg.hasIdbImage  = true;       // flag: IDB holds the canonical copy
                         // Don't persist imageDataUrl in localStorage — it's in IDB now.
                         const toSave = JSON.parse(JSON.stringify(state));
                         delete toSave.settings.background.imageDataUrl;
-                        Storage.saveData(toSave);
+                        root.Dashboard.Storage.saveData(toSave);
                         applySettings();
                     }).catch(err => {
                         console.warn('T6: failed to save bg image to IndexedDB; falling back to localStorage', err);
                         // Fallback: store inline (old behavior) so the user isn't blocked.
                         bg.type = 'upload';
                         bg.imageDataUrl = dataUrl;
-                        Storage.saveData(state);
+                        root.Dashboard.Storage.saveData(state);
                         applySettings();
                     });
                 };
@@ -1869,7 +1876,7 @@ function addWidget(type) {
     const id = 'widget-' + Date.now();
 
     // Prefer registry defaults so new types need zero edits here.
-    const entry = WidgetRegistry[type];
+    const entry = root.Dashboard.WidgetRegistry[type];
     let config = {};
     let data = {};
     if (entry && typeof entry.defaults === 'function') {
@@ -1892,7 +1899,7 @@ function addWidget(type) {
 
     state.widgets.push(newWidget);
     state.widgets.sort((a, b) => a.position - b.position);
-    Storage.saveData(state);
+    root.Dashboard.Storage.saveData(state);
     renderDashboard();
 }
 
@@ -1935,7 +1942,7 @@ function seedDashboard() {
             }
         }
     ];
-    Storage.saveData(state);
+    root.Dashboard.Storage.saveData(state);
     renderDashboard();
 }
 
@@ -2221,4 +2228,33 @@ function showUndoToast(label, onUndo) {
     region.appendChild(el);
 }
 
-init();
+    // ── P2-9: publish the app module's public API on the shared namespace ───────
+    const D = root.Dashboard;
+
+    // State (accessed by widgets.js render functions at call time).
+    D.state = state;
+
+    // Save + announce (called from widgets.js render functions).
+    D.saveFullState = saveFullState;
+    D.announceStatus = announceStatus;
+
+    // Color utilities (used within app.js; published for tests).
+    D.hexToRgb = hexToRgb;
+    D.rgbaString = rgbaString;
+    D.adjustFillForTheme = adjustFillForTheme;
+
+    // Boot.
+    D.init = init;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+
+// UMD footer (P2-9): expose the app module for Node tests.
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    // Under Node, the IIFE above has already run and populated root.Dashboard.
+    module.exports = globalThis.Dashboard;
+}
+
+// Boot the application (browser only — guarded so Node tests don't run DOM code).
+if (typeof window !== 'undefined') {
+    Dashboard.init();
+}

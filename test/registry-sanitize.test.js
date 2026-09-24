@@ -1,10 +1,10 @@
 'use strict';
-const { exports: E } = require('./setup');
+const { Dashboard: D } = require('./setup');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-// WidgetRegistry lives in registry.js (loaded into the shared context).
-const { WidgetRegistry } = E['registry'];
+// WidgetRegistry lives in registry.js (published on the namespace).
+const { WidgetRegistry } = D;
 
 test('every registered type has the core contract', () => {
   const types = Object.keys(WidgetRegistry);

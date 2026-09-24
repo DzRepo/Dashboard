@@ -1,10 +1,10 @@
 'use strict';
-const { exports: E, localStorage } = require('./setup');
+const { Dashboard: D, localStorage } = require('./setup');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-// Storage lives in storage.js (loaded into the shared context).
-const { Storage } = E['storage'];
+// Storage lives in storage.js (published on the namespace).
+const { Storage } = D;
 
 test('isValidHttpUrl accepts http/https and rejects others', () => {
   assert.equal(Storage.isValidHttpUrl('https://example.com'), true);

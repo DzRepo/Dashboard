@@ -1,10 +1,10 @@
 'use strict';
-const { exports: E } = require('./setup');
+const { Dashboard: D } = require('./setup');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-// buildSearchUrl lives in registry.js (loaded into the shared context).
-const { buildSearchUrl } = E['registry'];
+// buildSearchUrl lives in registry.js (published on the namespace).
+const { buildSearchUrl } = D;
 
 test('buildSearchUrl defaults to perplexity', () => {
   assert.equal(buildSearchUrl('perplexity', 'cats'), 'https://www.perplexity.ai/search/?q=cats');

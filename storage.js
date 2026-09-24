@@ -5,7 +5,20 @@
  * T6: Large background images (data URLs) live in IndexedDB under key 'bgImage'
  * to avoid consuming the ~5 MB localStorage quota. A small flag
  * (`settings.background.hasIdbImage`) tells us whether to fetch from IDB on load.
+ *
+ * P2-9: this file is the first-loaded classic script, so it creates the shared
+ * `window.Dashboard` namespace and publishes its own API as `Dashboard.Storage`.
+ * The whole module body lives in an IIFE so nothing leaks to the global scope; a
+ * UMD footer at the bottom makes it `require()`-able in Node tests.
  */
+
+(function (root) {
+    'use strict';
+
+    // Create the shared namespace once; later files (registry/widgets/app) attach
+    // their own API objects to it. `root` is window in the browser, globalThis under
+    // Node (see the UMD footer at the bottom of this file).
+    root.Dashboard = root.Dashboard || {};
 
 const STORAGE_KEY = 'personalDashboard:data';
 
@@ -284,8 +297,12 @@ const Storage = {
      */
     sanitizeWidget(widget) {
         // Prefer registry-based sanitization (covers all current + future types).
-        if (typeof getWidgetEntry === 'function') {
-            const entry = getWidgetEntry(widget && widget.type);
+        // P2-9: the registry is on the shared namespace (loaded after this file,
+        // but sanitizeWidget is only called at import time, well after all scripts load).
+        const getEntry = root.Dashboard && typeof root.Dashboard.getWidgetEntry === 'function'
+            ? root.Dashboard.getWidgetEntry : null;
+        if (getEntry) {
+            const entry = getEntry(widget && widget.type);
             if (entry && typeof entry.sanitize === 'function') {
                 return entry.sanitize(widget);
             }
@@ -362,3 +379,16 @@ const Storage = {
     _idbSetBgImage(d)  { return _idbSet(BG_IMAGE_KEY, d); },
     _idbDeleteBgImage(){ return _idbDelete(BG_IMAGE_KEY); }
 };
+
+    // P2-9: publish the storage API on the shared namespace. This is the only thing
+    // other files need from this module; STORAGE_KEY / DEFAULT_STATE stay private.
+    root.Dashboard.Storage = Storage;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+
+// UMD footer (P2-9): let Node tests `require()` this file. The IIFE above has already
+// run and populated root.Dashboard.Storage; under Node `root` is globalThis, so we
+// expose the same object here for a stable require() contract.
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = globalThis.Dashboard.Storage;
+}

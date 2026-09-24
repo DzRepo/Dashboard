@@ -1,10 +1,10 @@
 'use strict';
-const { exports: E } = require('./setup');
+const { Dashboard: D } = require('./setup');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-// hexToRgb / rgbaString / adjustFillForTheme live in app.js (loaded into the shared context).
-const { hexToRgb, rgbaString, adjustFillForTheme } = E['app'];
+// hexToRgb / rgbaString / adjustFillForTheme live in app.js (published on the namespace).
+const { hexToRgb, rgbaString, adjustFillForTheme } = D;
 
 // hexToRgb returns an object created in the vm realm, so deepEqual (which checks
 // prototype identity) fails on cross-realm objects. Compare field-by-field instead.

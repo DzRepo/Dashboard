@@ -1,10 +1,10 @@
 'use strict';
-const { exports: E } = require('./setup');
+const { Dashboard: D } = require('./setup');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-// pruneHabitsLog lives in widgets.js (loaded into the shared context).
-const { pruneHabitsLog } = E['widgets'];
+// pruneHabitsLog lives in widgets.js (published on the namespace).
+const { pruneHabitsLog } = D;
 
 function key(d) {
   const p = (n) => String(n).padStart(2, '0');

@@ -21,6 +21,14 @@
  * Zero edits to app.js / storage.js / widgets.js core logic.
  */
 
+// P2-9: publish the widget registry on the shared namespace created by storage.js
+// (Dashboard.WidgetRegistry). The whole module body lives in an IIFE so nothing leaks
+// to the global scope; a UMD footer at the bottom makes it `require()`-able in Node.
+(function (root) {
+    'use strict';
+
+    root.Dashboard = root.Dashboard || {};
+
 /**
  * Build the search URL for a Perplexity-style widget based on its configured engine.
  * Engines: perplexity (default), google, bing, ddg. All are keyless + CORS-friendly
@@ -44,7 +52,7 @@ WidgetRegistry['shortcuts'] = {
     defaults() {
         return { config: {}, data: { items: [] } };
     },
-    render: (widget, container) => renderShortcuts(widget, container),
+    render: (widget, container) => root.Dashboard.renderShortcuts(widget, container),
     editFields(widget) {
         return `
             <div class="settings-group">
@@ -71,7 +79,7 @@ WidgetRegistry['shortcuts'] = {
             config: raw.config || {},
             data: {
                 items: items
-                    .filter(it => it && typeof it === 'object' && Storage.isValidHttpUrl(it.url))
+                    .filter(it => it && typeof it === 'object' && root.Dashboard.Storage.isValidHttpUrl(it.url))
                     .map(it => ({
                         label: it.label || '',
                         url: it.url,
@@ -92,7 +100,7 @@ WidgetRegistry['lists'] = {
     defaults() {
         return { config: {}, data: { items: [], showCompleted: true, sortByDueDate: false } };
     },
-    render: (widget, container) => renderLists(widget, container),
+    render: (widget, container) => root.Dashboard.renderLists(widget, container),
     applyEdit(widget, modalBody) {
         // Persist the display options (the "Clear completed" button is wired separately
         // in app.js and saves immediately, so it's not touched here).
@@ -159,7 +167,7 @@ WidgetRegistry['clock'] = {
             data: { times: [{ label: 'My Time', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Denver' }] }
         };
     },
-    render: (widget, container) => renderClock(widget, container),
+    render: (widget, container) => root.Dashboard.renderClock(widget, container),
     applyEdit(widget, modalBody) {
         widget.config = widget.config || {};
         const fmtEl = document.getElementById('edit-clock-format');
@@ -187,8 +195,8 @@ WidgetRegistry['clock'] = {
         const times = widget.data?.times || [];
         const rows = times.map(entry => `
             <div class="clock-time-row">
-                <input type="text" class="clock-time-label" placeholder="Label (e.g. Home)" value="${escapeHtml(entry.label || '')}">
-                <input type="text" class="clock-time-zone" placeholder="Timezone (e.g. America/New_York)" value="${escapeHtml(entry.timezone || '')}">
+                <input type="text" class="clock-time-label" placeholder="Label (e.g. Home)" value="${root.Dashboard.escapeHtml(entry.label || '')}">
+                <input type="text" class="clock-time-zone" placeholder="Timezone (e.g. America/New_York)" value="${root.Dashboard.escapeHtml(entry.timezone || '')}">
                 <button type="button" class="clock-remove-entry" title="Remove entry">×</button>
             </div>
         `).join('');
@@ -258,7 +266,7 @@ WidgetRegistry['search'] = {
             data: { recentQueries: [] }
         };
     },
-    render: (widget, container) => renderPerplexity(widget, container),
+    render: (widget, container) => root.Dashboard.renderPerplexity(widget, container),
     applyEdit(widget, modalBody) {
         // Title comes from the shared #edit-widget-title field (handled by the generic
         // Save handler), so only the engine + new-tab flag are persisted here.
@@ -327,7 +335,7 @@ WidgetRegistry['weather'] = {
             data: { lat: null, lon: null, city: 'Your Location' }
         };
     },
-    render: (widget, container) => renderWeather(widget, container),
+    render: (widget, container) => root.Dashboard.renderWeather(widget, container),
     applyEdit(widget, modalBody) {
         const readNum = (id) => {
             const el = document.getElementById(id);
@@ -368,7 +376,7 @@ WidgetRegistry['weather'] = {
         return `
             <div class="settings-group">
                 <label>City (display name):</label>
-                <input type="text" id="edit-weather-city" value="${escapeHtml(d.city || '')}" placeholder="e.g. Denver">
+                <input type="text" id="edit-weather-city" value="${root.Dashboard.escapeHtml(d.city || '')}" placeholder="e.g. Denver">
             </div>
             <div class="settings-group">
                 <label>Latitude:</label>
@@ -433,7 +441,7 @@ WidgetRegistry['notes'] = {
     defaults() {
         return { config: {}, data: { text: '', updatedAt: null } };
     },
-    render: (widget, container) => renderNotes(widget, container),
+    render: (widget, container) => root.Dashboard.renderNotes(widget, container),
     editFields() {
         return '';
     },
@@ -462,7 +470,7 @@ WidgetRegistry['stocks'] = {
     defaults() {
         return { config: {}, data: { symbols: [] } };
     },
-    render: (widget, container) => renderStocks(widget, container),
+    render: (widget, container) => root.Dashboard.renderStocks(widget, container),
     applyEdit(widget, modalBody) {
         // Persist the edited ticker list.
         widget.data = widget.data || {};
@@ -481,8 +489,8 @@ WidgetRegistry['stocks'] = {
         const symbols = widget.data?.symbols || [];
         const rows = symbols.map(s => `
             <div class="stock-symbol-row">
-                <input type="text" class="stock-symbol-input" value="${escapeHtml(s.symbol)}" placeholder="TICKER">
-                <input type="text" class="stock-name-input" value="${escapeHtml(s.name || '')}" placeholder="Company name">
+                <input type="text" class="stock-symbol-input" value="${root.Dashboard.escapeHtml(s.symbol)}" placeholder="TICKER">
+                <input type="text" class="stock-name-input" value="${root.Dashboard.escapeHtml(s.name || '')}" placeholder="Company name">
                 <button type="button" class="stock-remove-entry" title="Remove">×</button>
             </div>
         `).join('');
@@ -527,7 +535,7 @@ WidgetRegistry['countdown'] = {
     defaults() {
         return { config: {}, data: { events: [] } };
     },
-    render: (widget, container) => renderCountdown(widget, container),
+    render: (widget, container) => root.Dashboard.renderCountdown(widget, container),
     applyEdit(widget, modalBody) {
         // Persist the edited event list (label + when).
         widget.data = widget.data || {};
@@ -549,8 +557,8 @@ WidgetRegistry['countdown'] = {
         if (!Array.isArray(d.events)) d.events = [];
         const rows = d.events.map(ev => `
             <div class="countdown-event-row">
-                <input type="text" class="countdown-ev-label" placeholder="Label (e.g. Launch)" value="${escapeHtml(ev.label || '')}">
-                <input type="datetime-local" class="countdown-ev-dt" step="60" value="${escapeAttr(ev.when ? toLocalInputValue(new Date(ev.when)) : '')}">
+                <input type="text" class="countdown-ev-label" placeholder="Label (e.g. Launch)" value="${root.Dashboard.escapeHtml(ev.label || '')}">
+                <input type="datetime-local" class="countdown-ev-dt" step="60" value="${root.Dashboard.escapeAttr(ev.when ? root.Dashboard.toLocalInputValue(new Date(ev.when)) : '')}">
                 <button type="button" class="countdown-remove-entry" title="Remove event">×</button>
             </div>
         `).join('');
@@ -595,7 +603,7 @@ WidgetRegistry['rss'] = {
     defaults() {
         return { config: {}, data: { feeds: [] } };
     },
-    render: (widget, container) => renderRss(widget, container),
+    render: (widget, container) => root.Dashboard.renderRss(widget, container),
     applyEdit(widget, modalBody) {
         // Persist the edited feed list (optional label + url).
         widget.data = widget.data || {};
@@ -607,7 +615,7 @@ WidgetRegistry['rss'] = {
             let url = (urlEl.value || '').trim();
             if (!url) return; // skip rows without a URL
             if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-            if (!Storage.isValidHttpUrl(url)) {
+            if (!root.Dashboard.Storage.isValidHttpUrl(url)) {
                 window.alert('Invalid feed URL: "' + url + '" (must be http/https).');
                 return;
             }
@@ -620,8 +628,8 @@ WidgetRegistry['rss'] = {
         if (!Array.isArray(d.feeds)) d.feeds = [];
         const rows = d.feeds.map(f => `
             <div class="rss-feed-row">
-                <input type="text" class="rss-feed-label" placeholder="Label (optional)" value="${escapeHtml(f.label || '')}">
-                <input type="url" class="rss-feed-url" placeholder="Feed URL (https://…/feed.xml)" value="${escapeAttr(f.url || '')}">
+                <input type="text" class="rss-feed-label" placeholder="Label (optional)" value="${root.Dashboard.escapeHtml(f.label || '')}">
+                <input type="url" class="rss-feed-url" placeholder="Feed URL (https://…/feed.xml)" value="${root.Dashboard.escapeAttr(f.url || '')}">
                 <button type="button" class="rss-remove-entry" title="Remove feed">×</button>
             </div>
         `).join('');
@@ -648,7 +656,7 @@ WidgetRegistry['rss'] = {
             config: (raw.config && typeof raw.config === 'object') ? raw.config : {},
             data: {
                 feeds: feeds
-                    .filter(f => f && typeof f === 'object' && Storage.isValidHttpUrl(f.url))
+                    .filter(f => f && typeof f === 'object' && root.Dashboard.Storage.isValidHttpUrl(f.url))
                     .map(f => ({
                         label: typeof f.label === 'string' ? f.label : '',
                         url: f.url,
@@ -668,7 +676,7 @@ WidgetRegistry['pomodoro'] = {
             data:   { running: false, mode: 'focus', remainingSec: 25 * 60, completedSessions: 0 }
         };
     },
-    render: (widget, container) => renderPomodoro(widget, container),
+    render: (widget, container) => root.Dashboard.renderPomodoro(widget, container),
     applyEdit(widget, modalBody) {
         // Persist duration settings. The running timer state (mode / remainingSec /
         // completedSessions) is managed by the widget itself and untouched here.
@@ -745,7 +753,7 @@ WidgetRegistry['currency'] = {
             data:   { rates: {}, updatedAt: null }
         };
     },
-    render: (widget, container) => renderCurrency(widget, container),
+    render: (widget, container) => root.Dashboard.renderCurrency(widget, container),
     applyEdit(widget, modalBody) {
         // Persist base currency + the list of foreign codes (de-duped, base excluded).
         widget.config = widget.config || {};
@@ -774,7 +782,7 @@ WidgetRegistry['currency'] = {
             <div class="currency-code-row">
                 <input type="text" maxlength="3" class="currency-code-input"
                        style="text-transform:uppercase; width:72px;"
-                       value="${escapeHtml(String(code).toUpperCase())}" aria-label="Currency code">
+                       value="${root.Dashboard.escapeHtml(String(code).toUpperCase())}" aria-label="Currency code">
                 <button type="button" class="currency-remove-entry" title="Remove">×</button>
             </div>
         `).join('');
@@ -782,11 +790,11 @@ WidgetRegistry['currency'] = {
             <div class="settings-group">
                 <label>Base currency (you convert $1 of this):</label>
                 <input type="text" maxlength="3" style="text-transform:uppercase; width:80px;"
-                       id="currency-from-code" value="${escapeHtml(curFrom)}">
+                       id="currency-from-code" value="${root.Dashboard.escapeHtml(curFrom)}">
             </div>
             <div class="settings-group">
                 <label>Foreign currencies to show (one code per row):</label>
-                <p style="font-size:12px;opacity:.7;margin-top:4px;">Each shows the rate for $1 ${escapeHtml(curFrom)} → that currency, and links out to XE.com. Note: uses ECB reference rates (Frankfurter v1) — covers ~30 major currencies; some exotics may not be available.</p>
+                <p style="font-size:12px;opacity:.7;margin-top:4px;">Each shows the rate for $1 ${root.Dashboard.escapeHtml(curFrom)} → that currency, and links out to XE.com. Note: uses ECB reference rates (Frankfurter v1) — covers ~30 major currencies; some exotics may not be available.</p>
                 <div id="currency-codes-editor" class="currency-codes-editor">
                     ${rows}
                 </div>
@@ -853,7 +861,7 @@ WidgetRegistry['habits'] = {
     defaults() {
         return { config: {}, data: { habits: [], log: {} } };
     },
-    render: (widget, container) => renderHabits(widget, container),
+    render: (widget, container) => root.Dashboard.renderHabits(widget, container),
     applyEdit(widget, modalBody) {
         // Persist the edited habit list. The log is managed by the widget itself and
         // untouched here.
@@ -873,7 +881,7 @@ WidgetRegistry['habits'] = {
         if (!Array.isArray(d.habits)) d.habits = [];
         const rows = d.habits.map(h => `
             <div class="habit-row-editor">
-                <input type="text" class="habit-label-input" value="${escapeHtml(h.label || '')}" placeholder="Habit name (e.g. Read 20 min)">
+                <input type="text" class="habit-label-input" value="${root.Dashboard.escapeHtml(h.label || '')}" placeholder="Habit name (e.g. Read 20 min)">
                 <button type="button" class="habit-remove-entry" title="Remove habit">×</button>
             </div>
         `).join('');
@@ -939,3 +947,17 @@ function getWidgetEntry(type) {
 // Check DevTools console on load: expect 9+ entries as of T7.
 console.info('[dashboard] WidgetRegistry loaded with', Object.keys(WidgetRegistry).length,
     'entries:', Object.keys(WidgetRegistry).join(', '));
+
+    // P2-9: publish the registry + its helpers on the shared namespace.
+    root.Dashboard.WidgetRegistry = WidgetRegistry;
+    root.Dashboard.buildSearchUrl  = buildSearchUrl;
+    root.Dashboard.genWidgetId     = genWidgetId;
+    root.Dashboard.getRegisteredTypes = getRegisteredTypes;
+    root.Dashboard.getWidgetEntry  = getWidgetEntry;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+
+// UMD footer (P2-9): expose the registry object for Node tests.
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = globalThis.Dashboard.WidgetRegistry;
+}

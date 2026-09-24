@@ -19,7 +19,17 @@
  *   setWidgetTimer(widgetId, intervalId) – register (replaces any existing)
  *   clearWidgetTimer(widgetId)           – clearInterval + delete for one widget
  *   clearAllWidgetTimers()               – clearInterval every entry and reset the Map
+ *
+ * P2-9: this file is wrapped in an IIFE that publishes its public API on the shared
+ * `Dashboard` namespace (created by storage.js). Bare globals are replaced with
+ * namespaced references so cross-file coupling is explicit. A UMD footer at the bottom
+ * makes this file `require()`-able in Node tests.
  */
+(function (root) {
+    'use strict';
+
+    root.Dashboard = root.Dashboard || {};
+
 const widgetTimers = new Map();
 function setWidgetTimer(widgetId, intervalId) { widgetTimers.set(widgetId, intervalId); }
 function clearWidgetTimer(widgetId) {
@@ -42,6 +52,16 @@ function escapeAttr(value) {
         .replace(/>/g, '&gt;');
 }
 
+/** Escape for safe insertion into innerHTML. Moved from app.js (P2-9) so it's
+ *  available to widgets.js and registry.js, which load before app.js. */
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 /**
  * C5 — shared empty-state helper.
  * Reads the `emptyState` string from the widget's registry entry (single source of truth)
@@ -49,7 +69,8 @@ function escapeAttr(value) {
  * so new widgets that forget to set one still get consistent copy.
  */
 function emptyStateText(widget) {
-    const entry = typeof WidgetRegistry !== 'undefined' && widget ? WidgetRegistry[widget.type] : null;
+    const reg = root.Dashboard.WidgetRegistry;
+    const entry = reg && widget ? reg[widget.type] : null;
     return (entry && typeof entry.emptyState === 'string') ? entry.emptyState : 'None yet — open Edit to add some.';
 }
 
@@ -148,7 +169,8 @@ function promptDueDate(current) {
  */
 function createWidgetContent(widget, container) {
     // Prefer the registry so new types need zero edits here.
-    const entry = (typeof WidgetRegistry !== 'undefined') ? WidgetRegistry[widget.type] : null;
+    const reg = root.Dashboard.WidgetRegistry;
+    const entry = (reg) ? reg[widget.type] : null;
 
     if (entry && typeof entry.render === 'function') {
         try { entry.render(widget, container); return; } catch(e) { console.warn('registry render failed', e); }
@@ -159,7 +181,7 @@ function createWidgetContent(widget, container) {
     // instead of showing only "Unknown widget type" in the card body.
     if (!entry) {
         console.error('[dashboard] WidgetRegistry has no entry for type:', JSON.stringify(widget.type),
-            '| registered types:', Object.keys(WidgetRegistry || {}).join(', '));
+            '| registered types:', Object.keys(reg || {}).join(', '));
     } else {
         console.warn('[dashboard] Registry render() threw for type:', widget.type, '(see warning above)');
     }
@@ -263,7 +285,7 @@ function renderShortcuts(widget, container) {
         a.addEventListener('click', () => {
             if (!item.clickCount) item.clickCount = 0;
             item.clickCount += 1;
-            saveFullState();
+            root.Dashboard.saveFullState();
         });
 
         list.appendChild(div);
@@ -657,7 +679,7 @@ function renderWeather(widget, container) {
         loading = false;
         lastError = err || 'Could not load weather.';
         renderBody();
-        if (typeof announceStatus === 'function') announceStatus('Weather failed to load: ' + lastError);
+        if (typeof root.Dashboard.announceStatus === 'function') root.Dashboard.announceStatus('Weather failed to load: ' + lastError);
     }
 
     async function fetchWeather(lat, lon) {
@@ -714,12 +736,12 @@ function renderWeather(widget, container) {
         loading = false;
         renderBody();
         // Announce the update to screen readers via the global live region.
-        if (typeof announceStatus === 'function') {
+        if (typeof root.Dashboard.announceStatus === 'function') {
             const t = currentData && typeof currentData.temperature === 'number' ? Math.round(currentData.temperature) + '°' : '';
             // NOTE: compute the label here — `cityLabel` is scoped inside renderBody() and
             // would be a ReferenceError if referenced from this outer function.
             const city = (widget.data && widget.data.city) || 'Your Location';
-            announceStatus('Weather updated for ' + city + (t ? ', currently ' + t : '') + '.');
+            root.Dashboard.announceStatus('Weather updated for ' + city + (t ? ', currently ' + t : '') + '.');
         }
     }
 
@@ -903,7 +925,7 @@ function renderWeather(widget, container) {
                 if (!widget.data.city || widget.data.city === 'Your Location') {
                     // Reverse-geocode via Open-Meteo's free endpoint is not available; keep the label.
                 }
-                saveFullState();
+                root.Dashboard.saveFullState();
                 fetchWeather(widget.data.lat, widget.data.lon);
             },
             (err) => setError('Location denied: ' + err.message),
@@ -951,7 +973,7 @@ function renderNotes(widget, container) {
         saveTimer = setTimeout(() => {
             widget.data.text = ta.value;
             widget.data.updatedAt = Date.now();
-            saveFullState();
+            root.Dashboard.saveFullState();
             updateTimestamp();
         }, 300);
     }
@@ -975,7 +997,7 @@ function renderNotes(widget, container) {
         if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
         widget.data.text = ta.value;
         widget.data.updatedAt = Date.now();
-        saveFullState();
+        root.Dashboard.saveFullState();
         updateTimestamp();
     });
 
@@ -999,7 +1021,7 @@ function renderNotes(widget, container) {
  * and a hint points to Settings → Stocks & APIs. Errors never break the render.
  */
 function getTwelveDataKey() {
-    try { return ((typeof state !== 'undefined' && state.settings) || {}).twelvedataApiKey || ''; } catch (e) { return ''; }
+    try { const s = root.Dashboard.state; return ((s && s.settings) || {}).twelvedataApiKey || ''; } catch (e) { return ''; }
 }
 
 /**
@@ -1082,8 +1104,9 @@ function renderStocks(widget, container) {
             // Default: https://www.google.com/finance/beta/quote/{ticker}
             const displayName = s.name || s.symbol;
             let nameHtml;
-            if (typeof state !== 'undefined' && state.settings && typeof state.settings.stockLinkTemplate === 'string' && state.settings.stockLinkTemplate.includes('{ticker}')) {
-                const url = state.settings.stockLinkTemplate.replace('{ticker}', encodeURIComponent(s.symbol));
+            const _st = root.Dashboard.state;
+            if (_st && _st.settings && typeof _st.settings.stockLinkTemplate === 'string' && _st.settings.stockLinkTemplate.includes('{ticker}')) {
+                const url = _st.settings.stockLinkTemplate.replace('{ticker}', encodeURIComponent(s.symbol));
                 nameHtml = `<a class="stock-name stock-link" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayName)}</a>`;
             } else {
                 // Fallback default template
@@ -1226,7 +1249,7 @@ function renderStocks(widget, container) {
         // ticker succeeded — a total failure leaves any prior timestamp intact.
         if (failures < symbols.length) widget.data.updatedAt = Date.now();
 
-        saveFullState();
+        root.Dashboard.saveFullState();
         renderList();
         if (failures === symbols.length && key) {
             setStatus('<p class="stock-status-err">Could not load live quotes (check the API key / rate limit). Showing cached prices.</p>');
@@ -1361,8 +1384,9 @@ function renderRss(widget, container) {
         //    placeholder conventions: {url} / {URL}, or a trailing "?" for append.
         let userProxy = '';
         try {
-            if (window.state && window.state.settings) {
-                userProxy = String(window.state.settings.corsProxyUrl || '').trim();
+            const _st = root.Dashboard.state;
+            if (_st && _st.settings) {
+                userProxy = String(_st.settings.corsProxyUrl || '').trim();
             }
         } catch (_) { /* ignore */ }
 
@@ -1680,8 +1704,8 @@ function renderPomodoro(widget, container) {
                 widget.data.remainingSec = modeSec(widget.data.mode);
 
                 // Visual + audio cue.
-                if (typeof announceStatus === 'function') {
-                    announceStatus('Pomodoro complete — starting ' + label.toLowerCase() + '.');
+                if (typeof root.Dashboard.announceStatus === 'function') {
+                    root.Dashboard.announceStatus('Pomodoro complete — starting ' + label.toLowerCase() + '.');
                 }
             }
             renderState();
@@ -1726,9 +1750,9 @@ function renderPomodoro(widget, container) {
                 widget.data.endTime += modeSec(widget.data.mode) * 1000;
                 guard++;
             }
-            if (typeof announceStatus === 'function') {
+            if (typeof root.Dashboard.announceStatus === 'function') {
                 const n = widget.data.completedSessions;
-                announceStatus('Pomodoro caught up — ' + (n === 1 ? '1 session' : n + ' sessions') + ' completed while away.');
+                root.Dashboard.announceStatus('Pomodoro caught up — ' + (n === 1 ? '1 session' : n + ' sessions') + ' completed while away.');
             }
         }
         // Resume the (possibly fast-forwarded) session from its wall-clock endTime.
@@ -1944,9 +1968,9 @@ function renderCurrency(widget, container) {
             widget.data.updatedAt = Date.now();
             delete widget.data.error;
             renderState();
-            if (typeof announceStatus === 'function') {
+            if (typeof root.Dashboard.announceStatus === 'function') {
                 const sample = targets.slice(0, 3).map(c => `${c} ${fmtRate(rates[c])}`).join(', ');
-                announceStatus(`Currency rates updated: $1 ${fromCode} → ${sample}.`);
+                root.Dashboard.announceStatus(`Currency rates updated: $1 ${fromCode} → ${sample}.`);
             }
         } catch (err) {
             // T15: Include the error detail for easier diagnosis.
@@ -2076,10 +2100,59 @@ function renderHabits(widget, container) {
         }
 
         // Persist + re-render just this card.
-        saveFullState();
+        root.Dashboard.saveFullState();
         renderGrid();
     }
 
     container.addEventListener('click', handleToggle);
+}
+
+    // ── P2-9: publish the public API on the shared namespace ───────────────
+    // Render functions are referenced by registry.js entries (which load after this file).
+    // Shared helpers (escapeHtml, escapeAttr, toLocalInputValue) are used by both
+    // registry.js and app.js. Timer functions are called from app.js.
+    const D = root.Dashboard;
+
+    // Render functions (one per widget type).
+    D.renderShortcuts  = renderShortcuts;
+    D.renderLists      = renderLists;
+    D.renderClock      = renderClock;
+    D.renderPerplexity = renderPerplexity;
+    D.renderWeather    = renderWeather;
+    D.renderNotes      = renderNotes;
+    D.renderStocks     = renderStocks;
+    D.renderCountdown  = renderCountdown;
+    D.renderRss        = renderRss;
+    D.renderPomodoro   = renderPomodoro;
+    D.renderCurrency   = renderCurrency;
+    D.renderHabits     = renderHabits;
+
+    // Shared helpers (used by registry.js editFields + app.js).
+    D.escapeHtml        = escapeHtml;
+    D.escapeAttr        = escapeAttr;
+    D.toLocalInputValue = toLocalInputValue;
+    D.truncate          = truncate;
+    D.emptyStateText    = emptyStateText;
+    D.buildSparkline    = buildSparkline;
+
+    // Timer registry (called from app.js renderDashboard / delete paths).
+    D.setWidgetTimer     = setWidgetTimer;
+    D.clearWidgetTimer   = clearWidgetTimer;
+    D.clearAllWidgetTimers = clearAllWidgetTimers;
+
+    // Timer aliases (thin wrappers over the shared registry).
+    D.clearClockTimer     = clearClockTimer;
+    D.clearCountdownTimer = clearCountdownTimer;
+    D.clearPomodoroTimer  = clearPomodoroTimer;
+
+    // Other cross-file helpers.
+    D.pruneHabitsLog      = pruneHabitsLog;
+    D.createWidgetContent = createWidgetContent;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+
+// UMD footer (P2-9): expose the widgets module for Node tests.
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = globalThis.Dashboard;
 }
 
