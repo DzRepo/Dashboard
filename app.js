@@ -2204,14 +2204,16 @@ function _paletteBuildResults(query) {
 
         // 2. Shortcut links inside a shortcuts widget.
         if (w.type === 'shortcuts' && Array.isArray(w.data?.items)) {
-            for (const item of w.data.items) {
+            w.data.items.forEach((item, index) => {
                 const label = String(item.label || '');
                 const desc  = String(item.description || '');
                 const url   = String(item.url || '');
                 if (!q || label.toLowerCase().includes(q) || desc.toLowerCase().includes(q) || url.toLowerCase().includes(q)) {
-                    out.push({ kind: 'link', widgetId: w.id, id: null, label, sublabel: url });
+                    // Carry the item's index as stable identity so activation can
+                    // resolve the exact URL even when labels are duplicated (P1-2).
+                    out.push({ kind: 'link', widgetId: w.id, id: null, itemIndex: index, label, sublabel: url });
                 }
-            }
+            });
         }
     }
 
@@ -2286,15 +2288,17 @@ function _paletteActivate(index) {
         }
     } else if (r.kind === 'link') {
         const widget = state.widgets.find(w => w.id === r.widgetId);
-        let url = '';
-        let match = null;
-        if (widget && Array.isArray(widget.data?.items)) {
-            // Find the matching item by label to get its current URL.
-            match = widget.data.items.find(it => String(it.label || '') === r.label) ||
-                    widget.data.items[0];
-            url = match ? (match.url || '') : '';
+        // Resolve by the stable item index carried on the result (P1-2) — never
+        // by label equality, which breaks when two shortcuts share a label.
+        const match = (widget && Array.isArray(widget.data?.items) && typeof r.itemIndex === 'number')
+            ? widget.data.items[r.itemIndex] : null;
+        const url = match ? (match.url || '') : '';
+        if (!url) {
+            // Stale result (item removed since the list was built): no-op + announce.
+            if (typeof announceStatus === 'function') announceStatus('That link is no longer available.');
+            return;
         }
-        if (url && /^https?:\/\//i.test(url)) {
+        if (/^https?:\/\//i.test(url)) {
             // Shortcut items carry their own per-item flag; fall back to the widget config,
             // which defaults to "new tab" when unset (consistent with runPerplexitySearch).
             const openInNewTab = match ? !!match.openInNewTab : (widget?.config?.openInNewTab !== false);
