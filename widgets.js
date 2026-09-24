@@ -1576,10 +1576,43 @@ function renderPomodoro(widget, container) {
     const wrap = document.createElement('div');
     wrap.className = 'pomodoro-wrap';
 
-    // Mode label + timer display.
-    // NOTE: modeLabel and totalSec are computed INSIDE renderState() (not here)
-    // because widget.data.mode changes when a session completes — computing them
-    // once at mount would leave the label and progress bar stale after every cycle.
+    // Static skeleton: build the DOM once and update only textContent / style.width
+    // per tick. Rebuilding innerHTML on every render would destroy the buttons and
+    // orphan their listeners (P0-1). The mode label, time, progress fill and session
+    // count are computed per render because widget.data.mode changes when a session
+    // completes — but the elements themselves are created exactly once here.
+    const modeEl = document.createElement('div');
+    modeEl.className = 'pomodoro-mode';
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'pomodoro-time';
+
+    const progressEl = document.createElement('div');
+    progressEl.className = 'pomodoro-progress';
+    const barEl = document.createElement('div');
+    barEl.className = 'pomodoro-bar';
+    progressEl.appendChild(barEl);
+
+    const sessionsEl = document.createElement('p');
+    sessionsEl.className = 'pomodoro-sessions';
+
+    const actionsEl = document.createElement('div');
+    actionsEl.className = 'pomodoro-actions';
+    const startPauseBtn = document.createElement('button');
+    startPauseBtn.type = 'button';
+    startPauseBtn.className = 'pomodoro-btn pomodoro-start-pause';
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'pomodoro-btn pomodoro-reset';
+    resetBtn.textContent = '↺ Reset';
+    actionsEl.appendChild(startPauseBtn);
+    actionsEl.appendChild(resetBtn);
+
+    wrap.appendChild(modeEl);
+    wrap.appendChild(timeEl);
+    wrap.appendChild(progressEl);
+    wrap.appendChild(sessionsEl);
+    wrap.appendChild(actionsEl);
 
     function fmt(sec) {
         sec = Math.max(0, Math.round(sec));
@@ -1588,21 +1621,16 @@ function renderPomodoro(widget, container) {
         return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     }
 
+    // Update the existing skeleton in place — never rebuild it.
     function renderState() {
-        const modeLabel = { focus: 'Focus', short: 'Short Break', long: 'Long Break' }[widget.data.mode] || 'Focus';
+        modeEl.textContent = { focus: 'Focus', short: 'Short Break', long: 'Long Break' }[widget.data.mode] || 'Focus';
+        timeEl.textContent = fmt(widget.data.remainingSec);
+
         const totalSec  = (widget.data.mode === 'focus' ? focusMin : widget.data.mode === 'short' ? shortBrkMin : longBrkMin) * 60;
-        wrap.innerHTML = `
-            <div class="pomodoro-mode">${escapeHtml(modeLabel)}</div>
-            <div class="pomodoro-time" aria-live="polite">${fmt(widget.data.remainingSec)}</div>
-            <div class="pomodoro-progress">
-                <div class="pomodoro-bar" style="width:${Math.max(0, Math.min(100, (widget.data.remainingSec / totalSec) * 100)).toFixed(1)}%"></div>
-            </div>
-            <p class="pomodoro-sessions">✓ ${widget.data.completedSessions} session${widget.data.completedSessions === 1 ? '' : 's'} completed</p>
-            <div class="pomodoro-actions">
-                <button type="button" class="pomodoro-btn pomodoro-start-pause">${widget.data.running ? '⏸ Pause' : '▶ Start'}</button>
-                <button type="button" class="pomodoro-btn pomodoro-reset">↺ Reset</button>
-            </div>
-        `;
+        barEl.style.width = Math.max(0, Math.min(100, (widget.data.remainingSec / totalSec) * 100)).toFixed(1) + '%';
+
+        sessionsEl.textContent = `✓ ${widget.data.completedSessions} session${widget.data.completedSessions === 1 ? '' : 's'} completed`;
+        startPauseBtn.textContent = widget.data.running ? '⏸ Pause' : '▶ Start';
     }
 
     renderState();
@@ -1654,24 +1682,18 @@ function renderPomodoro(widget, container) {
         renderState();
     }
 
-    // ── Button wiring (attached to the current DOM; re-wired on each render) ──
-    const startPauseBtn = wrap.querySelector('.pomodoro-start-pause');
-    if (startPauseBtn) {
-        startPauseBtn.addEventListener('click', () => {
-            if (widget.data.running) pauseTick(); else startTick();
-        });
-    }
+    // ── Button wiring (the skeleton is built once, so these listeners stay valid) ──
+    startPauseBtn.addEventListener('click', () => {
+        if (widget.data.running) pauseTick(); else startTick();
+    });
 
-    const resetBtn = wrap.querySelector('.pomodoro-reset');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            clearTimer();
-            widget.data.running = false;
-            widget.data.mode = 'focus';
-            widget.data.remainingSec = focusMin * 60;
-            renderState();
-        });
-    }
+    resetBtn.addEventListener('click', () => {
+        clearTimer();
+        widget.data.running = false;
+        widget.data.mode = 'focus';
+        widget.data.remainingSec = focusMin * 60;
+        renderState();
+    });
 
     // If the widget was running when last rendered (e.g. page reload), resume.
     if (widget.data.running) {
