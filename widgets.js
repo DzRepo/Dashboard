@@ -1578,6 +1578,12 @@ function renderPomodoro(widget, container) {
     }
     if (typeof widget.data.completedSessions !== 'number') widget.data.completedSessions = 0;
 
+    // Duration (seconds) for a given mode — single source of truth for the progress bar,
+    // session completion, and timestamp math.
+    function modeSec(mode) {
+        return (mode === 'focus' ? focusMin : mode === 'short' ? shortBrkMin : longBrkMin) * 60;
+    }
+
     container.innerHTML = '';
 
     const wrap = document.createElement('div');
@@ -1633,7 +1639,7 @@ function renderPomodoro(widget, container) {
         modeEl.textContent = { focus: 'Focus', short: 'Short Break', long: 'Long Break' }[widget.data.mode] || 'Focus';
         timeEl.textContent = fmt(widget.data.remainingSec);
 
-        const totalSec  = (widget.data.mode === 'focus' ? focusMin : widget.data.mode === 'short' ? shortBrkMin : longBrkMin) * 60;
+        const totalSec = modeSec(widget.data.mode);
         barEl.style.width = Math.max(0, Math.min(100, (widget.data.remainingSec / totalSec) * 100)).toFixed(1) + '%';
 
         sessionsEl.textContent = `✓ ${widget.data.completedSessions} session${widget.data.completedSessions === 1 ? '' : 's'} completed`;
@@ -1646,46 +1652,56 @@ function renderPomodoro(widget, container) {
     // ── Timer management ───────────────────────────────────────────────
     function clearTimer() { return clearWidgetTimer(widget.id); }
 
+    // Advance past one completed session: update mode + counter, set remainingSec to
+    // the next mode's full duration. Returns a label for status announcements.
+    function advanceSession() {
+        if (widget.data.mode === 'focus') {
+            widget.data.completedSessions++;
+            const shouldLong = (widget.data.completedSessions % sessionsUntilLong === 0);
+            widget.data.mode = shouldLong ? 'long' : 'short';
+        } else {
+            // Break finished → back to focus.
+            widget.data.mode = 'focus';
+        }
+        widget.data.remainingSec = modeSec(widget.data.mode);
+        return { focus: 'Focus', short: 'Short Break', long: 'Long Break' }[widget.data.mode];
+    }
+
     function startTick() {
         clearTimer(); // prevent stacking on re-render / double-start
         widget.data.running = true;
+        // P1-1: time is derived from a wall-clock endTime, not a decremented counter.
+        // The interval below is only a ~250 ms render heartbeat — browsers may throttle
+        // it in background tabs, but the displayed time always comes from Date.now(),
+        // so a running Pomodoro never loses or gains time when the tab is unfocused.
+        widget.data.endTime = Date.now() + Math.max(0, widget.data.remainingSec) * 1000;
         renderState();
+
         const id = setInterval(() => {
-            if (widget.data.remainingSec > 0) {
-                widget.data.remainingSec--;
-            }
+            // Recompute remaining from the wall clock (never decrement a counter).
+            widget.data.remainingSec = Math.max(0, Math.round((widget.data.endTime - Date.now()) / 1000));
             if (widget.data.remainingSec <= 0) {
-                // Session finished.
-                clearTimer();
-                widget.data.running = false;
-
-                if (widget.data.mode === 'focus') {
-                    widget.data.completedSessions++;
-                    const shouldLong = (widget.data.completedSessions % sessionsUntilLong === 0);
-                    widget.data.mode = shouldLong ? 'long' : 'short';
-                } else {
-                    // Break finished → back to focus.
-                    widget.data.mode = 'focus';
-                }
-
-                const nextMin = (widget.data.mode === 'focus') ? focusMin
-                               : (widget.data.mode === 'short') ? shortBrkMin : longBrkMin;
-                widget.data.remainingSec = nextMin * 60;
+                // Session finished. The timer auto-advances to the next session and
+                // keeps running (matching the previous behavior), so set a fresh endTime.
+                const label = advanceSession();
+                widget.data.endTime = Date.now() + modeSec(widget.data.mode) * 1000;
+                widget.data.remainingSec = modeSec(widget.data.mode);
 
                 // Visual + audio cue.
                 if (typeof announceStatus === 'function') {
-                    const label = { focus: 'Focus', short: 'Short Break', long: 'Long Break' }[widget.data.mode];
                     announceStatus('Pomodoro complete — starting ' + label.toLowerCase() + '.');
                 }
             }
             renderState();
-        }, 1000);
+        }, 250);
         setWidgetTimer(widget.id, id);
     }
 
     function pauseTick() {
         clearTimer();
         widget.data.running = false;
+        // Persist the paused remainder so a reload resumes from here, not from endTime.
+        widget.data.remainingSec = Math.max(0, Math.round((widget.data.endTime - Date.now()) / 1000));
         renderState();
     }
 
@@ -1697,15 +1713,37 @@ function renderPomodoro(widget, container) {
     resetBtn.addEventListener('click', () => {
         clearTimer();
         widget.data.running = false;
+        delete widget.data.endTime; // no pending wall-clock target after a reset
         widget.data.mode = 'focus';
         widget.data.remainingSec = focusMin * 60;
         renderState();
     });
 
-    // If the widget was running when last rendered (e.g. page reload), resume.
-    if (widget.data.running) {
+    // ── Load-time resume (P1-1) ───────────────────────────────────────
+    // If the timer was running when the page last saved, fast-forward across any
+    // sessions that completed while we were closed instead of silently resuming a
+    // stale counter. We complete as many full sessions as the elapsed wall-clock time
+    // accounts for, then resume the final (possibly partial) session from its endTime.
+    if (widget.data.running && typeof widget.data.endTime === 'number' && isFinite(widget.data.endTime)) {
+        const now = Date.now();
+        if (widget.data.endTime <= now) {
+            // At least one full session elapsed while closed. Fast-forward through them.
+            let guard = 0;
+            while (widget.data.endTime <= now && guard < 1000) {
+                const label = advanceSession();
+                widget.data.endTime += modeSec(widget.data.mode) * 1000;
+                guard++;
+            }
+            if (typeof announceStatus === 'function') {
+                const n = widget.data.completedSessions;
+                announceStatus('Pomodoro caught up — ' + (n === 1 ? '1 session' : n + ' sessions') + ' completed while away.');
+            }
+        }
+        // Resume the (possibly fast-forwarded) session from its wall-clock endTime.
         startTick();
     } else {
+        // Not running: make sure a stale endTime from an old session can't leak in.
+        delete widget.data.endTime;
         clearTimer();
     }
 }
