@@ -1,0 +1,5 @@
+# macOS
+.DS_Store/
+
+# Dev-only tooling (Phase 3)
+node_modules/
