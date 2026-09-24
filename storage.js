@@ -107,13 +107,35 @@ const Storage = {
 
         try {
             let data = JSON.parse(raw);
+            if (typeof data !== 'object' || data === null) throw new Error('Saved state is not an object');
+            // P2-4: a saved object without `version` (hand-edited / partial write) used to
+            // make the migration loop a no-op (`undefined < CURRENT_VERSION` is false), so
+            // the raw shape flowed straight into renderers. Treat a missing version as 1 so
+            // migration runs and fills in the expected shape.
+            if (typeof data.version !== 'number') {
+                console.warn('Saved dashboard state has no version; assuming v1 and migrating.');
+                data.version = 1;
+            }
             // Migrate older versions forward to CURRENT_VERSION.
             while (data.version < CURRENT_VERSION) {
                 data = this.migrate(data);
             }
             return data;
         } catch (e) {
-            console.error('Failed to parse dashboard data, resetting to default.', e);
+            // P2-4: don't silently wipe the user's data. Preserve the corrupt payload under a
+            // backup key so it can be recovered/exported, and surface an alert explaining what happened.
+            console.error('Failed to parse dashboard data; preserving corrupt payload and resetting.', e);
+            try {
+                const backupKey = STORAGE_KEY + '.corrupt-' + Date.now();
+                localStorage.setItem(backupKey, raw);
+            } catch (e2) {
+                console.error('Could not write corrupt-data backup either.', e2);
+            }
+            alert(
+                'Your saved dashboard data could not be read and was reset to defaults.\n' +
+                'A copy of the original data has been kept in browser storage so it can be recovered.\n' +
+                'If you exported a backup recently, you can re-import it from Settings.'
+            );
             return this._defaultState();
         }
     },
