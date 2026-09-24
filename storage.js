@@ -336,8 +336,11 @@ const Storage = {
             // Re-index positions for a clean layout.
             sanitized.forEach((w, i) => { w.position = i; });
 
+            // P2-5: spread a fresh clone of the defaults (this._defaultState()), not the
+            // live DEFAULT_STATE singleton — otherwise an import missing a top-level key
+            // would alias the singleton's nested objects and later mutations could leak into "defaults".
             const cleanData = {
-                ...DEFAULT_STATE,
+                ...this._defaultState(),
                 ...data,
                 version: CURRENT_VERSION,
                 widgets: sanitized
