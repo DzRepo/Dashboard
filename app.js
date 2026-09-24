@@ -1076,52 +1076,15 @@ function openAddWidgetModal() {
 }
 
 function openEditWidgetModal(widget) {
-    // Build type-specific edit fields from the registry entry when available.
+    // P2-8: the edit UI is fully registry-driven. Every registered type has an
+    // editFields() function, so the old per-type `else if` fallbacks (search/clock) were
+    // unreachable dead code and are deleted. A new widget type now needs only a registry
+    // entry — zero edits here.
     const entry = WidgetRegistry[widget.type];
-    const isClock = widget.type === 'clock';
-
     let fieldsHtml = '';
-
     if (entry && typeof entry.editFields === 'function') {
-        // Registry-driven: lets new types define their own edit UI.
-        try { fieldsHtml = entry.editFields(widget); } catch(e) { console.warn('editFields failed', e); }
-    // C3: type id renamed from 'perplexity' → 'search'.
-    } else if (widget.type === 'search') {
-        const cfg = widget.config || {};
-        // T17: the shared #edit-widget-title above is now the single Title field.
-        fieldsHtml = `
-            <div class="settings-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="edit-open-tab" ${cfg.openInNewTab !== false ? 'checked' : ''}> Open results in new tab
-                </label>
-            </div>
-        `;
-    } else if (isClock) {
-        const cfg = widget.config || {};
-        fieldsHtml = `
-            <div class="settings-group">
-                <label>Time format:</label>
-                <select id="edit-clock-format">
-                    <option value="12" ${cfg.formatType === 12 ? 'selected' : ''}>12-hour</option>
-                    <option value="24" ${cfg.formatType === 24 ? 'selected' : ''}>24-hour</option>
-                </select>
-            </div>
-            <div class="settings-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="edit-clock-seconds" ${cfg.showSeconds ? 'checked' : ''}> Show seconds
-                </label>
-            </div>
-            <div class="settings-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="edit-clock-date" ${cfg.showDate !== false ? 'checked' : ''}> Show date
-                </label>
-            </div>
-        `;
+        try { fieldsHtml = entry.editFields(widget); } catch (e) { console.warn('editFields failed', e); }
     }
-
-    // Note: the clock's time-entry editor comes from the registry entry's editFields()
-    // above, so we must NOT render a second one here (that was duplicating the list).
-    const timesHtml = '';
 
     // Size selector (span 1/2/3) — available for every widget type.
     const currentSpan = [1, 2, 3].includes(widget.span) ? widget.span : 1;
@@ -1287,7 +1250,7 @@ function openEditWidgetModal(widget) {
     }
 
     // Wire up the clock times editor (only present for clock widgets).
-    if (isClock) {
+    if (widget.type === 'clock') {
         wireRowEditor({
             editorId: 'clock-times-editor',
             addBtnId: 'clock-add-time',
@@ -1458,176 +1421,15 @@ function openEditWidgetModal(widget) {
             }
         }
 
-        // Ensure config exists before writing to it (covers perplexity + clock branches).
+        // P2-8: type-specific save logic now lives on the registry entry (applyEdit),
+        // so this handler is generic. Each type owns defaults → render → edit UI → save.
         widget.config = widget.config || {};
 
-        // Lists / Todo — persist the display options moved here from the card.
-        if (widget.type === 'lists') {
-            const showEl = document.getElementById('edit-lists-show-completed');
-            if (showEl) { widget.data = widget.data || {}; widget.data.showCompleted = showEl.checked; }
-            const sortEl = document.getElementById('edit-lists-sort-due');
-            if (sortEl) { widget.data = widget.data || {}; widget.data.sortByDueDate = sortEl.checked; }
+        if (entry && typeof entry.applyEdit === 'function') {
+            try { entry.applyEdit(widget, modalBody); } catch (e) { console.warn('applyEdit failed', e); }
         }
 
-        // C3: type id renamed from 'perplexity' → 'search'.
-        if (widget.type === 'search') {
-            // T17: title comes from the shared #edit-widget-title field now.
-            const openTabEl = document.getElementById('edit-open-tab');
-            if (openTabEl) widget.config.openInNewTab = openTabEl.checked;
-        }
-
-        if (isClock) {
-            widget.config.formatType = parseInt(document.getElementById('edit-clock-format').value, 10);
-            widget.config.showSeconds = document.getElementById('edit-clock-seconds').checked;
-            widget.config.showDate = document.getElementById('edit-clock-date').checked;
-
-            const times = [];
-            modalBody.querySelectorAll('.clock-time-row').forEach(row => {
-                const label = row.querySelector('.clock-time-label').value.trim();
-                const tz = row.querySelector('.clock-time-zone').value.trim();
-                if (tz) times.push({ label, timezone: tz });
-            });
-            widget.data = widget.data || {};
-            widget.data.times = times;
-        }
-
-        // Weather — persist city / lat / lon / units / forecast toggle.
-        if (widget.type === 'weather') {
-            const readNum = (id) => {
-                const el = document.getElementById(id);
-                if (!el || el.value.trim() === '') return null;
-                const n = parseFloat(el.value);
-                return isNaN(n) ? null : n;
-            };
-
-            widget.config = widget.config || {};
-            widget.data = widget.data || {};
-
-            const cityEl = document.getElementById('edit-weather-city');
-            if (cityEl) widget.data.city = cityEl.value.trim() || 'Your Location';
-
-            const lat = readNum('edit-weather-lat');
-            const lon = readNum('edit-weather-lon');
-            // Only persist a coordinate pair when both are present and in range.
-            if (lat != null && lon != null && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
-                widget.data.lat = lat;
-                widget.data.lon = lon;
-            }
-
-            const unitsEl = document.getElementById('edit-weather-units');
-            if (unitsEl) widget.config.units = unitsEl.value === 'imperial' ? 'imperial' : 'metric';
-
-            const forecastEl = document.getElementById('edit-weather-forecast');
-            if (forecastEl) widget.config.showForecast = forecastEl.checked;
-
-            // B7: persist the two previously-dead flags now that they're exposed in the editor.
-            const humidityEl = document.getElementById('edit-weather-humidity');
-            if (humidityEl) widget.config.showHumidity = humidityEl.checked;
-            const hourlyEl = document.getElementById('edit-weather-hourly');
-            if (hourlyEl) widget.config.showHourly = hourlyEl.checked;
-        }
-
-        // Stocks — persist the edited ticker list.
-        if (widget.type === 'stocks') {
-            widget.data = widget.data || {};
-            const symbols = [];
-            modalBody.querySelectorAll('.stock-symbol-row').forEach(row => {
-                const sym = row.querySelector('.stock-symbol-input');
-                const nameEl = row.querySelector('.stock-name-input');
-                if (!sym) return;
-                const s = (sym.value || '').trim().toUpperCase();
-                if (!s) return; // skip blank rows
-                symbols.push({ symbol: s, name: (nameEl && nameEl.value.trim()) || '' });
-            });
-            widget.data.symbols = symbols;
-        }
-
-        // Countdown — persist the edited event list (label + when).
-        if (widget.type === 'countdown') {
-            widget.data = widget.data || {};
-            const events = [];
-            modalBody.querySelectorAll('.countdown-event-row').forEach(row => {
-                const labelEl = row.querySelector('.countdown-ev-label');
-                const dtEl  = row.querySelector('.countdown-ev-dt');
-                if (!labelEl || !dtEl) return;
-                const whenVal = (dtEl.value || '').trim();
-                // datetime-local is local time; new Date() parses it as local.
-                const whenMs = whenVal ? new Date(whenVal).getTime() : NaN;
-                if (!Number.isFinite(whenMs)) return; // skip rows without a valid date
-                events.push({ label: (labelEl.value || '').trim(), when: whenMs });
-            });
-            widget.data.events = events;
-        }
-
-        // T7: Habit Tracker — persist the edited habit list. The log is
-        // managed by the widget itself and untouched here.
-        if (widget.type === 'habits') {
-            widget.data = widget.data || {};
-            const habits = [];
-            modalBody.querySelectorAll('.habit-row-editor').forEach(row => {
-                const labelEl = row.querySelector('.habit-label-input');
-                if (!labelEl) return;
-                const label = (labelEl.value || '').trim();
-                if (!label) return; // skip blank rows
-                habits.push({ id: 'habit-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), label });
-            });
-            widget.data.habits = habits;
-        }
-
-        // T7: Currency Converter — persist base currency + the list of foreign codes.
-        if (widget.type === 'currency') {
-            widget.config = widget.config || {};
-            const fromEl = document.getElementById('currency-from-code');
-            if (fromEl) {
-                const f = String(fromEl.value).trim().toUpperCase();
-                if (/^[A-Z]{3}$/.test(f)) widget.config.from = f; else widget.config.from = 'USD';
-            }
-            // Read the multi-currency rows into config.toCodes (de-duped, base excluded).
-            const codes = [];
-            const seenC = new Set();
-            modalBody.querySelectorAll('.currency-code-input').forEach(inp => {
-                const c = String(inp.value).trim().toUpperCase();
-                if (/^[A-Z]{3}$/.test(c) && c !== widget.config.from && !seenC.has(c)) { codes.push(c); seenC.add(c); }
-            });
-            widget.config.toCodes = codes.length ? codes : ['EUR', 'GBP'];
-        }
-
-        // T7: Pomodoro — persist duration settings. The running timer state
-        // (mode / remainingSec) is managed by the widget itself and untouched here.
-        if (widget.type === 'pomodoro') {
-            widget.config = widget.config || {};
-            const readNum = (id, fallback) => {
-                const el = document.getElementById(id);
-                if (!el) return null;
-                const n = parseInt(el.value, 10);
-                return Number.isFinite(n) && n >= 1 ? n : fallback;
-            };
-            const f = readNum('pom-focus-min', 25);   if (f != null) widget.config.focusMin = f;
-            const s = readNum('pom-short-brk', 5);    if (s != null) widget.config.shortBreakMin = s;
-            const l = readNum('pom-long-brk', 15);    if (l != null) widget.config.longBreakMin = l;
-            const u = readNum('pom-sessions-until-long', 4);
-            if (u != null && u >= 2) widget.config.sessionsUntilLong = u;
-        }
-
-        // RSS — persist the edited feed list (optional label + url).
-        if (widget.type === 'rss') {
-            widget.data = widget.data || {};
-            const feeds = [];
-            modalBody.querySelectorAll('.rss-feed-row').forEach(row => {
-                const labelEl = row.querySelector('.rss-feed-label');
-                const urlEl   = row.querySelector('.rss-feed-url');
-                if (!urlEl) return;
-                let url = (urlEl.value || '').trim();
-                if (!url) return; // skip rows without a URL
-                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-                if (!Storage.isValidHttpUrl(url)) {
-                    window.alert('Invalid feed URL: "' + url + '" (must be http/https).');
-                    return;
-                }
-                feeds.push({ label: (labelEl && labelEl.value.trim()) || '', url, maxItems: 8 });
-            });
-            widget.data.feeds = feeds;
-        }
+        // (Type-specific save logic moved to each registry entry's applyEdit — see above.)
 
         window.saveFullState();
         renderDashboard();
@@ -2074,6 +1876,10 @@ function addWidget(type) {
         try { ({ config, data } = entry.defaults()); } catch(e) { console.warn('defaults() failed', e); }
     }
 
+    // P2-8: defaults come exclusively from the registry (entry.defaults()). The old
+    // per-type fallback block here was dead code — every registered type has a defaults()
+    // method, so an unknown `type` is the only case that reaches here and it's handled by
+    // sanitizeWidget() on save. New widget types need zero edits in this function.
     const newWidget = {
         id,
         type,
@@ -2083,20 +1889,6 @@ function addWidget(type) {
         config,
         data
     };
-
-    // Fallback defaults for types not yet in the registry.
-    if (!entry || !data.items) {
-        if (type === 'shortcuts') newWidget.data = { items: [] };
-        if (type === 'lists') newWidget.data = { items: [], showCompleted: true };
-        if (type === 'clock' && !newWidget.config.formatType) {
-            newWidget.config = { formatType: 12, showSeconds: false, showDate: true };
-            newWidget.data = { times: [{ label: 'My Time', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Denver' }] };
-        }
-        // C3: type id renamed from 'perplexity' → 'search'.
-        if (type === 'search') {
-            newWidget.config = { title: 'Search', openInNewTab: true, engine: 'perplexity' };
-        }
-    }
 
     state.widgets.push(newWidget);
     state.widgets.sort((a, b) => a.position - b.position);

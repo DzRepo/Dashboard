@@ -164,25 +164,11 @@ function createWidgetContent(widget, container) {
         console.warn('[dashboard] Registry render() threw for type:', widget.type, '(see warning above)');
     }
 
-    // Fallback for types not yet in the registry.
-    switch (widget.type) {
-        case 'shortcuts':
-            renderShortcuts(widget, container);
-            break;
-        case 'lists':
-            renderLists(widget, container);
-            break;
-        case 'clock':
-            renderClock(widget, container);
-            break;
-        // C3: type id renamed from 'perplexity' → 'search'. The function name
-        // (renderPerplexity) is kept for continuity — it's engine-neutral in practice.
-        case 'search':
-            renderPerplexity(widget, container);
-            break;
-        default:
-            container.innerHTML = `<p>Unknown widget type: ${widget.type}</p>`;
-    }
+    // P2-8: the registry is the single source of truth for rendering. The old per-type
+    // switch here was dead code — every registered type has a render() method, so the only
+    // case that reaches here is an unknown/corrupt type id (already logged above). We show
+    // a clear message instead of silently re-implementing renderers.
+    container.innerHTML = `<p>Unknown widget type: ${widget.type}</p>`;
 }
 
 /**

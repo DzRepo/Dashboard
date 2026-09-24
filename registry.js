@@ -6,6 +6,12 @@
  *   defaults() – returns { config, data } for a new widget
  *   render()   – (widget, container) => void  (pure DOM builder)
  *   editFields() – (widget) => HTML string for the edit modal body
+ *   applyEdit()  – optional: (widget, formEl) => void. Persists the type-specific edit
+ *                   modal fields onto widget.config / widget.data, then the generic Save
+ *                   handler in app.js saves + re-renders. This is what makes the registry
+ *                   the single source of truth (P2-8): each type owns defaults → render →
+ *                   edit UI → save/validate. Types with no modal-specific fields (e.g.
+ *                   notes) omit it; the generic handler still saves title/size/danger-zone.
  *   sanitize() – (raw) => clean widget object | null
  *   emptyState – optional: shared empty-state copy (C5); rendered when a list-type
  *                widget has no rows yet. Kept in one place so new widgets inherit it.
@@ -87,6 +93,15 @@ WidgetRegistry['lists'] = {
         return { config: {}, data: { items: [], showCompleted: true, sortByDueDate: false } };
     },
     render: (widget, container) => renderLists(widget, container),
+    applyEdit(widget, modalBody) {
+        // Persist the display options (the "Clear completed" button is wired separately
+        // in app.js and saves immediately, so it's not touched here).
+        widget.data = widget.data || {};
+        const showEl = document.getElementById('edit-lists-show-completed');
+        if (showEl) widget.data.showCompleted = showEl.checked;
+        const sortEl = document.getElementById('edit-lists-sort-due');
+        if (sortEl) widget.data.sortByDueDate = sortEl.checked;
+    },
     editFields(widget) {
         const data = widget.data || {};
         const showCompleted = data.showCompleted !== false; // default true
@@ -145,6 +160,28 @@ WidgetRegistry['clock'] = {
         };
     },
     render: (widget, container) => renderClock(widget, container),
+    applyEdit(widget, modalBody) {
+        widget.config = widget.config || {};
+        const fmtEl = document.getElementById('edit-clock-format');
+        if (fmtEl) widget.config.formatType = parseInt(fmtEl.value, 10);
+        const secEl = document.getElementById('edit-clock-seconds');
+        if (secEl) widget.config.showSeconds = secEl.checked;
+        const dateEl = document.getElementById('edit-clock-date');
+        if (dateEl) widget.config.showDate = dateEl.checked;
+
+        // Collect the edited time rows (label + timezone).
+        const times = [];
+        modalBody.querySelectorAll('.clock-time-row').forEach(row => {
+            const label = row.querySelector('.clock-time-label');
+            const tz    = row.querySelector('.clock-time-zone');
+            if (!label || !tz) return;
+            const tzVal = (tz.value || '').trim();
+            if (!tzVal) return; // skip rows without a timezone
+            times.push({ label: (label.value || '').trim(), timezone: tzVal });
+        });
+        widget.data = widget.data || {};
+        widget.data.times = times;
+    },
     editFields(widget) {
         const cfg = widget.config || {};
         const times = widget.data?.times || [];
@@ -222,6 +259,15 @@ WidgetRegistry['search'] = {
         };
     },
     render: (widget, container) => renderPerplexity(widget, container),
+    applyEdit(widget, modalBody) {
+        // Title comes from the shared #edit-widget-title field (handled by the generic
+        // Save handler), so only the engine + new-tab flag are persisted here.
+        widget.config = widget.config || {};
+        const engineEl = document.getElementById('edit-engine');
+        if (engineEl) widget.config.engine = engineEl.value;
+        const openTabEl = document.getElementById('edit-open-tab');
+        if (openTabEl) widget.config.openInNewTab = openTabEl.checked;
+    },
     editFields(widget) {
         const cfg = widget.config || {};
         const engines = [
@@ -282,6 +328,40 @@ WidgetRegistry['weather'] = {
         };
     },
     render: (widget, container) => renderWeather(widget, container),
+    applyEdit(widget, modalBody) {
+        const readNum = (id) => {
+            const el = document.getElementById(id);
+            if (!el || el.value.trim() === '') return null;
+            const n = parseFloat(el.value);
+            return isNaN(n) ? null : n;
+        };
+
+        widget.config = widget.config || {};
+        widget.data = widget.data || {};
+
+        const cityEl = document.getElementById('edit-weather-city');
+        if (cityEl) widget.data.city = cityEl.value.trim() || 'Your Location';
+
+        const lat = readNum('edit-weather-lat');
+        const lon = readNum('edit-weather-lon');
+        // Only persist a coordinate pair when both are present and in range.
+        if (lat != null && lon != null && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+            widget.data.lat = lat;
+            widget.data.lon = lon;
+        }
+
+        const unitsEl = document.getElementById('edit-weather-units');
+        if (unitsEl) widget.config.units = unitsEl.value === 'imperial' ? 'imperial' : 'metric';
+
+        const forecastEl = document.getElementById('edit-weather-forecast');
+        if (forecastEl) widget.config.showForecast = forecastEl.checked;
+
+        // B7: persist the two previously-dead flags now that they're exposed in the editor.
+        const humidityEl = document.getElementById('edit-weather-humidity');
+        if (humidityEl) widget.config.showHumidity = humidityEl.checked;
+        const hourlyEl = document.getElementById('edit-weather-hourly');
+        if (hourlyEl) widget.config.showHourly = hourlyEl.checked;
+    },
     editFields(widget) {
         const cfg = widget.config || {};
         const d = widget.data || {};
@@ -383,6 +463,20 @@ WidgetRegistry['stocks'] = {
         return { config: {}, data: { symbols: [] } };
     },
     render: (widget, container) => renderStocks(widget, container),
+    applyEdit(widget, modalBody) {
+        // Persist the edited ticker list.
+        widget.data = widget.data || {};
+        const symbols = [];
+        modalBody.querySelectorAll('.stock-symbol-row').forEach(row => {
+            const sym = row.querySelector('.stock-symbol-input');
+            const nameEl = row.querySelector('.stock-name-input');
+            if (!sym) return;
+            const s = (sym.value || '').trim().toUpperCase();
+            if (!s) return; // skip blank rows
+            symbols.push({ symbol: s, name: (nameEl && nameEl.value.trim()) || '' });
+        });
+        widget.data.symbols = symbols;
+    },
     editFields(widget) {
         const symbols = widget.data?.symbols || [];
         const rows = symbols.map(s => `
@@ -434,6 +528,22 @@ WidgetRegistry['countdown'] = {
         return { config: {}, data: { events: [] } };
     },
     render: (widget, container) => renderCountdown(widget, container),
+    applyEdit(widget, modalBody) {
+        // Persist the edited event list (label + when).
+        widget.data = widget.data || {};
+        const events = [];
+        modalBody.querySelectorAll('.countdown-event-row').forEach(row => {
+            const labelEl = row.querySelector('.countdown-ev-label');
+            const dtEl  = row.querySelector('.countdown-ev-dt');
+            if (!labelEl || !dtEl) return;
+            const whenVal = (dtEl.value || '').trim();
+            // datetime-local is local time; new Date() parses it as local.
+            const whenMs = whenVal ? new Date(whenVal).getTime() : NaN;
+            if (!Number.isFinite(whenMs)) return; // skip rows without a valid date
+            events.push({ label: (labelEl.value || '').trim(), when: whenMs });
+        });
+        widget.data.events = events;
+    },
     editFields(widget) {
         const d = widget.data || {};
         if (!Array.isArray(d.events)) d.events = [];
@@ -486,6 +596,25 @@ WidgetRegistry['rss'] = {
         return { config: {}, data: { feeds: [] } };
     },
     render: (widget, container) => renderRss(widget, container),
+    applyEdit(widget, modalBody) {
+        // Persist the edited feed list (optional label + url).
+        widget.data = widget.data || {};
+        const feeds = [];
+        modalBody.querySelectorAll('.rss-feed-row').forEach(row => {
+            const labelEl = row.querySelector('.rss-feed-label');
+            const urlEl   = row.querySelector('.rss-feed-url');
+            if (!urlEl) return;
+            let url = (urlEl.value || '').trim();
+            if (!url) return; // skip rows without a URL
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            if (!Storage.isValidHttpUrl(url)) {
+                window.alert('Invalid feed URL: "' + url + '" (must be http/https).');
+                return;
+            }
+            feeds.push({ label: (labelEl && labelEl.value.trim()) || '', url, maxItems: 8 });
+        });
+        widget.data.feeds = feeds;
+    },
     editFields(widget) {
         const d = widget.data || {};
         if (!Array.isArray(d.feeds)) d.feeds = [];
@@ -540,6 +669,22 @@ WidgetRegistry['pomodoro'] = {
         };
     },
     render: (widget, container) => renderPomodoro(widget, container),
+    applyEdit(widget, modalBody) {
+        // Persist duration settings. The running timer state (mode / remainingSec /
+        // completedSessions) is managed by the widget itself and untouched here.
+        widget.config = widget.config || {};
+        const readNum = (id, fallback) => {
+            const el = document.getElementById(id);
+            if (!el) return null;
+            const n = parseInt(el.value, 10);
+            return Number.isFinite(n) && n >= 1 ? n : fallback;
+        };
+        const f = readNum('pom-focus-min', 25);   if (f != null) widget.config.focusMin = f;
+        const s = readNum('pom-short-brk', 5);    if (s != null) widget.config.shortBreakMin = s;
+        const l = readNum('pom-long-brk', 15);    if (l != null) widget.config.longBreakMin = l;
+        const u = readNum('pom-sessions-until-long', 4);
+        if (u != null && u >= 2) widget.config.sessionsUntilLong = u;
+    },
     editFields(widget) {
         const c = widget.config || {};
         return `
@@ -601,6 +746,22 @@ WidgetRegistry['currency'] = {
         };
     },
     render: (widget, container) => renderCurrency(widget, container),
+    applyEdit(widget, modalBody) {
+        // Persist base currency + the list of foreign codes (de-duped, base excluded).
+        widget.config = widget.config || {};
+        const fromEl = document.getElementById('currency-from-code');
+        if (fromEl) {
+            const f = String(fromEl.value).trim().toUpperCase();
+            if (/^[A-Z]{3}$/.test(f)) widget.config.from = f; else widget.config.from = 'USD';
+        }
+        const codes = [];
+        const seenC = new Set();
+        modalBody.querySelectorAll('.currency-code-input').forEach(inp => {
+            const c = String(inp.value).trim().toUpperCase();
+            if (/^[A-Z]{3}$/.test(c) && c !== widget.config.from && !seenC.has(c)) { codes.push(c); seenC.add(c); }
+        });
+        widget.config.toCodes = codes.length ? codes : ['EUR', 'GBP'];
+    },
     editFields(widget) {
         const c = widget.config || {};
         const curFrom  = (c.from || 'USD').toUpperCase();
@@ -693,6 +854,20 @@ WidgetRegistry['habits'] = {
         return { config: {}, data: { habits: [], log: {} } };
     },
     render: (widget, container) => renderHabits(widget, container),
+    applyEdit(widget, modalBody) {
+        // Persist the edited habit list. The log is managed by the widget itself and
+        // untouched here.
+        widget.data = widget.data || {};
+        const habits = [];
+        modalBody.querySelectorAll('.habit-row-editor').forEach(row => {
+            const labelEl = row.querySelector('.habit-label-input');
+            if (!labelEl) return;
+            const label = (labelEl.value || '').trim();
+            if (!label) return; // skip blank rows
+            habits.push({ id: 'habit-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), label });
+        });
+        widget.data.habits = habits;
+    },
     editFields(widget) {
         const d = widget.data || {};
         if (!Array.isArray(d.habits)) d.habits = [];

@@ -291,24 +291,15 @@ const Storage = {
             }
         }
 
-        // Fallback for environments where registry.js isn't loaded (or a type's
-        // entry lacks sanitize). Derive the allow-list from the live registry when
-        // available so it can't drift; otherwise fall back to the core types.
+        // P2-8: the registry is the single source of truth for widget validation. The old
+        // fallback here (a duplicate allow-list + generic shape) was dead code in the page —
+        // registry.js is always loaded before storage import runs, so a registered type
+        // always has an entry.sanitize(). We only reach here for an unknown/corrupt type id,
+        // which we drop rather than guess at a shape. New widget types need zero edits here.
         if (!widget || typeof widget !== 'object') return null;
-        const VALID_TYPES = (typeof getRegisteredTypes === 'function' && Array.isArray(getRegisteredTypes()) && getRegisteredTypes().length)
-            ? getRegisteredTypes()
-            : ['shortcuts', 'lists', 'clock', 'search']; // C3: renamed from 'perplexity'
-        if (!VALID_TYPES.includes(widget.type)) return null;
-
-        return {
-            id: (typeof widget.id === 'string' && widget.id) ? widget.id : 'widget-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-            type: widget.type,
-            title: (typeof widget.title === 'string') ? widget.title : widget.type,
-            position: (typeof widget.position === 'number') ? widget.position : 0,
-            span: [1, 2, 3].includes(widget.span) ? widget.span : 1,
-            config: (widget.config && typeof widget.config === 'object') ? widget.config : {},
-            data: (widget.data && typeof widget.data === 'object') ? widget.data : {}
-        };
+        console.warn('[dashboard] sanitizeWidget: no registry entry for type',
+            JSON.stringify(widget.type), '— dropping widget.');
+        return null;
     },
 
     /**
