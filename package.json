@@ -1,0 +1,13 @@
+{
+  "name": "personal-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first personal dashboard (classic scripts, file://-safe). Dev-only tooling below is never loaded by the page.",
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\"",
+    "lint": "eslint *.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  }
+}

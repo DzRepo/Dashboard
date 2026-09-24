@@ -1,0 +1,60 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "script"
+  },
+  "globals": {
+    // ── Cross-file globals (classic scripts share the global scope) ─────────────
+    // These are defined in one file and called bare from another. Phase 3.3 (P2-9)
+    // replaces this implicit coupling with an explicit Dashboard namespace, at which
+    // point most of these entries can be deleted. Declared here so lint passes today.
+    "state": "readonly",            // app.js: window.state = Storage.getData()
+    "saveFullState": "writable",    // app.js: window.saveFullState = …
+    "announceStatus": "readonly",   // app.js function, called from widgets.js
+    "escapeHtml": "readonly",       // defined in app.js (or a shared helper), used widely
+    "escapeAttr": "readonly",       // widgets.js attr-escaping helper, used by app/registry
+    "toLocalInputValue": "readonly", // widgets.js date helper, used by app/registry
+    "pruneHabitsLog": "readonly",   // widgets.js, called from app.js init()
+    "createWidgetContent": "readonly", // widgets.js dispatcher, called from app.js
+    "clearClockTimer": "readonly",   // widgets.js timer aliases, called from app.js
+    "clearCountdownTimer": "readonly",
+    "clearPomodoroTimer": "readonly",
+    "getWidgetEntry": "readonly",   // registry.js, used by storage.js sanitize
+    "Storage": "readonly",          // storage.js const, used by app/registry/widgets
+    "WidgetRegistry": "readonly",   // registry.js const, used by app/widgets
+    "buildSearchUrl": "readonly",   // registry.js function
+    "genWidgetId": "readonly",      // registry.js function
+    "getRegisteredTypes": "readonly",
+    "setWidgetTimer": "readonly",   // widgets.js timer registry
+    "clearWidgetTimer": "readonly",
+    "clearAllWidgetTimers": "readonly",
+    // Render fns (widgets.js) referenced by registry.js render: entries.
+    "renderShortcuts": "readonly",
+    "renderLists": "readonly",
+    "renderClock": "readonly",
+    "renderPerplexity": "readonly",
+    "renderWeather": "readonly",
+    "renderNotes": "readonly",
+    "renderStocks": "readonly",
+    "renderCountdown": "readonly",
+    "renderRss": "readonly",
+    "renderPomodoro": "readonly",
+    "renderCurrency": "readonly",
+    "renderHabits": "readonly"
+  },
+  "rules": {
+    // no-undef is the key rule: it mechanically exposes hidden global coupling.
+    "no-undef": "error",
+    // Unused vars: warn (the codebase has some intentional-but-unused render fns that
+    // are only reachable via the registry). Prefix _ to silence a specific one.
+    "no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "args": "none" }],
+    "prefer-const": "warn",
+    "eqeqeq": ["warn", "smart"],
+    "no-var": "off"
+  }
+}
