@@ -1,0 +1,2020 @@
+:root {
+    --bg-color: #ffffff;
+    --text-color: #1a1a1a;
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --card-border: #e0e0e0;
+    --accent-color: #007AFF;
+    --header-bg: rgba(255, 255, 255, 0.9);
+    --overlay-opacity: 0.45;
+    --blur-amount: 0px;
+    --grid-gap: 10px;
+    --border-radius: 12px;
+
+    /* Semantic status + accent-tint tokens (C10/C11). Values match the previously
+       hard-coded literals so there is no visual change; they now track per theme and
+       give future widgets correct colors for free. */
+    --color-danger: #c62828;
+    --color-success: #1a7f37;
+    --accent-soft: rgba(0, 122, 255, 0.1);
+    --accent-soft-strong: rgba(0, 122, 255, 0.18);
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #f0f0f0;
+    --card-bg: rgba(30, 30, 30, 0.8);
+    --card-border: #333333;
+    --accent-color: #0A84FF;
+    --header-bg: rgba(30, 30, 30, 0.9);
+
+    /* Dark-theme status + accent tints (brighter variants already used inline). */
+    --color-danger: #f87171;
+    --color-success: #3fb950;
+    --accent-soft: rgba(10, 132, 255, 0.1);
+    --accent-soft-strong: rgba(10, 132, 255, 0.18);
+}
+
+[data-theme="light"] {
+    --bg-color: #f8f9fa;
+    --text-color: #212529;
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --card-border: #dee2e6;
+    --accent-color: #007AFF;
+    --header-bg: rgba(255, 255, 255, 0.9);
+
+    /* Light theme reuses the default (light) status + accent tints. */
+    --color-danger: #c62828;
+    --color-success: #1a7f37;
+    --accent-soft: rgba(0, 122, 255, 0.1);
+    --accent-soft-strong: rgba(0, 122, 255, 0.18);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+    min-height: 100vh;
+}
+
+#app {
+    max-width: 95%;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 10px; /* slim banner — just a touch more than the tallest element (36px button) needs */
+    background: var(--header-bg);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    margin-bottom: 10px;
+    border: 1px solid var(--card-border);
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Compact icon-only header buttons (Add Widget "+" and Settings gear) */
+#add-widget-btn,
+#settings-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 20px;
+    line-height: 1;
+}
+
+#add-widget-btn { font-weight: 700; }
+#settings-btn svg { display: block; }
+
+/* T19: make the header +/gear buttons read as themed panels (not solid black)
+   in dark mode. Explicit bg+border so they never fall back to a UA/black fill.
+   Hover is still handled by the generic button:hover rule below. */
+#add-widget-btn,
+#settings-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-color);
+}
+[data-theme="dark"] #add-widget-btn,
+[data-theme="system"] #add-widget-btn,
+[data-theme="dark"] #settings-btn,
+[data-theme="system"] #settings-btn {
+    background: rgba(70, 72, 84, 0.9); /* visible mid-gray panel on the dark header */
+    border-color: #3a3c46;
+}
+#add-widget-btn:hover,
+#settings-btn:hover { background: var(--accent-color); color: #fff; }
+[data-theme="dark"] #add-widget-btn:hover,
+[data-theme="system"] #add-widget-btn:hover,
+[data-theme="dark"] #settings-btn:hover,
+[data-theme="system"] #settings-btn:hover { border-color: transparent; }
+
+button {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--grid-gap);
+    align-content: start;
+}
+
+/* T18: fixed column count (Settings → Layout). data-layout="fixed" + --grid-cols.
+   Falls back to auto-fill when the attribute is absent. */
+[data-layout="fixed"] .dashboard-grid {
+    grid-template-columns: repeat(var(--grid-cols, 4), minmax(0, 1fr));
+}
+
+/* Widget sizing — span-2 spans two columns, span-3 spans three.
+   On narrow screens the grid collapses to a single column so spans are no-ops. */
+.widget-card.span-2 {
+    grid-column: span 2;
+}
+.widget-card.span-3 {
+    grid-column: span 3;
+}
+
+.widget-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    backdrop-filter: blur(var(--blur-amount));
+    position: relative;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+.widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 10px;
+}
+
+.widget-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.widget-title {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* T22: optional per-widget icon glyph shown before the title */
+.widget-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.widget-content {
+    flex-grow: 1;
+}
+
+.widget-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px; /* T12: spacing between refresh + gear icons */
+}
+
+/* Gear icon button in the widget header (replaces the old text Edit button) */
+.action-icon {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 14px;
+    /* Match the widget's fill color when one is set (--card-fill, set on the card);
+       transparent otherwise so it blends into the theme background. */
+    background-color: var(--card-fill, transparent);
+}
+
+.action-icon svg { display: block; }
+
+/* Drag handle in the widget header */
+.widget-drag-handle {
+    cursor: grab;
+    user-select: none;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 6px;
+    opacity: 0.4;
+    transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.widget-drag-handle:hover {
+    opacity: 1;
+    background: rgba(127, 127, 127, 0.15);
+}
+
+.widget-drag-handle:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--accent-color);
+    outline-offset: 1px;
+}
+
+.widget-card.dragging .widget-drag-handle {
+    cursor: grabbing;
+}
+
+/* Card being dragged */
+.widget-card.dragging {
+    opacity: 0.4;
+    border-style: dashed;
+    box-shadow: none;
+}
+
+/* Drop slot indicator shown while dragging */
+.drop-indicator {
+    border: 2px dashed var(--accent-color);
+    border-radius: var(--border-radius);
+    background: rgba(127, 127, 127, 0.08);
+    min-height: 120px;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay[hidden] {
+    display: none;
+}
+
+.modal-content {
+    background: #f4f5f7; /* neutral light gray — not pure white */
+    padding: 30px;
+    border-radius: var(--border-radius);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    border: 1px solid #c8cad0; /* visible edge in light mode */
+}
+
+[data-theme="dark"] .modal-content {
+    background: #2a2a3e; /* dark gray — not near-black, reads as a panel */
+    border-color: #0f0f14; /* thin darker-than-fill border for edge definition */
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* C7 — Add-widget picker buttons with optional hint captions. */
+.widget-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.widget-options button[data-type] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+    text-align: left;
+    padding: 10px 12px;
+}
+
+.widget-options .widget-type-label {
+    font-weight: 600;
+}
+
+.widget-options .widget-type-hint {
+    display: block;
+    font-size: 11.5px;
+    line-height: 1.35;
+    opacity: 0.72;
+    /* Slightly smaller + dimmer so the label stays primary; inherits theme colors. */
+}
+
+#background-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+    transition: background-image 0.5s;
+}
+
+.background-overlay-content {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-color);
+    opacity: var(--overlay-opacity);
+    z-index: -1;
+}
+
+/* List styles */
+.lists-container {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--card-border);
+}
+.list-item:last-child {
+    border-bottom: none;
+}
+.list-item.completed .list-item-text {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+.list-item-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+.list-item-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.list-item-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.list-empty {
+    opacity: 0.6;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 12px 0;
+}
+/* Shortcuts styles (base link; the card layout is handled by .shortcut-item-container) */
+.shortcut-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 2px;
+    margin: 0;
+    border: none;
+    background: transparent;
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+}
+
+/* World Clock Widget */
+.clock-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.clock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 2px;          /* tighter, matching the quicklinks look */
+}
+
+.clock-info {
+    /* Location name on top; below it a date/time line (date left, time right). */
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+}
+
+/* The date + time share one horizontal line. Date stays left, time is pushed right. */
+.clock-dt {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* Compact sizing so date + time fit cleanly in a small (1-column) widget. */
+.clock-time {
+    font-size: 0.95rem;
+    line-height: 1.25;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Date (left) — slightly smaller than the time, muted but readable. */
+.clock-date {
+    font-size: 0.8rem;
+    line-height: 1.25;
+    opacity: 0.75;
+    white-space: nowrap;
+}
+
+.clock-label-wrap { display: flex; align-items: center; gap: 6px; min-width: 0; }
+
+.clock-label {
+    font-size: 0.72rem;
+    opacity: 0.75;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* .clock-day-badge (base + tone variants) is defined later in this file with the Tomorrow/Yesterday colors — kept there as the single source of truth.
+   The per-row delete button was removed; add/remove times is managed on the Edit page. */
+
+.clock-empty {
+    font-size: 0.85rem;
+    opacity: 0.6;
+    text-align: center;
+    padding: 12px;
+}
+
+/* Clock times editor (inside the edit modal) */
+.clock-times-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.clock-time-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clock-time-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.clock-time-row .clock-time-zone {
+    flex: 1.2;
+}
+
+.clock-remove-entry {
+    border: none;
+    background: none;
+    color: var(--accent-color);
+    font-size: 18px;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.clock-remove-entry:hover {
+    background: var(--accent-soft); /* ~0.1; close enough to the old 0.12 tint */
+}
+
+/* Modal action buttons */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-actions button.primary {
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+}
+
+.modal-actions button.primary:hover {
+    opacity: 0.9;
+}
+
+/* Checkbox-style labels used in modals */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* ── Weather Widget ─────────────────────────────────────────────── */
+.weather-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.weather-main {
+    text-align: center;
+    padding: 8px 0;
+}
+
+.weather-icon {
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.weather-temp {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.weather-desc {
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+.weather-meta {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+/* T4 — hourly forecast strip */
+.weather-hourly {
+    display: flex;
+    justify-content: flex-start; /* default: left-aligned so overflow scrolls correctly */
+    gap: 4px;
+    overflow-x: auto;
+    padding: 4px 0 2px;
+    margin-top: 8px;
+}
+
+/* T21: on medium/large cards the strip usually fits — center it. When it does
+   overflow, `overflow-x:auto` keeps left-aligned scrolling so nothing is lost. */
+.widget-card.span-2 .weather-hourly,
+.widget-card.span-3 .weather-hourly {
+    justify-content: center;
+}
+
+.weather-hour {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    min-width: 52px;
+    padding: 6px 4px;
+    border-radius: 8px;
+    background: rgba(127, 127, 127, 0.06);
+}
+
+.h-label {
+    font-size: 0.7rem;
+    opacity: 0.65;
+}
+
+.h-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.h-temp {
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.h-precip {
+    font-size: 0.62rem;
+    opacity: 0.65;
+    white-space: nowrap;
+}
+
+.weather-forecast {
+    display: flex;              /* horizontal strip — scroll instead of wrap */
+    justify-content: flex-start;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 0 2px;
+    margin-top: 8px;
+}
+
+/* On medium/large cards the days usually fit — center them; when they overflow,
+   `overflow-x:auto` keeps left-aligned scrolling so nothing is lost. */
+.widget-card.span-2 .weather-forecast,
+.widget-card.span-3 .weather-forecast {
+    justify-content: center;
+}
+
+.weather-fc-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 64px;            /* fixed width so the strip scrolls rather than shrinks */
+    padding: 8px 4px;
+    border-radius: 8px;
+    background: rgba(127, 127, 127, 0.06);
+}
+
+.fc-label {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.fc-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.fc-range {
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.weather-actions,
+.weather-error .weather-retry-btn,
+.weather-empty button {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.weather-status,
+.weather-empty p:first-child {
+    font-size: 0.9rem;
+    opacity: 0.75;
+}
+
+.weather-error p {
+    color: var(--color-danger);
+    margin-bottom: 8px;
+}
+
+/* ── Notes / Scratchpad Widget ──────────────────────────────────── */
+.notes-textarea {
+    box-sizing: border-box; /* keep padding + border inside the card so it doesn't overflow past the right edge */
+    width: 100%;
+    min-height: 160px; /* reduced ~20% from 200px on request */
+    resize: vertical;
+    padding: 12px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.notes-textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px var(--accent-soft-strong);
+}
+
+/* Darker placeholder text for better contrast (was the browser-default dim gray). */
+.notes-textarea::placeholder,
+textarea.search-input::placeholder {
+    color: var(--text-color);
+    opacity: 0.6;
+}
+
+.notes-timestamp {
+    font-size: 0.7rem;
+    opacity: 0.55;
+    margin-top: 6px;
+    text-align: right;
+}
+
+/* ── Stock Watchlist Widget ─────────────────────────────────────── */
+.stocks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stock-row {
+    display: grid;
+    /* T5 — three columns when a sparkline is present; the sparkline sits between name and price */
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(127, 127, 127, 0.05);
+}
+
+/* When no sparkline is rendered the middle cell collapses; keep layout tidy */
+.stock-row .stock-sparkline {
+    display: block;
+    flex-shrink: 0;
+}
+
+/* Price block: price on top, change + % stacked beneath — all right-justified. */
+.stock-value {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    line-height: 1.25;
+}
+
+.stock-symbol {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    min-width: 48px;
+}
+
+.stock-name {
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+/* T14: Clickable stock name link */
+a.stock-link {
+    color: inherit;
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+a.stock-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.stock-price {
+    font-weight: 600;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.stocks-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.stock-empty {
+    opacity: 0.6;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 12px;
+}
+
+/* Stock symbols editor (inside the edit modal) */
+.stock-symbols-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.stock-symbol-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.stock-symbol-input,
+.stock-name-input {
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.stock-symbol-input {
+    width: 90px;
+    text-transform: uppercase;
+}
+
+/* ── Lists: due-date chip + inline note preview ─────────────── */
+.list-due-chip {
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: inherit;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.list-due-chip:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent-color);
+}
+
+.list-item.overdue .list-due-chip {
+    color: var(--color-danger);
+    border-color: rgba(214, 87, 51, 0.4);
+    background: rgba(214, 87, 51, 0.1);
+}
+
+/* Inline note preview (truncated) */
+.list-note-inline {
+    font-size: 11px;
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+}
+
+/* ── Lists: inline editor (due date + note, opened by clicking the row) ─── */
+.list-item-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: rgba(127, 127, 127, 0.04);
+}
+
+.list-item-editor[hidden] { display: none; }
+
+.list-edit-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.list-edit-field > span {
+    min-width: 60px;
+    opacity: 0.75;
+    font-weight: 600;
+}
+
+.list-due-input,
+.list-note-input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.list-due-input:focus,
+.list-note-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px var(--accent-soft-strong);
+}
+
+.list-edit-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.list-editor-save,
+.list-editor-cancel {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.list-editor-save {
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+}
+
+.list-editor-cancel {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: inherit;
+}
+
+/* T20: per-item delete (×) + bottom Add button — theme-aware so they're not
+   solid black in dark mode. Compact, match the panel fill. */
+.delete-list-btn {
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1;
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: inherit;
+    cursor: pointer;
+}
+.delete-list-btn:hover {
+    background: rgba(198, 40, 40, 0.14); /* soft red wash */
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+[data-theme="dark"] .delete-list-btn,
+[data-theme="system"] .delete-list-btn {
+    background: rgba(70, 72, 84, 0.6);
+    border-color: #3a3c46;
+    color: #e5e5ea;
+}
+
+.add-list-btn {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+.add-list-btn:hover {
+    filter: brightness(0.92);
+}
+
+/* ── Shortcuts enhancements (favicons / filter / reorder / new-tab) ─────── */
+.shortcut-toolbar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.shortcut-filter,
+.shortcut-sort {
+    padding: 6px 8px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 13px;
+}
+
+.shortcut-filter { flex: 1; min-width: 0; }
+.shortcut-sort   { max-width: 140px; cursor: pointer; }
+
+.shortcut-item-container {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+    align-items: center;
+    padding: 4px 2px;
+    border-radius: 8px;
+    margin-bottom: 2px;
+}
+
+.shortcut-item-container[hidden] { display: none; }
+
+.shortcut-item {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 2px !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    color: inherit;
+    text-decoration: none;
+    min-width: 0;
+}
+
+.shortcut-item:hover .shortcut-label { color: var(--accent-color); }
+
+/* Favicon (auto-fetched from Google s2) with letter-avatar fallback */
+.shortcut-icon {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.shortcut-favicon-wrap { position: relative; display: inline-flex; }
+
+/* Hide the broken favicon img and show the letter fallback underneath. */
+.shortcut-icon-fallback {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    background: var(--accent-color);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shortcut-favicon-wrap .shortcut-favicon { position: absolute; inset: 0; }
+.shortcut-favicon-wrap .shortcut-icon-fallback { z-index: 0; }
+.shortcut-favicon-wrap img { z-index: 1; background: transparent; }
+
+/* Letter avatar used when no URL is available */
+.shortcut-letter-avatar {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    background: var(--accent-color);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shortcut-label { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shortcut-desc  { margin-left: auto !important; max-width: 45%; opacity: 0.6; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+
+/* Per-item control buttons (only the delete button remains) */
+.shortcut-item-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.delete-shortcut-btn {
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: inherit;
+    width: 26px; height: 26px;
+    padding: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.delete-shortcut-btn:hover { color: var(--color-danger); }
+
+/* Collapsible add form */
+.shortcut-add-wrap {
+    margin-top: 8px;
+}
+
+.shortcut-add-toggle {
+    width: 100%;
+    padding: 8px;
+    border: 1px dashed var(--card-border);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.shortcut-add-toggle:hover { border-color: var(--accent-color); }
+
+.shortcuts-controls[hidden] { display: none; }
+
+.shortcuts-controls {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+}
+
+.shortcuts-controls input,
+.shortcuts-controls button {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ── Clock enhancements (inline add + day-offset badge) ─────────── */
+.clock-label-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.clock-day-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(127, 127, 127, 0.15);
+    color: inherit;
+    white-space: nowrap;
+}
+
+.clock-day-badge.tomorrow  { background: rgba(46, 138, 87, 0.18); }
+.clock-day-badge.yesterday { background: rgba(214, 87, 51, 0.18); }
+
+.clock-add-row {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr auto;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--card-border);
+}
+
+.clock-add-row input {
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 13px;
+}
+
+.clock-add-btn { white-space: nowrap; }
+
+/* ── Search widget (stacked layout: provider row + multi-line query) ───
+   C3: class renamed from .perplexity-* to .search-* to match the new type id. */
+.search-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.search-provider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.search-provider-row > span {
+    min-width: 60px;
+    opacity: 0.75;
+    font-weight: 600;
+}
+
+.engine-select {
+    flex: 1;
+    max-width: none;
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.search-query-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+}
+
+textarea.search-input {
+    flex: 1;
+    min-width: 0;
+    min-height: 72px;
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+.search-input:focus, .engine-select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.search-btn {
+    align-self: flex-end;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent-color);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.search-btn:hover { filter: brightness(1.08); }
+
+.search-recent {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--card-border);
+}
+
+.search-recent-label {
+    font-size: 11px;
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.recent-chip {
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: inherit;
+    padding: 3px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.recent-chip:hover { background: var(--accent-soft); border-color: var(--accent-color); }
+
+.stock-change {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.75rem;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+.stock-change.up { color: var(--color-success); }
+.stock-change.down { color: var(--color-danger); }
+
+/* Stock status / hint lines */
+.stock-status { margin-top: 8px; font-size: 0.85rem; line-height: 1.4; min-height: 0; }
+.stock-status-key, .stock-status-err, .stock-status-loading, .stock-status-cached {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(127, 127, 127, 0.06);
+}
+.stock-status-key { color: var(--text-color); }
+/* "Serving from cache" hint — informational, not an error. */
+.stock-status-cached {
+    opacity: 0.85;
+    font-size: 0.8rem;
+}
+.stock-status-err { color: var(--color-danger); }
+
+/* ── Countdown Widget ─────────────────────────────── */
+.countdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.countdown-row {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(127, 127, 127, 0.05);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.countdown-row.past { opacity: 0.6; }
+
+.countdown-label {
+    font-weight: 700;
+    min-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.countdown-value {
+    margin-left: auto;          /* right-align the d/h/m/s value */
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+/* Future countdown values use the normal text color by default.
+   In dark themes (near-white cards) they get an explicit high-contrast value so
+   the "future" state stays visually distinct without going white-on-white on light. */
+[data-theme="dark"] .countdown-value.future,
+[data-theme="system"] .countdown-value.future { color: #ffffff; }
+
+.countdown-date {
+    opacity: 0.6;
+    margin-left: auto;
+    font-size: 0.75rem;
+}
+
+.countdown-empty {
+    opacity: 0.6;
+    text-align: center;
+    padding: 12px;
+    font-size: 0.9rem;
+}
+
+/* ── Pomodoro / Focus Timer Widget (T7) ───────────────
+   Compact focus timer with mode label, big tabular-numeral clock,
+   a progress bar that drains as the session runs, and Start/Pause + Reset.
+   ------------------------------------------------------------------------ */
+.pomodoro-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px;
+}
+
+.pomodoro-mode {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    opacity: 0.65;
+    font-weight: 600;
+}
+
+.pomodoro-time {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 2.75rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    color: var(--text-color);
+}
+
+.pomodoro-progress {
+    width: 100%;
+    max-width: 260px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(127, 127, 127, 0.18);
+    overflow: hidden;
+}
+
+.pomodoro-bar {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent-color, #4f9cff);
+    transition: width 1s linear; /* smooth drain as the timer ticks */
+}
+
+.pomodoro-sessions {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.75;
+}
+
+.pomodoro-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.pomodoro-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: rgba(127, 127, 127, 0.08);
+    color: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.pomodoro-btn:hover {
+    background: rgba(127, 127, 127, 0.16);
+}
+
+.pomodoro-btn:focus-visible {
+    outline: 2px solid var(--accent-color, #4f9cff);
+    outline-offset: 2px;
+}
+
+/* ── Currency Converter Widget (T7) — multi-currency rate board ─────
+   One row per chosen foreign currency. Each shows the $1 base → code
+   rate and links out to XE.com's chart for that pair. High-contrast,
+   readable text in both light and dark themes.
+   ------------------------------------------------------------------------ */
+.currency-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 2px;
+}
+
+/* Base note (e.g. "$1 USD →") above the list of rates — readable, not dimmed. */
+.currency-base-note {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-color);
+    opacity: 0.95;
+    margin-bottom: 2px;
+}
+
+.currency-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Each rate row is a link to XE.com. The currency code and the numeric rate
+   both use the theme's primary text color at full strength for legibility —
+   this fixes the previously low-contrast foreign-currency text. */
+.currency-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    background: rgba(127, 127, 127, 0.06);
+    color: var(--text-color);           /* high-contrast readable text */
+    text-decoration: none;
+    font-size: 1rem;
+}
+a.currency-row:hover {
+    background: rgba(127, 127, 127, 0.14);
+    color: var(--text-color);           /* keep full contrast on hover */
+}
+a.currency-row:focus-visible {
+    outline: 2px solid var(--accent-color, #4f9cff);
+    outline-offset: 2px;
+}
+
+/* Currency code (left). Bold + primary text color for clear readability. */
+.currency-code {
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--text-color);
+}
+
+/* Numeric rate (right). Tabular figures, full-strength theme text color. */
+.currency-rate {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--text-color);           /* was a low-contrast accent — now readable */
+}
+
+/* Rows without a loaded rate (e.g. code not supported by the provider). */
+.currency-row-missing { cursor: default; }
+.currency-rate-dim { opacity: 0.5; }
+
+/* Edit-modal multi-currency rows. */
+.currency-code-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.currency-loading,
+.currency-error {
+    text-align: center;
+    padding: 12px;
+    font-size: 0.9rem;
+}
+
+/* ── Habit Tracker Widget (T7) ───────────────────────
+   A compact grid: habit names on the left, a 7-day streak row per habit.
+   Only today's cell is interactive; past days show as read-only indicators.
+   ------------------------------------------------------------------------ */
+.habit-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.habit-header-row,
+.habit-row {
+    display: grid;
+    grid-template-columns: minmax(80px, 1fr) repeat(7, 32px);
+    align-items: center;
+    gap: 2px;
+}
+
+.habit-col-name {
+    font-size: 0.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 6px;
+}
+
+.habit-day-label {
+    font-size: 0.65rem;
+    opacity: 0.55;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.habit-today { opacity: 1; font-weight: 700; }
+
+.habit-cell {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--card-border);
+    background: rgba(127, 127, 127, 0.05);
+    color: inherit;
+    font-size: 0.8rem;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.habit-cell:focus-visible {
+    outline: 2px solid var(--accent-color, #4f9cff);
+    outline-offset: 1px;
+}
+
+.habit-clickable { cursor: pointer; }
+.habit-clickable:hover { background: rgba(127, 127, 127, 0.15); }
+
+.habit-done {
+    background: var(--accent-color, #4f9cff);
+    border-color: transparent;
+    color: #fff;
+}
+
+[data-theme="dark"] .habit-done,
+[data-theme="system"] .habit-done { color: #1a1a2e; }
+
+.habit-empty {
+    text-align: center;
+    padding: 16px;
+    opacity: 0.6;
+    font-size: 0.9rem;
+}
+
+/* Habit editor (inside the edit modal) */
+.habit-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.habit-row-editor {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.habit-label-input {
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+}
+
+.habit-remove-entry {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(198, 40, 40, 0.1);
+    color: var(--color-danger);
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.habit-remove-entry:hover { background: rgba(198, 40, 40, 0.2); }
+.habit-remove-entry { color: var(--color-danger); }
+
+/* ── Command palette (⌘K / Ctrl+K) ───────────────────
+   A separate overlay from .modal-overlay so it doesn't fight the existing
+   Escape/focus-trap handlers. Mirrors the modal's visual language and uses
+   the same theme variables, so light/dark/system themes all work out of box.
+   ------------------------------------------------------------------------ */
+.palette-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, var(--overlay-opacity));
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* anchor near the top like a real command palette */
+    padding-top: 12vh;
+    z-index: 1100; /* above .modal-overlay (1000) so it can layer over an open dialog if needed */
+}
+
+.palette-overlay[hidden] {
+    display: none;
+}
+
+.palette-content {
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--card-border);
+    border-radius: var(--border-radius);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    width: min(680px, calc(100vw - 32px));
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.palette-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 1.05rem;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.palette-input::placeholder {
+    opacity: 0.55;
+}
+
+.palette-results {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 40px;
+}
+
+.palette-item,
+.palette-empty {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    cursor: default;
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.palette-item {
+    cursor: pointer;
+}
+
+.palette-item.active,
+.palette-item:hover {
+    background: rgba(127, 127, 127, 0.14);
+}
+
+[data-theme="dark"] .palette-item.active,
+[data-theme="dark"] .palette-item:hover {
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.palette-item-icon {
+    width: 22px;
+    text-align: center;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.palette-item-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.palette-item-text strong {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.palette-item-text small {
+    opacity: 0.55;
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.palette-empty {
+    padding: 14px 16px;
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* Flash highlight when a widget is jumped to from the palette.
+   Applied via .widget-card.palette-flash; removed after animationend so it can re-trigger. */
+@keyframes paletteFlash {
+    0%   { box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 0 0 3px var(--accent-color); }
+    100% { box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 0 0 3px transparent; }
+}
+
+.widget-card.palette-flash {
+    animation: paletteFlash 1.2s ease-out;
+    outline: none;
+}
+
+/* ── Undo toasts (T3) ───────────────────────────────
+   A fixed bottom-right stack of transient notifications. Each toast has a label,
+   an optional "Undo" button, and a dismiss ×. Auto-dismisses after ~6s unless
+   hovered; the visible stack is capped at 5 by app.js.
+   ------------------------------------------------------------------------ */
+.toast-region {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column-reverse; /* newest on top visually, oldest at the bottom of the stack */
+    gap: 8px;
+    z-index: 1200; /* above palette (1100) and modal (1000) so toasts are always visible */
+    pointer-events: none;          /* let clicks pass through the region itself… */
+}
+
+.toast {
+    pointer-events: auto;           /* …but each toast is interactive.
+                                      This combo lets you click anywhere in the page while a
+                                      toast sits there without accidentally hitting it. */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--card-border);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    font-size: 0.9rem;
+    line-height: 1.35;
+    max-width: min(420px, calc(100vw - 40px));
+    animation: toastIn 0.18s ease-out;
+}
+
+.toast.leaving {
+    opacity: 0;
+    transform: translateX(12px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.toast-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.toast-undo-btn,
+.toast-dismiss-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: var(--text-color);
+}
+
+.toast-undo-btn {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.toast-undo-btn:hover,
+.toast-dismiss-btn:hover {
+    background: rgba(127, 127, 127, 0.14);
+}
+
+[data-theme="dark"] .toast-undo-btn:hover,
+[data-theme="dark"] .toast-dismiss-btn:hover {
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.toast-dismiss-btn {
+    opacity: 0.6;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* Countdown events editor (inside the edit modal) */
+.countdown-events-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.countdown-event-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.countdown-ev-label,
+.countdown-ev-dt {
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.countdown-ev-dt { min-width: 0; }
+
+/* ── RSS / News Widget ─────────────────────────────── */
+.rss-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rss-feed {
+    border-top: 1px solid var(--card-border);
+    padding-top: 8px;
+}
+
+.rss-feed:first-child { border-top: none; padding-top: 0; }
+
+.rss-feed-label {
+    margin: 0 0 6px;
+    font-size: 0.95rem;
+    color: var(--accent-color);
+}
+
+.rss-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rss-items li { line-height: 1.35; }
+
+.rss-items a {
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.rss-items a:hover { text-decoration: underline; color: var(--accent-color); }
+
+.rss-item-date {
+    display: block;
+    opacity: 0.55;
+    font-size: 0.72rem;
+    margin-top: 1px;
+}
+
+.rss-status, .rss-error, .rss-empty { font-size: 0.85rem; }
+.rss-error { color: var(--color-danger); }
+
+/* RSS feeds editor (inside the edit modal) */
+.rss-feeds-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.rss-feed-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.rss-feed-label,
+.rss-feed-url {
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.rss-feed-url { min-width: 0; }
+
+/* ── Edit modal danger zone (Delete Widget) ─────────── */
+.edit-danger-divider {
+    border: none;
+    border-top: 1px solid var(--card-border);
+    margin: 20px 0 16px;
+}
+
+.edit-danger-zone label { color: var(--color-danger); font-weight: 700; }
+
+button.danger {
+    background: transparent;
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+[data-theme="dark"] button.danger, [data-theme="system"] button.danger {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+button.danger:hover { background: rgba(198, 40, 40, 0.1); }
+[data-theme="dark"] button.danger:hover,
+[data-theme="system"] button.danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+}
+
+/* Responsive Grid */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Spans are no-ops in a single-column layout. */
+    .widget-card.span-2,
+    .widget-card.span-3 {
+        grid-column: auto;
+    }
+}

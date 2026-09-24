@@ -1,0 +1,25 @@
+{
+    "name": "Personal Dashboard",
+    "short_name": "Dashboard",
+    "description": "A local-first, installable dashboard for shortcuts, lists, world clock, weather, notes, stocks, search, countdowns, RSS feeds, Pomodoro timer, currency rates and habit tracking.",
+    "id": "./index.html",
+    "start_url": ".",
+    "scope": ".",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#f5f5f5",
+    "theme_color": "#007AFF",
+    "categories": ["productivity", "utilities"],
+    "icons": [
+        { "src": "icon-16.png",   "sizes": "16x16",   "type": "image/png" },
+        { "src": "icon-32.png",   "sizes": "32x32",   "type": "image/png" },
+        { "src": "icon-48.png",   "sizes": "48x48",   "type": "image/png" },
+        { "src": "icon-96.png",   "sizes": "96x96",   "type": "image/png" },
+        { "src": "icon-128.png",  "sizes": "128x128", "type": "image/png" },
+        { "src": "icon-192.png",  "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "icon-384.png",  "sizes": "384x384", "type": "image/png", "purpose": "any" },
+        { "src": "icon-512.png",  "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ],
+    "shortcuts": []
+}

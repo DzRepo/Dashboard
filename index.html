@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Personal Dashboard</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <!-- C13: default (light) accent; app.js updates this per-theme at runtime. -->
+    <meta id="meta-theme-color" name="theme-color" content="#007AFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dashboard">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="16x16" href="icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+
+    <!-- Accessibility: skip link target is the main grid. -->
+    <style>
+        .visually-hidden {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+        }
+    </style>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-system">
+    <a class="visually-hidden" href="#dashboard-grid">Skip to dashboard</a>
+    <div id="app">
+        <div id="background-overlay"></div>
+        <div class="background-overlay-content"></div>
+        <header role="banner">
+            <h1 id="dashboard-title">My Dashboard</h1>
+            <div class="header-actions" role="toolbar" aria-label="Dashboard actions">
+                <button id="add-widget-btn" type="button" aria-label="Add a new widget" title="Add Widget"><span aria-hidden="true">＋</span></button>
+                <button id="settings-btn" type="button" aria-label="Open settings" title="Settings"><svg class="icon-gear" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span class="visually-hidden">Settings</span></button>
+            </div>
+        </header>
+
+        <main id="dashboard-grid" class="dashboard-grid" role="region" aria-label="Dashboard widgets">
+            <!-- Widgets will be injected here -->
+        </main>
+
+        <div id="modal-container" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal-content">
+                <button type="button" class="modal-close" aria-label="Close dialog">&times;</button>
+                <h2 id="modal-title" class="visually-hidden">Dialog</h2>
+                <div id="modal-body"></div>
+            </div>
+        </div>
+
+        <!-- Command palette (⌘K / Ctrl+K): jump to a widget or open a shortcut link. -->
+        <div id="command-palette" class="palette-overlay" hidden role="dialog" aria-modal="true" aria-label="Command palette">
+            <div class="palette-content" role="presentation">
+                <input type="text" id="palette-input" class="palette-input"
+                       placeholder="Search widgets & links…  (↑↓ to move, Enter to open, Esc to close)"
+                       autocomplete="off" spellcheck="false" aria-label="Command palette search">
+                <ul id="palette-results" class="palette-results" role="listbox" aria-label="Results"></ul>
+            </div>
+        </div>
+
+        <!-- Undo toasts: transient, dismissible notifications with an optional Undo button.
+             Rendered by app.js (showUndoToast). Container is a fixed region; individual
+             toasts stack from the bottom-right and auto-dismiss after ~6s. -->
+        <div id="undo-toast-region" class="toast-region" aria-live="polite" aria-atomic="false"></div>
+
+        <!-- Live region for status announcements (e.g. "Weather updated", "Saved"). -->
+        <div id="status-live-region" class="visually-hidden" role="status" aria-live="polite"></div>
+    </div>
+    <script src="storage.js"></script>
+    <script src="widgets.js"></script>
+    <script src="registry.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
