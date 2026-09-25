@@ -86,6 +86,19 @@ function truncate(str, max) {
     return s.slice(0, Math.max(0, max - 1)).trimEnd() + '…';
 }
 
+/**
+ * Fetch with an AbortController timeout. Shared by RSS / weather / stocks / currency.
+ * @param {string} targetUrl
+ * @param {number} [ms=10000]
+ * @param {RequestInit} [init]
+ */
+function fetchWithTimeout(targetUrl, ms, init) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms || 10000);
+    const opts = Object.assign({}, init || {}, { signal: controller.signal });
+    return fetch(targetUrl, opts).finally(() => clearTimeout(timer));
+}
+
 /** Format a Date as the local value expected by <input type="datetime-local">. */
 function toLocalInputValue(date) {
     if (!(date instanceof Date) || isNaN(date.getTime())) return '';
@@ -157,6 +170,7 @@ Dashboard.emptyStateText     = emptyStateText;
 Dashboard.cachedDisplayName  = cachedDisplayName;
 Dashboard.safeDomainForFavicon = safeDomainForFavicon;
 Dashboard.truncate           = truncate;
+Dashboard.fetchWithTimeout   = fetchWithTimeout;
 Dashboard.toLocalInputValue  = toLocalInputValue;
 Dashboard._dateKey           = _dateKey;
 Dashboard.pruneHabitsLog     = pruneHabitsLog;

@@ -69,7 +69,7 @@ function createWidgetElement(widget) {
         // background (#1a1a1a) so card edges stay distinguishable. Hue/saturation are
         // preserved; only lightness is nudged up for dark fills (see adjustFillForTheme).
         const rgb = hexToRgb(widget.fillColor);
-        if (!rgb) return;
+        if (rgb) {
         const activeTheme = document.documentElement.getAttribute('data-theme');
         const { r, g, b } = adjustFillForTheme(rgb, activeTheme);
 
@@ -95,12 +95,11 @@ function createWidgetElement(widget) {
             const bb = Math.max(0, b - 25);
             card.style.border = `1px solid rgba(${br}, ${bg2}, ${bb}, 0.6)`;
         }
+        }
     }
 
-    // P3-10: flush any pending debounced save before re-rendering. The Notes
-    // widget stores a __notesFlush callback that captures the current textarea
-    // value and persists it, so keystrokes made just before a drag/re-render
-    // aren't lost when the old container is destroyed.
+    // P3-10: flush is done in renderDashboard before the grid is wiped. Keep a
+    // secondary flush here for any path that rebuilds a single card without that loop.
     if (typeof widget.__notesFlush === 'function') {
         try { widget.__notesFlush(); } catch (_) {}
     }

@@ -61,7 +61,7 @@ function renderWeather(widget, container) {
         renderBody();
 
         try {
-            const res = await fetch(url, { mode: 'cors' });
+            const res = await Dashboard.fetchWithTimeout(url, 10000, { mode: 'cors' });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const json = await res.json();
             currentData = json.current_weather || null;

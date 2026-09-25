@@ -152,6 +152,10 @@ function _applyGridColumns(value) {
     }
 }
 
+/** One matchMedia listener for system theme; replaced on each applySettings call. */
+let _systemThemeMq = null;
+let _systemThemeHandler = null;
+
 /**
  * UI Logic
  */
@@ -162,6 +166,14 @@ function applySettings() {
     _applyGridColumns(state.settings.gridColumns);
     _applyUiScale(state.settings.uiScale != null ? state.settings.uiScale : 100);
 
+    // Tear down any previous system-theme listener before (re)attaching.
+    if (_systemThemeMq && _systemThemeHandler) {
+        if (_systemThemeMq.removeEventListener) _systemThemeMq.removeEventListener('change', _systemThemeHandler);
+        else if (_systemThemeMq.removeListener) _systemThemeMq.removeListener(_systemThemeHandler);
+        _systemThemeMq = null;
+        _systemThemeHandler = null;
+    }
+
     // Apply Theme
     if (theme === 'system') {
         const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -170,7 +182,9 @@ function applySettings() {
             _updateMetaThemeColor(); // C13: keep browser chrome in sync
         };
         applySystemTheme();
-        // React to OS light/dark flips mid-session (fixes #5).
+        // React to OS light/dark flips mid-session (fixes #5). One listener only.
+        _systemThemeMq = mq;
+        _systemThemeHandler = applySystemTheme;
         if (mq.addEventListener) mq.addEventListener('change', applySystemTheme);
         else if (mq.addListener) mq.addListener(applySystemTheme); // Safari < 14
     } else {
@@ -330,6 +344,13 @@ function _updateMetaThemeColor() {
 }
 
 function renderDashboard() {
+    // Flush pending notes saves before destroying the grid DOM.
+    for (const w of state.widgets) {
+        if (w && typeof w.__notesFlush === 'function') {
+            try { w.__notesFlush(); } catch (_) {}
+        }
+    }
+
     // C2: clear any tick timers from the previous render so we don't leak
     // orphaned 1s intervals (see widgetTimers in widgets/shared/helpers.js).
     if (typeof Dashboard.clearAllWidgetTimers === 'function') {
@@ -396,7 +417,7 @@ function addWidget(type) {
     // method, so an unknown `type` is the only case that reaches here and it's handled by
     // sanitizeWidget() on save. New widget types need zero edits in this function.
     const newWidget = {
-        id,
+        id: (typeof Dashboard.genWidgetId === 'function') ? Dashboard.genWidgetId() : ('widget-' + Date.now()),
         type,
         title: entry ? `New ${entry.label}` : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
         position: state.widgets.length,

@@ -517,11 +517,23 @@ WidgetRegistry['stocks'] = {
             data: {
                 symbols: symbols
                     .filter(s => s && typeof s === 'object' && typeof s.symbol === 'string')
-                    .map(s => ({
-                        symbol: s.symbol.toUpperCase(),
-                        name: s.name || '',
-                        lastPrice: typeof s.lastPrice === 'number' ? s.lastPrice : null
-                    }))
+                    .map(s => {
+                        const out = {
+                            symbol: s.symbol.toUpperCase(),
+                            name: s.name || '',
+                            lastPrice: typeof s.lastPrice === 'number' ? s.lastPrice : null
+                        };
+                        if (typeof s.change === 'number' && isFinite(s.change)) out.change = s.change;
+                        if (typeof s.changePct === 'number' && isFinite(s.changePct)) out.changePct = s.changePct;
+                        if (Array.isArray(s.sparkline)) {
+                            const spark = s.sparkline.filter(n => typeof n === 'number' && isFinite(n));
+                            if (spark.length) out.sparkline = spark;
+                        }
+                        return out;
+                    }),
+                ...(typeof raw.data?.updatedAt === 'number' && isFinite(raw.data.updatedAt)
+                    ? { updatedAt: raw.data.updatedAt }
+                    : {})
             }
         };
     }
@@ -736,7 +748,11 @@ WidgetRegistry['pomodoro'] = {
                 remainingSec:      (typeof d.remainingSec === 'number' && isFinite(d.remainingSec) && d.remainingSec >= 0)
                                     ? Math.round(d.remainingSec) : 25 * 60,
                 completedSessions: (typeof d.completedSessions === 'number' && d.completedSessions >= 0)
-                                    ? Math.floor(d.completedSessions) : 0
+                                    ? Math.floor(d.completedSessions) : 0,
+                // Keep wall-clock target when running so import/reload can catch up.
+                ...(d.running === true && typeof d.endTime === 'number' && isFinite(d.endTime)
+                    ? { endTime: d.endTime }
+                    : {})
             }
         };
     }

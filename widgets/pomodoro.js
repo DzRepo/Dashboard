@@ -112,6 +112,10 @@ function renderPomodoro(widget, container) {
         return { focus: 'Focus', short: 'Short Break', long: 'Long Break' }[widget.data.mode];
     }
 
+    function persist() {
+        if (typeof Dashboard.saveFullState === 'function') Dashboard.saveFullState();
+    }
+
     function startTick() {
         clearTimer(); // prevent stacking on re-render / double-start
         widget.data.running = true;
@@ -120,6 +124,7 @@ function renderPomodoro(widget, container) {
         // it in background tabs, but the displayed time always comes from Date.now(),
         // so a running Pomodoro never loses or gains time when the tab is unfocused.
         widget.data.endTime = Date.now() + Math.max(0, widget.data.remainingSec) * 1000;
+        persist();
         renderState();
 
         const id = setInterval(() => {
@@ -131,6 +136,7 @@ function renderPomodoro(widget, container) {
                 const label = advanceSession();
                 widget.data.endTime = Date.now() + modeSec(widget.data.mode) * 1000;
                 widget.data.remainingSec = modeSec(widget.data.mode);
+                persist();
 
                 // Visual + audio cue.
                 if (typeof Dashboard.announceStatus === 'function') {
@@ -147,6 +153,8 @@ function renderPomodoro(widget, container) {
         widget.data.running = false;
         // Persist the paused remainder so a reload resumes from here, not from endTime.
         widget.data.remainingSec = Math.max(0, Math.round((widget.data.endTime - Date.now()) / 1000));
+        delete widget.data.endTime;
+        persist();
         renderState();
     }
 
@@ -161,8 +169,20 @@ function renderPomodoro(widget, container) {
         delete widget.data.endTime; // no pending wall-clock target after a reset
         widget.data.mode = 'focus';
         widget.data.remainingSec = focusMin * 60;
+        persist();
         renderState();
     });
+
+    // Persist when the tab is hidden so a reload can resume from endTime.
+    // Bind once per widget object to avoid stacking on dashboard re-renders.
+    if (!widget.__pomodoroVisBound) {
+        widget.__pomodoroVisBound = true;
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && widget.data && widget.data.running) {
+                if (typeof Dashboard.saveFullState === 'function') Dashboard.saveFullState();
+            }
+        });
+    }
 
     // ── Load-time resume (P1-1) ───────────────────────────────────────
     // If the timer was running when the page last saved, fast-forward across any

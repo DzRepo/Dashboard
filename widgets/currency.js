@@ -102,15 +102,7 @@ function renderCurrency(widget, container) {
             // T15: Use the current frankfurter.dev v1 endpoint.
             // Note: v1 uses base + symbols params (not from/to).
             const url = `https://api.frankfurter.dev/v1/latest?base=${encodeURIComponent(fromCode)}&symbols=${encodeURIComponent(targets.join(','))}`;
-            // AbortController + setTimeout for broader browser compatibility.
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
-            let res;
-            try {
-                res = await fetch(url, { signal: controller.signal });
-            } finally {
-                clearTimeout(timeoutId);
-            }
+            const res = await Dashboard.fetchWithTimeout(url, 10000);
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const json = await res.json();
 

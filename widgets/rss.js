@@ -81,13 +81,7 @@ function renderRss(widget, container) {
 
     // Fetch a single URL with an AbortController timeout. Returns the response.
     async function fetchWithTimeout(targetUrl, ms) {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), ms || ATTEMPT_TIMEOUT_MS);
-        try {
-            return await fetch(targetUrl, { mode: 'cors', signal: controller.signal });
-        } finally {
-            clearTimeout(timer);
-        }
+        return Dashboard.fetchWithTimeout(targetUrl, ms || ATTEMPT_TIMEOUT_MS, { mode: 'cors' });
     }
 
     // P1-7: returns { ok, items } on success or throws an Error whose message names

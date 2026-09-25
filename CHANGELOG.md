@@ -19,3 +19,13 @@ All notable changes to Personal Dashboard are documented here.
 - **Stocks:** Link templates validated as http(s) on Settings save and again at render (falls back to Google Finance).
 - **Background:** `#bg-url` uses `escapeAttr`; `applySettings` sets `url("…")` via `CSS.escape` and rejects unsafe schemes; upload hint updated for IndexedDB.
 - **Unknown widget type:** Fallback UI uses `textContent` instead of interpolating `widget.type` into HTML.
+
+### Step 3 — Correctness
+
+- **Theme:** `applySettings` removes the previous `matchMedia` listener before attaching a new one.
+- **Pomodoro:** Persists on start/pause/reset/session boundary and on `visibilitychange`; sanitize keeps `endTime` when running.
+- **Notes:** Flush all `__notesFlush` hooks before wiping the grid; comments corrected.
+- **Widget card:** Invalid fill color no longer aborts card construction.
+- **addWidget:** Uses `Dashboard.genWidgetId()`.
+- **Stocks sanitize:** Keeps change/sparkline/`updatedAt` when valid.
+- **Fetch:** Shared `Dashboard.fetchWithTimeout` used by weather, stocks, RSS, and currency.

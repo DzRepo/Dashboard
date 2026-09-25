@@ -162,7 +162,7 @@ function renderStocks(widget, container) {
                     // --- Quote call -------------------------------------------------
                     const qUrl = 'https://api.twelvedata.com/quote?symbol=' + encodeURIComponent(symbol)
                         + '&apikey=' + encodeURIComponent(key);
-                    const res = await fetch(qUrl, { mode: 'cors' });
+                    const res = await Dashboard.fetchWithTimeout(qUrl, 10000, { mode: 'cors' });
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const json = await res.json();
 
@@ -223,7 +223,7 @@ function renderStocks(widget, container) {
                         const tsUrl = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol)
                             + '&interval=1day&outputsize=20'   // ~last 20 trading days
                             + '&apikey=' + encodeURIComponent(key);
-                        const res2 = await fetch(tsUrl, { mode: 'cors' });
+                        const res2 = await Dashboard.fetchWithTimeout(tsUrl, 10000, { mode: 'cors' });
                         if (!res2.ok) return; // non-fatal — skip sparkline for this symbol
                         const json2 = await res2.json();
                         if (json2 && Array.isArray(json2.values) && json2.values.length >= 2) {
