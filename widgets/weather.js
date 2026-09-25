@@ -257,14 +257,14 @@ function renderWeather(widget, container) {
 
         // T12: "Use my location" and "Refresh" buttons moved to the card header.
         // The locate button remains only in the empty-state above (when no coords set).
-        // Refresh is triggered via the ↻ icon next to the gear (app.js handleWidgetAction).
+        // Refresh is triggered via the ↻ icon next to the gear (app/boot.js handleWidgetAction).
     }
 
     // Button actions.
     // Convention: render functions must not attach listeners to elements they may
     // re-render (the error/empty states are rebuilt by renderBody() after wiring ran,
     // which orphaned the listeners — P1-3). Instead we expose locate/refresh on the
-    // widget and let app.js's grid-level delegated click handler dispatch them, the
+    // widget and let app/grid.js's delegated click handler dispatch them, the
     // same pattern lists/shortcuts/search already use.
     const locate = () => {
         if (!navigator.geolocation) {
@@ -296,8 +296,8 @@ function renderWeather(widget, container) {
     };
 
     // T12: .weather-refresh-btn no longer exists in the body (moved to header).
-    // Expose locate + refresh on the widget so app.js's header ↻ icon and the
-    // in-card Retry / "Use my location" buttons (via grid delegation) can call them.
+    // Expose locate + refresh on the widget so the header ↻ icon (app/boot.js) and the
+    // in-card Retry / "Use my location" buttons (via app/grid.js delegation) can call them.
     widget.__weatherLocate = locate;
     widget.__weatherRefresh = refresh;
 

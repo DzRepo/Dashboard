@@ -1730,7 +1730,7 @@ a.currency-row:focus-visible {
 /* ── Undo toasts (T3) ───────────────────────────────
    A fixed bottom-right stack of transient notifications. Each toast has a label,
    an optional "Undo" button, and a dismiss ×. Auto-dismisses after ~6s unless
-   hovered; the visible stack is capped at 5 by app.js.
+   hovered; the visible stack is capped at 5 by app/toasts.js.
    ------------------------------------------------------------------------ */
 .toast-region {
     position: fixed;

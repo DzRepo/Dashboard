@@ -141,7 +141,7 @@ function renderCurrency(widget, container) {
     // ── Button wiring ──────────────────────────────────────────────
     // Convention: the error state (and its Retry button) is rendered by renderState()
     // *after* mount, so wiring it here at once would orphan the listener (P1-4).
-    // Expose fetchRates on the widget and let app.js's grid-level delegated click
+    // Expose fetchRates on the widget and let app/grid.js's delegated click
     // handler dispatch .currency-retry clicks — same pattern as weather above.
     widget.__currencyRetry = fetchRates;
 

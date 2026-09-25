@@ -3,7 +3,7 @@ const { Dashboard: D } = require('./setup');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-// hexToRgb / rgbaString / adjustFillForTheme live in app.js (published on the namespace).
+// hexToRgb / rgbaString / adjustFillForTheme live in app/boot.js (published on the namespace).
 const { hexToRgb, rgbaString, adjustFillForTheme } = D;
 
 // hexToRgb returns an object created in the vm realm, so deepEqual (which checks

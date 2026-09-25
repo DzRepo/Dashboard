@@ -265,7 +265,7 @@ function renderStocks(widget, container) {
     renderList();
     fetchQuotes();
 
-    // T12: "↻ Refresh quotes" button moved to the card header (app.js).
+    // T12: "↻ Refresh quotes" button moved to the card header (app/boot.js).
     // Expose a refresh fn on the widget so the header ↻ icon can trigger it.
     widget.__stocksRefresh = () => { setStatus('<p class="stock-status-loading">Loading…</p>'); fetchQuotes(true); };
 }

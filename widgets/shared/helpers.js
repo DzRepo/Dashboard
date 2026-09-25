@@ -27,8 +27,8 @@ function escapeAttr(value) {
         .replace(/>/g, '&gt;');
 }
 
-/** Escape for safe insertion into innerHTML. Moved from app.js (P2-9) so it's
- *  available to widgets.js and registry.js, which load before app.js. */
+/** Escape for safe insertion into innerHTML. Moved out of the main app bundle (P2-9)
+ *  so it's available to widgets and registry.js, which load before app/. */
 function escapeHtml(value) {
     return String(value)
         .replace(/&/g, '&amp;')

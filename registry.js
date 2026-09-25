@@ -8,7 +8,7 @@
  *   editFields() – (widget) => HTML string for the edit modal body
  *   applyEdit()  – optional: (widget, formEl) => void. Persists the type-specific edit
  *                   modal fields onto widget.config / widget.data, then the generic Save
- *                   handler in app.js saves + re-renders. This is what makes the registry
+ *                   handler in app/modals/edit-widget.js saves + re-renders. This is what makes the registry
  *                   the single source of truth (P2-8): each type owns defaults → render →
  *                   edit UI → save/validate. Types with no modal-specific fields (e.g.
  *                   notes) omit it; the generic handler still saves title/size/danger-zone.
@@ -18,7 +18,7 @@
  *   hint       – optional: short description shown under the add-widget picker button (C7).
  *
  * Adding a new widget = one new entry here + one render function.
- * Zero edits to app.js / storage.js / widgets.js core logic.
+ * Zero edits to app/, storage.js, or widget core logic.
  */
 
 // P2-9: publish the widget registry on the shared namespace created by storage.js
@@ -30,7 +30,7 @@
     root.Dashboard = root.Dashboard || {};
 
 /**
- * Build the search URL for a Perplexity-style widget based on its configured engine.
+ * Build the search URL for the Search widget based on its configured engine.
  * Engines: perplexity (default), google, bing, ddg. All are keyless + CORS-friendly
  * because they're just opened in a new tab — no fetch involved.
  */
@@ -103,7 +103,7 @@ WidgetRegistry['lists'] = {
     render: (widget, container) => root.Dashboard.renderLists(widget, container),
     applyEdit(widget, modalBody) {
         // Persist the display options (the "Clear completed" button is wired separately
-        // in app.js and saves immediately, so it's not touched here).
+        // in app/modals/edit-widget.js and saves immediately, so it's not touched here).
         widget.data = widget.data || {};
         const showEl = document.getElementById('edit-lists-show-completed');
         if (showEl) widget.data.showCompleted = showEl.checked;

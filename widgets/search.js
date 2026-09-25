@@ -43,7 +43,7 @@ function renderSearch(widget, container) {
         </div>
     `;
 
-    // Recent queries (local, capped at 10) shown as clickable chips.
+    // Recent queries (stored capped at 10; show up to 5) as clickable chips.
     const recent = widget.data.recentQueries || [];
     if (recent.length > 0) {
         const recentWrap = document.createElement('div');

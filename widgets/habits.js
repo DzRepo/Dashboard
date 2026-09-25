@@ -9,11 +9,11 @@ function renderHabits(widget, container) {
     if (!Array.isArray(widget.data.habits)) widget.data.habits = [];
     if (typeof widget.data.log !== 'object' || widget.data.log === null) widget.data.log = {};
 
-    // B6: log pruning now happens once at load time in app.js init() via pruneHabitsLog().
+    // B6: log pruning now happens once at load time in app/boot.js init() via pruneHabitsLog().
     container.innerHTML = '';
 
     // ── Helpers ────────────────────────────────────────────────
-    // B6: _dateKey is a module-level helper (see top of this file).
+    // B6: _dateKey lives in widgets/shared/helpers.js (published on Dashboard).
 
     // Build the last-7-days array ending today.
     function lastSevenDays() {

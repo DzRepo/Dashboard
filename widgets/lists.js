@@ -62,7 +62,7 @@ function renderLists(widget, container) {
         // The whole row is a click target that opens the inline editor for due date + note.
         // NOTE: intentionally NOT role="button" / tabindex — this <li> also contains real
         // interactive controls (checkbox + delete). A button role wrapping other interactives
-        // confuses screen readers. Click-to-open still works via the delegated handler in app.js;
+        // confuses screen readers. Click-to-open still works via the delegated handler in app/grid.js;
         // keyboard users reach the checkbox/delete directly, and can open the editor by clicking.
         li.dataset.index = realIndex;
         li.title = 'Click to set due date and add/edit note';

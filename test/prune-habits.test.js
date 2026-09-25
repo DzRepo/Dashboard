@@ -3,7 +3,7 @@ const { Dashboard: D } = require('./setup');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-// pruneHabitsLog lives in widgets.js (published on the namespace).
+// pruneHabitsLog lives in widgets/shared/helpers.js (published on the namespace).
 const { pruneHabitsLog } = D;
 
 function key(d) {

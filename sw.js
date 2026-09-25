@@ -15,7 +15,7 @@
 // serving stale cached copies to PWA/HTTP users, causing "Unknown widget type"
 // regressions. The activate handler below deletes non-matching caches automatically.
 // Bumped v2→v3 on 2026-09-24: P2-10 split widgets.js into per-type files under
-// widgets/ and will split app.js into app/ — the asset list below changed, so a
+// widgets/ and app.js into app/ — the asset list below changed, so a
 // cache bump is required (see README Deploy checklist).
 const CACHE_NAME = 'personal-dashboard-v4';
 // RELEASE CHECKLIST: bump CACHE_NAME whenever index.html / app shell JS/CSS change.

@@ -75,7 +75,7 @@ async function init() {
     dashboardGrid.addEventListener('change', handleGridChange);
 
     // Global keyboard shortcuts:
-    //   "/"      → focus the first Perplexity search box (if not already typing)
+    //   "/"      → focus the first Search widget input (if not already typing)
     //   Alt+P    → same, as an unambiguous alternative
     document.addEventListener('keydown', handleGlobalShortcuts);
 
@@ -368,7 +368,7 @@ function renderDashboard() {
 // reorder wiring) lives in app/widget-card.js — extracted from this file (P2-10).
 
 // Grid-level delegated event handlers (click / input / change / keypress, global
-// shortcuts, and the Perplexity search runner) live in app/grid.js — extracted from this
+// shortcuts, and the search runner) live in app/grid.js — extracted from this
 // file (P2-10) to keep boot.js under the ~500-line target. They are attached in init()
 // above via the shared globals.
 

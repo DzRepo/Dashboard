@@ -118,7 +118,7 @@ const Storage = {
      * This is the single source of truth for "what do default settings look like?"
      * Used by:
      *   - the v2→v3 migration backfill (storage.js)
-     *   - the Reset handler in app.js (replaces its inline copy, which had drifted)
+     *   - the Reset handler in app/modals/settings.js (replaces its inline copy, which had drifted)
      *   - any future code that needs pristine defaults
      *
      * Previously the settings shape was duplicated in three places and had already

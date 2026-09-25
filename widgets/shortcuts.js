@@ -107,7 +107,7 @@ function renderShortcuts(widget, container) {
     });
 
     // NOTE: the "+ Add link" form now lives on this widget's Edit page (see
-    // WidgetRegistry['shortcuts'].editFields + #shortcut-add-link in app.js), so it is
+    // WidgetRegistry['shortcuts'].editFields + #shortcut-add-link in app/modals/edit-widget.js), so it is
     // intentionally NOT rendered inside the card body anymore.
     container.appendChild(list);
 }

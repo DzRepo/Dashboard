@@ -156,7 +156,7 @@ function handleGridClick(e) {
 
     // Clock rows no longer have a per-row delete button; times are managed on the Edit page.
 
-    // Perplexity: search (uses the configured engine via buildSearchUrl)
+    // Search: run query (uses the configured engine via buildSearchUrl)
     if (target.classList.contains('search-btn')) {
         const inputEl = contentContainer.querySelector('.search-input');
         const query = inputEl.value.trim();
@@ -166,7 +166,7 @@ function handleGridClick(e) {
         return;
     }
 
-    // Perplexity: click a recent-query chip → fill the input and search.
+    // Search: click a recent-query chip → fill the input and search.
     if (target.classList.contains('recent-chip')) {
         const q = target.dataset.q || '';
         if (!q) return;
@@ -246,7 +246,7 @@ function handleGridInput(e) {
 function handleGridChange(e) {
     const target = e.target;
 
-    // Perplexity: inline engine selector → persist + re-render.
+    // Search: inline engine selector → persist + re-render.
     if (target.classList && target.classList.contains('engine-select')) {
         const card = target.closest('.widget-card');
         if (!card || !dashboardGrid.contains(card)) return;
@@ -334,7 +334,7 @@ function handleGridKeypress(e) {
         saveFullState();
         Dashboard.renderLists(widget, contentContainer);
     } else {
-        // Perplexity search (Enter in the query box)
+        // Search (Enter in the query box)
         const query = e.target.value.trim();
         if (!query) return;
         runSearch(widget, query);
@@ -342,12 +342,12 @@ function handleGridKeypress(e) {
 }
 
 /**
- * Global keyboard shortcuts. "\" focuses the first Perplexity search box; Alt+P is an
- * unambiguous alternative. Both are suppressed while the user is typing in any field,
- * when a modal is open, or when focus is already inside that same input.
+ * Global keyboard shortcuts. "/" focuses the first Search widget input; Alt+P is an
+ * unambiguous alternative. Both are suppressed while the user is typing in any field
+ * or when a modal is open.
  */
 function handleGlobalShortcuts(e) {
-    // Don't hijack keys from inputs / textareas / contenteditable (except Escape).
+    // Don't hijack keys from inputs / textareas / contenteditable.
     const t = e.target;
     const typingInField = t && (
         t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' ||
@@ -370,7 +370,7 @@ function handleGlobalShortcuts(e) {
     if (!shouldFocus) return;
 
     const inputEl = dashboardGrid.querySelector('.search-input');
-    if (!inputEl) return; // no Perplexity widget present
+    if (!inputEl) return; // no Search widget present
 
     e.preventDefault();
     inputEl.focus();
@@ -378,9 +378,9 @@ function handleGlobalShortcuts(e) {
 }
 
 /**
- * Run a Perplexity-style search: build the URL from the widget's configured engine,
- * record it in recent queries (local), and open it. Shared by the Search button,
- * Enter key, and recent-query chips.
+ * Run a search: build the URL from the widget's configured engine (Perplexity,
+ * Google, Bing, or DuckDuckGo), record it in recent queries (local, capped at 10),
+ * and open it. Shared by the Go button, Enter key, and recent-query chips.
  */
 function runSearch(widget, query) {
     const config = widget.config || {};

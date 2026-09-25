@@ -20,7 +20,7 @@ const vm = require('vm');
 // ── Minimal browser-global stubs (only what the files reference at LOAD time) ─────
 const _ls = {};
 
-// A permissive DOM element stub: callable, with the props app.js's boot code touches.
+// A permissive DOM element stub: callable, with the props app/boot.js touches.
 // querySelector returns a fresh permissive element (so .querySelector(...).appendChild()
 // chains don't crash) and querySelectorAll returns [] so loops are no-ops.
 function makeEl() {
@@ -53,7 +53,7 @@ const sandbox = {
     removeItem: (k) => { delete _ls[k]; },
     clear: () => { for (const k of Object.keys(_ls)) delete _ls[k]; }
   },
-  // app.js touches the DOM at load (state init + element lookups). Stub enough to not throw.
+  // app/boot.js touches the DOM at load (state init + element lookups). Stub enough to not throw.
   document: {
     getElementById: () => makeEl(), createElement: () => makeEl(),
     querySelector: () => null, querySelectorAll: () => [],
@@ -69,7 +69,7 @@ const sandbox = {
   Dashboard: undefined // created by storage.js IIFE at load time
 };
 
-// In a browser, `window` is the global object; mirror that so app.js's
+// In a browser, `window` is the global object; mirror that so app/boot.js's
 // IIFE receives the sandbox as `root` (via typeof window !== 'undefined' ? window : globalThis).
 sandbox.window = sandbox;
 
@@ -83,7 +83,7 @@ function loadFile(name) {
   vm.runInContext(code, context, { filename: name });
 }
 
-// Order matches index.html: storage → widget files (shared first) → registry, then app.js.
+// Order matches index.html: storage → widget files (shared first) → registry, then app/.
 loadFile('storage.js');
 const WIDGET_FILES = [
   'widgets/shared/helpers.js',
@@ -95,7 +95,7 @@ const WIDGET_FILES = [
 for (const f of WIDGET_FILES) loadFile(f);
 loadFile('registry.js');
 
-// Pre-seed localStorage with a complete v5 default state so app.js's init()
+// Pre-seed localStorage with a complete v5 default state so app/boot.js's init()
 // skips seedDashboard()'s DOM-building path. The remaining boot (applySettings + empty
 // renderDashboard) is a no-op against the stubbed DOM.
 const _seed = sandbox.Dashboard.Storage._defaultState();
