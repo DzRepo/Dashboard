@@ -943,10 +943,12 @@ function getWidgetEntry(type) {
 }
 
 // ── Registration summary (diagnostic) ────────────────────────────────────────
-// If an earlier line in this file threw at runtime, the count below will be low.
-// Check DevTools console on load: expect 9+ entries as of T7.
-console.info('[dashboard] WidgetRegistry loaded with', Object.keys(WidgetRegistry).length,
-    'entries:', Object.keys(WidgetRegistry).join(', '));
+// P3-4: gated behind ?debug=1 so normal loads are quiet. If an earlier line in
+// this file threw at runtime, the count will be low — check with ?debug=1.
+if (typeof location !== 'undefined' && /[?&]debug=1(&|$)/.test(location.search)) {
+    console.info('[dashboard] WidgetRegistry loaded with', Object.keys(WidgetRegistry).length,
+        'entries:', Object.keys(WidgetRegistry).join(', '));
+}
 
     // P2-9: publish the registry + its helpers on the shared namespace.
     root.Dashboard.WidgetRegistry = WidgetRegistry;

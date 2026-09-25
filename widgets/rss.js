@@ -184,7 +184,6 @@ function renderRss(widget, container) {
     async function loadAll() {
         const feeds = widget.data.feeds;
         if (feeds.length === 0) {
-            // C5: shared copy from registry metadata.
             bodyEl.innerHTML = `<p class="rss-empty">${escapeHtml(emptyStateText(widget))}</p>`;
             return;
         }

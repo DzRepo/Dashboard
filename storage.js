@@ -197,7 +197,10 @@ const Storage = {
      * Each migration bumps `version` by 1 so the loop in getData() can chain them.
      */
     migrate(data) {
-        console.log('Migrating dashboard data v' + (data.version || 0) + ' → next…');
+        // P3-4: gate the migration log behind ?debug=1 so normal loads are quiet.
+        if (typeof location !== 'undefined' && /[?&]debug=1(&|$)/.test(location.search)) {
+            console.log('Migrating dashboard data v' + (data.version || 0) + ' → next…');
+        }
 
         if ((data.version || 0) < 2) {
             // ── v1 → v2: add `span` to every widget so the grid can size cards.

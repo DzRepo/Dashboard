@@ -29,7 +29,6 @@ function renderCountdown(widget, container) {
         listEl.innerHTML = '';
         const events = widget.data.events.slice().sort((a, b) => new Date(a.when) - new Date(b.when));
         if (events.length === 0) {
-            // C5: shared copy from registry metadata.
             listEl.innerHTML = `<p class="countdown-empty">${escapeHtml(emptyStateText(widget))}</p>`;
             return;
         }

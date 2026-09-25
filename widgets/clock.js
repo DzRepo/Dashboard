@@ -79,7 +79,6 @@ function renderClock(widget, container) {
     if (widget.data.times.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'clock-empty';
-        // C5: shared copy from registry metadata.
         empty.textContent = emptyStateText(widget);
         list.appendChild(empty);
     }

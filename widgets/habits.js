@@ -34,7 +34,6 @@ function renderHabits(widget, container) {
     // ── Render ────────────────────────────────────────────────
     function renderGrid() {
         if (widget.data.habits.length === 0) {
-            // C5: shared copy from registry metadata.
             container.innerHTML = `<p class="habit-empty">${escapeHtml(emptyStateText(widget))}</p>`;
             return;
         }

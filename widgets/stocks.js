@@ -64,7 +64,6 @@ function renderStocks(widget, container) {
     function renderList() {
         listEl.innerHTML = '';
         if (widget.data.symbols.length === 0) {
-            // C5: shared copy from registry metadata.
             listEl.innerHTML = `<p class="stock-empty">${escapeHtml(emptyStateText(widget))}</p>`;
             return;
         }
