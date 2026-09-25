@@ -143,10 +143,15 @@ function renderStocks(widget, container) {
 
         // T5 — batched fetch: group symbols into chunks of 4 so we make
         // ceil(N/4) parallel call-groups instead of N fully-sequential ones.
-        // Each symbol gets a quote + time_series request; the two run in parallel
-        // within each chunk to stay under Twelve Data's free-tier rate limit.
+        //
+        // P2-7: each symbol costs TWO API calls (quote + time_series). A 4-ticker
+        // watchlist auto-refresh issues up to 8 concurrent calls — right at the free
+        // tier's ~8 credits/minute. To stay under the limit, we skip time_series on
+        // automatic refreshes (sparkline only updates on manual ↻). This halves the
+        // credit cost of auto-refresh to N calls instead of 2N.
         const CHUNK = 4;
         let failures = 0;
+        let rateLimited = false;
 
         for (let c = 0; c < symbols.length; c += CHUNK) {
             const chunk = symbols.slice(c, c + CHUNK);
@@ -170,6 +175,12 @@ function renderStocks(widget, container) {
                     );
                     if (isErr) {
                         failures++;
+                        // P2-7: detect rate-limit specifically so the status line can
+                        // tell the user to wait a minute instead of blaming their key.
+                        const errMsg = String(json.message || json.status || '').toLowerCase();
+                        if (/rate.?limit|too many requests|exceeded/i.test(errMsg)) {
+                            rateLimited = true;
+                        }
                         console.warn('twelvedata quote error for ' + symbol, json.message || json.status);
                         return; // keep cached price
                     }
@@ -206,26 +217,31 @@ function renderStocks(widget, container) {
                 }
 
                 // --- Time-series call (sparkline data) ------------------------------
-                try {
-                    const tsUrl = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol)
-                        + '&interval=1day&outputsize=20'   // ~last 20 trading days
-                        + '&apikey=' + encodeURIComponent(key);
-                    const res2 = await fetch(tsUrl, { mode: 'cors' });
-                    if (!res2.ok) return; // non-fatal — skip sparkline for this symbol
-                    const json2 = await res2.json();
-                    if (json2 && Array.isArray(json2.values) && json2.values.length >= 2) {
-                        if (target) {
-                            // values[] is newest-first; reverse so the sparkline reads left→right.
-                            target.sparkline = json2.values
-                                .slice(0, 20)
-                                .map(v => parseFloat(v.close))
-                                .reverse();
+                // P2-7: only fetch sparkline data on manual refresh (force=true).
+                // Automatic refreshes skip this to stay under the free-tier rate limit
+                // (~8 credits/min). The existing sparkline is kept as-is.
+                if (force) {
+                    try {
+                        const tsUrl = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol)
+                            + '&interval=1day&outputsize=20'   // ~last 20 trading days
+                            + '&apikey=' + encodeURIComponent(key);
+                        const res2 = await fetch(tsUrl, { mode: 'cors' });
+                        if (!res2.ok) return; // non-fatal — skip sparkline for this symbol
+                        const json2 = await res2.json();
+                        if (json2 && Array.isArray(json2.values) && json2.values.length >= 2) {
+                            if (target) {
+                                // values[] is newest-first; reverse so the sparkline reads left→right.
+                                target.sparkline = json2.values
+                                    .slice(0, 20)
+                                    .map(v => parseFloat(v.close))
+                                    .reverse();
+                            }
+                        } else {
+                            // No usable series — clear any stale sparkline so it doesn't linger.
+                            delete target.sparkline;
                         }
-                    } else {
-                        // No usable series — clear any stale sparkline so it doesn't linger.
-                        delete target.sparkline;
-                    }
-                } catch (_) { /* time-series is optional; ignore */ }
+                    } catch (_) { /* time-series is optional; ignore */ }
+                }
             }));
         }
 
@@ -236,7 +252,13 @@ function renderStocks(widget, container) {
         Dashboard.saveFullState();
         renderList();
         if (failures === symbols.length && key) {
-            setStatus('<p class="stock-status-err">Could not load live quotes (check the API key / rate limit). Showing cached prices.</p>');
+            // P2-7: distinguish rate-limit from other failures so the user knows
+            // to wait a minute instead of assuming their key is broken.
+            if (rateLimited) {
+                setStatus('<p class="stock-status-err">Rate limited by Twelve Data — wait a minute and try again. Showing cached prices.</p>');
+            } else {
+                setStatus('<p class="stock-status-err">Could not load live quotes (check the API key / rate limit). Showing cached prices.</p>');
+            }
         } else if (!key) {
             // no-op; handled above
         }
