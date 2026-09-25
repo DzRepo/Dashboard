@@ -109,18 +109,14 @@ header {
     color: var(--text-color);
 }
 [data-theme="dark"] #add-widget-btn,
-[data-theme="system"] #add-widget-btn,
-[data-theme="dark"] #settings-btn,
-[data-theme="system"] #settings-btn {
+[data-theme="dark"] #settings-btn {
     background: rgba(70, 72, 84, 0.9); /* visible mid-gray panel on the dark header */
     border-color: #3a3c46;
 }
 #add-widget-btn:hover,
 #settings-btn:hover { background: var(--accent-color); color: #fff; }
 [data-theme="dark"] #add-widget-btn:hover,
-[data-theme="system"] #add-widget-btn:hover,
-[data-theme="dark"] #settings-btn:hover,
-[data-theme="system"] #settings-btn:hover { border-color: transparent; }
+[data-theme="dark"] #settings-btn:hover { border-color: transparent; }
 
 button {
     padding: 8px 16px;
@@ -352,7 +348,6 @@ button:hover {
     background-size: cover;
     background-position: center;
     z-index: -1;
-    transition: background-image 0.5s;
 }
 
 .background-overlay-content {
@@ -411,20 +406,6 @@ button:hover {
     text-align: center;
     padding: 12px 0;
 }
-/* Shortcuts styles (base link; the card layout is handled by .shortcut-item-container) */
-.shortcut-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 4px 2px;
-    margin: 0;
-    border: none;
-    background: transparent;
-    text-decoration: none;
-    color: inherit;
-    min-width: 0;
-}
-
 /* World Clock Widget */
 .clock-list {
     display: flex;
@@ -701,7 +682,6 @@ button:hover {
     white-space: nowrap;
 }
 
-.weather-actions,
 .weather-error .weather-retry-btn,
 .weather-empty button {
     display: flex;
@@ -789,12 +769,6 @@ textarea.search-input::placeholder {
     line-height: 1.25;
 }
 
-.stock-symbol {
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    min-width: 48px;
-}
-
 .stock-name {
     opacity: 0.7;
     overflow: hidden;
@@ -823,12 +797,6 @@ a.stock-link:hover {
     font-weight: 600;
     font-size: 1rem;
     font-variant-numeric: tabular-nums;
-}
-
-.stocks-actions {
-    margin-top: 12px;
-    display: flex;
-    gap: 8px;
 }
 
 .stock-empty {
@@ -997,8 +965,7 @@ a.stock-link:hover {
     border-color: var(--color-danger);
     color: var(--color-danger);
 }
-[data-theme="dark"] .delete-list-btn,
-[data-theme="system"] .delete-list-btn {
+[data-theme="dark"] .delete-list-btn {
     background: rgba(70, 72, 84, 0.6);
     border-color: #3a3c46;
     color: #e5e5ea;
@@ -1126,23 +1093,6 @@ a.stock-link:hover {
 
 .delete-shortcut-btn:hover { color: var(--color-danger); }
 
-/* Collapsible add form */
-.shortcut-add-wrap {
-    margin-top: 8px;
-}
-
-.shortcut-add-toggle {
-    width: 100%;
-    padding: 8px;
-    border: 1px dashed var(--card-border);
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-.shortcut-add-toggle:hover { border-color: var(--accent-color); }
-
 .shortcuts-controls[hidden] { display: none; }
 
 .shortcuts-controls {
@@ -1160,14 +1110,6 @@ a.stock-link:hover {
     box-sizing: border-box;
 }
 
-/* ── Clock enhancements (inline add + day-offset badge) ─────────── */
-.clock-label-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-}
-
 .clock-day-badge {
     font-size: 10px;
     padding: 2px 8px;
@@ -1179,27 +1121,6 @@ a.stock-link:hover {
 
 .clock-day-badge.tomorrow  { background: rgba(46, 138, 87, 0.18); }
 .clock-day-badge.yesterday { background: rgba(214, 87, 51, 0.18); }
-
-.clock-add-row {
-    display: grid;
-    grid-template-columns: 1fr 1.3fr auto;
-    gap: 6px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--card-border);
-}
-
-.clock-add-row input {
-    min-width: 0;
-    padding: 8px 10px;
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    background: transparent;
-    color: inherit;
-    font-size: 13px;
-}
-
-.clock-add-btn { white-space: nowrap; }
 
 /* ── Search widget (stacked layout: provider row + multi-line query) ───
    C3: class renamed from .perplexity-* to .search-* to match the new type id. */
@@ -1367,8 +1288,7 @@ textarea.search-input {
 /* Future countdown values use the normal text color by default.
    In dark themes (near-white cards) they get an explicit high-contrast value so
    the "future" state stays visually distinct without going white-on-white on light. */
-[data-theme="dark"] .countdown-value.future,
-[data-theme="system"] .countdown-value.future { color: #ffffff; }
+[data-theme="dark"] .countdown-value.future { color: #ffffff; }
 
 .countdown-date {
     opacity: 0.6;
@@ -1611,8 +1531,7 @@ a.currency-row:focus-visible {
     color: #fff;
 }
 
-[data-theme="dark"] .habit-done,
-[data-theme="system"] .habit-done { color: #1a1a2e; }
+[data-theme="dark"] .habit-done { color: #1a1a2e; }
 
 .habit-empty {
     text-align: center;
@@ -1656,7 +1575,6 @@ a.currency-row:focus-visible {
 }
 
 .habit-remove-entry:hover { background: rgba(198, 40, 40, 0.2); }
-.habit-remove-entry { color: var(--color-danger); }
 
 /* ── Command palette (⌘K / Ctrl+K) ───────────────────
    A separate overlay from .modal-overlay so it doesn't fight the existing
@@ -1995,14 +1913,13 @@ button.danger {
     font-weight: 700;
 }
 
-[data-theme="dark"] button.danger, [data-theme="system"] button.danger {
+[data-theme="dark"] button.danger {
     border-color: var(--color-danger);
     color: var(--color-danger);
 }
 
 button.danger:hover { background: rgba(198, 40, 40, 0.1); }
-[data-theme="dark"] button.danger:hover,
-[data-theme="system"] button.danger:hover {
+[data-theme="dark"] button.danger:hover {
     background: rgba(248, 113, 113, 0.1);
 }
 
