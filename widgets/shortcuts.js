@@ -65,9 +65,16 @@ function renderShortcuts(widget, container) {
 
         const a = document.createElement('a');
         a.className = 'shortcut-item';
-        a.href = item.url;
-        a.target = item.openInNewTab ? '_blank' : '_self';
-        if (item.openInNewTab) a.rel = 'noopener noreferrer';
+        // P3-9: defense in depth — only set href when the URL is http(s).
+        // URLs are validated on import (registry sanitize) and in the Edit form,
+        // but a hand-edited/corrupted localStorage state could carry a
+        // javascript: URL straight into an anchor. Render as non-clickable text instead.
+        const isSafeUrl = /^https?:\/\//i.test(item.url || '');
+        if (isSafeUrl) {
+            a.href = item.url;
+            a.target = item.openInNewTab ? '_blank' : '_self';
+            if (item.openInNewTab) a.rel = 'noopener noreferrer';
+        }
         a.innerHTML = `
             ${faviconHtml}
             <span class="shortcut-label">${escapeHtml(item.label)}</span>
