@@ -81,12 +81,6 @@ function renderWeather(widget, container) {
             return;
         }
 
-        // Cache the latest price-style fields on the widget so a re-render can show them.
-        if (currentData && typeof currentData.temperature === 'number') {
-            widget.data.lastTemperature = currentData.temperature;
-            widget.data.lastFetchedAt = Date.now();
-        }
-
         loading = false;
         renderBody();
         // Announce the update to screen readers via the global live region.

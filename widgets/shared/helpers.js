@@ -117,29 +117,6 @@ function pruneHabitsLog(widget, maxAgeDays = 30) {
 }
 
 /**
- * Ask the user for a due date via prompt(). Returns an ISO "YYYY-MM-DD" string,
- * or null when cancelled / invalid. Kept dependency-free (no backend).
- */
-function promptDueDate(current) {
-    const toISO = (d) => d.toISOString().slice(0, 10);
-    let raw;
-    if (current && /^\d{4}-\d{2}-\d{2}$/.test(current)) {
-        raw = window.prompt('Due date (YYYY-MM-DD):', current);
-    } else {
-        const today = new Date();
-        raw = window.prompt('Due date (YYYY-MM-DD):', toISO(today));
-    }
-    if (!raw) return null;
-    raw = raw.trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-        const d = new Date(raw + 'T00:00:00');
-        if (!isNaN(d.getTime())) return raw;
-    }
-    window.alert('Please enter a date in YYYY-MM-DD format.');
-    return null;
-}
-
-/**
  * Widget Component Logic
  */
 function createWidgetContent(widget, container) {
@@ -181,7 +158,6 @@ Dashboard.truncate           = truncate;
 Dashboard.toLocalInputValue  = toLocalInputValue;
 Dashboard._dateKey           = _dateKey;
 Dashboard.pruneHabitsLog     = pruneHabitsLog;
-Dashboard.promptDueDate      = promptDueDate;
 Dashboard.createWidgetContent = createWidgetContent;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
