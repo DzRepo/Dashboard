@@ -232,7 +232,8 @@ function renderRss(widget, container) {
     container.appendChild(actions);
 
     loadAll();
-    actions.querySelector('.rss-refresh-btn').addEventListener('click', () => { bodyEl.innerHTML = '<p class="rss-status">Loading…</p>'; loadAll(); });
+    // Expose refresh for header ↻ and grid-delegated .rss-refresh-btn clicks.
+    widget.__rssRefresh = () => { bodyEl.innerHTML = '<p class="rss-status">Loading…</p>'; loadAll(); };
 }
 
 /**

@@ -189,6 +189,30 @@ function handleGridClick(e) {
         if (typeof widget.__currencyRetry === 'function') widget.__currencyRetry();
         return;
     }
+
+    // Habits: toggle today's cell (grid-delegated so re-renders don't stack listeners).
+    const habitCell = target.closest('.habit-cell');
+    if (habitCell && habitCell.classList.contains('habit-clickable') && card.contains(habitCell)) {
+        widget.data = widget.data || {};
+        if (typeof widget.data.log !== 'object' || widget.data.log === null) widget.data.log = {};
+        const habitId = habitCell.dataset.habitId;
+        const dateKey = habitCell.dataset.dateKey;
+        const arr = Array.isArray(widget.data.log[dateKey]) ? widget.data.log[dateKey] : [];
+        if (arr.includes(habitId)) {
+            widget.data.log[dateKey] = arr.filter(id => id !== habitId);
+        } else {
+            widget.data.log[dateKey] = arr.concat([habitId]);
+        }
+        saveFullState();
+        Dashboard.renderHabits(widget, contentContainer);
+        return;
+    }
+
+    // RSS: in-card Refresh.
+    if (target.classList.contains('rss-refresh-btn')) {
+        if (typeof widget.__rssRefresh === 'function') widget.__rssRefresh();
+        return;
+    }
 }
 
 // ── Delegated input / change handlers for live-updating controls ────────────

@@ -73,29 +73,7 @@ function renderHabits(widget, container) {
     }
 
     renderGrid();
-
-    // ── Toggle handler (delegated on the grid) ────────────────
-    function handleToggle(e) {
-        const cell = e.target.closest('.habit-cell');
-        if (!cell || !cell.classList.contains('habit-clickable')) return;
-
-        const habitId  = cell.dataset.habitId;
-        const dateKey  = cell.dataset.dateKey;
-
-        // Toggle: add or remove from today's log.
-        if (isDone(habitId, dateKey)) {
-            widget.data.log[dateKey] = (widget.data.log[dateKey] || []).filter(id => id !== habitId);
-        } else {
-            if (!Array.isArray(widget.data.log[dateKey])) widget.data.log[dateKey] = [];
-            widget.data.log[dateKey].push(habitId);
-        }
-
-        // Persist + re-render just this card.
-        Dashboard.saveFullState();
-        renderGrid();
-    }
-
-    container.addEventListener('click', handleToggle);
+    // Clicks are handled by handleGridClick (.habit-cell) — no per-render listener.
 }
 
 // P2-9: publish on the shared namespace.

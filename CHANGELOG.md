@@ -29,3 +29,11 @@ All notable changes to Personal Dashboard are documented here.
 - **addWidget:** Uses `Dashboard.genWidgetId()`.
 - **Stocks sanitize:** Keeps change/sparkline/`updatedAt` when valid.
 - **Fetch:** Shared `Dashboard.fetchWithTimeout` used by weather, stocks, RSS, and currency.
+
+### Step 4 — Architecture
+
+- **Sanitize shell:** `applyWidgetShell` preserves validated `id` / `icon` / `fillColor` / `fillOpacity` after type sanitize (used by `Storage.sanitizeWidget`).
+- **Registry refresh:** Weather, stocks, and RSS expose `refresh()`; header ↻ is driven by the registry instead of hard-coded types.
+- **Grid delegation:** Habit cell toggles and RSS refresh use `handleGridClick` (no per-render listeners).
+- **APP_SHELL sync:** New test `test/app-shell-sync.test.js` asserts `index.html` scripts match `sw.js` APP_SHELL.
+- **Deferred:** Full per-type `registry.js` split left for a follow-up (high churn / conflict risk).

@@ -336,6 +336,9 @@ WidgetRegistry['weather'] = {
         };
     },
     render: (widget, container) => root.Dashboard.renderWeather(widget, container),
+    refresh(widget) {
+        if (typeof widget.__weatherRefresh === 'function') widget.__weatherRefresh();
+    },
     applyEdit(widget, modalBody) {
         const readNum = (id) => {
             const el = document.getElementById(id);
@@ -471,6 +474,9 @@ WidgetRegistry['stocks'] = {
         return { config: {}, data: { symbols: [] } };
     },
     render: (widget, container) => root.Dashboard.renderStocks(widget, container),
+    refresh(widget) {
+        if (typeof widget.__stocksRefresh === 'function') widget.__stocksRefresh();
+    },
     applyEdit(widget, modalBody) {
         // Persist the edited ticker list.
         widget.data = widget.data || {};
@@ -616,6 +622,9 @@ WidgetRegistry['rss'] = {
         return { config: {}, data: { feeds: [] } };
     },
     render: (widget, container) => root.Dashboard.renderRss(widget, container),
+    refresh(widget) {
+        if (typeof widget.__rssRefresh === 'function') widget.__rssRefresh();
+    },
     applyEdit(widget, modalBody) {
         // Persist the edited feed list (optional label + url).
         widget.data = widget.data || {};
@@ -969,6 +978,39 @@ function getWidgetEntry(type) {
     return WidgetRegistry[type] || null;
 }
 
+/**
+ * Copy shared card chrome (icon / fill) and validate id onto a type-sanitized widget.
+ * Called after each entry.sanitize() so import keeps fillColor/fillOpacity/icon.
+ */
+function applyWidgetShell(raw, typed) {
+    if (!typed || typeof typed !== 'object') return null;
+    if (!raw || typeof raw !== 'object') return typed;
+
+    if (typeof raw.id === 'string' && /^[\w-]+$/.test(raw.id)) {
+        typed.id = raw.id;
+    } else if (typeof typed.id !== 'string' || !/^[\w-]+$/.test(typed.id)) {
+        typed.id = genWidgetId();
+    }
+
+    if (typeof raw.icon === 'string') {
+        const icon = raw.icon.trim().slice(0, 16);
+        if (icon) typed.icon = icon;
+        else delete typed.icon;
+    }
+
+    if (typeof raw.fillColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.fillColor)) {
+        typed.fillColor = raw.fillColor;
+        if (typeof raw.fillOpacity === 'number' && isFinite(raw.fillOpacity)) {
+            typed.fillOpacity = Math.min(1, Math.max(0.05, raw.fillOpacity));
+        }
+    } else {
+        delete typed.fillColor;
+        delete typed.fillOpacity;
+    }
+
+    return typed;
+}
+
 // ── Registration summary (diagnostic) ────────────────────────────────────────
 // P3-4: gated behind ?debug=1 so normal loads are quiet. If an earlier line in
 // this file threw at runtime, the count will be low — check with ?debug=1.
@@ -983,6 +1025,7 @@ if (typeof location !== 'undefined' && /[?&]debug=1(&|$)/.test(location.search))
     root.Dashboard.genWidgetId     = genWidgetId;
     root.Dashboard.getRegisteredTypes = getRegisteredTypes;
     root.Dashboard.getWidgetEntry  = getWidgetEntry;
+    root.Dashboard.applyWidgetShell = applyWidgetShell;
 
 })(typeof window !== 'undefined' ? window : globalThis);
 

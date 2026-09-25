@@ -343,7 +343,10 @@ const Storage = {
         if (getEntry) {
             const entry = getEntry(widget && widget.type);
             if (entry && typeof entry.sanitize === 'function') {
-                return entry.sanitize(widget);
+                const typed = entry.sanitize(widget);
+                const applyShell = root.Dashboard && typeof root.Dashboard.applyWidgetShell === 'function'
+                    ? root.Dashboard.applyWidgetShell : null;
+                return applyShell ? applyShell(widget, typed) : typed;
             }
         }
 

@@ -34,8 +34,10 @@ function createWidgetElement(widget) {
     // Delete now lives on the Edit page (see openEditWidgetModal's danger zone).
     // The header control is a gear icon that opens the same edit modal.
 
-    // T12: Weather + Stocks get a ↻ refresh icon next to the gear.
-    const showRefresh = (widget.type === 'weather' || widget.type === 'stocks');
+    // T12: network widgets get a ↻ refresh icon next to the gear when the registry
+    // exposes refresh().
+    const entry = Dashboard.getWidgetEntry && Dashboard.getWidgetEntry(widget.type);
+    const showRefresh = !!(entry && typeof entry.refresh === 'function');
     const refreshBtnHtml = showRefresh ? `
         <button class="action-btn action-icon" data-action="refresh" title="Refresh ${escapeHtml(widget.title)}" aria-label="Refresh ${escapeHtml(widget.title)}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>

@@ -380,14 +380,13 @@ function handleWidgetAction(widget, action) {
         case 'edit':
             openEditWidgetModal(widget);
             break;
-        case 'refresh':
-            // T12: header ↻ icon — call the widget's exposed refresh fn.
-            if (widget.type === 'weather' && typeof widget.__weatherRefresh === 'function') {
-                widget.__weatherRefresh();
-            } else if (widget.type === 'stocks' && typeof widget.__stocksRefresh === 'function') {
-                widget.__stocksRefresh();
+        case 'refresh': {
+            const entry = Dashboard.getWidgetEntry && Dashboard.getWidgetEntry(widget.type);
+            if (entry && typeof entry.refresh === 'function') {
+                entry.refresh(widget);
             }
             break;
+        }
         // Note: the card-header Delete button was removed; deletion now happens
         // from the Edit page's danger zone (#edit-delete).
     }
