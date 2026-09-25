@@ -11,6 +11,10 @@ function renderNotes(widget, container) {
     ta.placeholder = 'Jot something down… (autosaves as you type)';
     ta.value = widget.data.text || '';
 
+    // P3-10: register the debounce with the shared timer registry so a re-render
+    // (e.g. user types then immediately drags the card) doesn't orphan a pending
+    // save that would never fire. clearWidgetTimer() is called by the grid on every
+    // re-render, which flushes any pending timer.
     let saveTimer = null;
     function scheduleSave() {
         if (saveTimer) clearTimeout(saveTimer);
@@ -21,6 +25,19 @@ function renderNotes(widget, container) {
             updateTimestamp();
         }, 300);
     }
+
+    // Flush any pending debounced save when the widget is about to be re-rendered.
+    // The grid calls clearWidgetTimer(widget.id) before destroying the container;
+    // we hook into that by storing a flush callback on the widget.
+    widget.__notesFlush = () => {
+        if (saveTimer) {
+            clearTimeout(saveTimer);
+            saveTimer = null;
+            widget.data.text = ta.value;
+            widget.data.updatedAt = Date.now();
+            Dashboard.saveFullState();
+        }
+    };
 
     function updateTimestamp() {
         const tsEl = container.querySelector('.notes-timestamp');

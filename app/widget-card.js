@@ -97,6 +97,14 @@ function createWidgetElement(widget) {
         }
     }
 
+    // P3-10: flush any pending debounced save before re-rendering. The Notes
+    // widget stores a __notesFlush callback that captures the current textarea
+    // value and persists it, so keystrokes made just before a drag/re-render
+    // aren't lost when the old container is destroyed.
+    if (typeof widget.__notesFlush === 'function') {
+        try { widget.__notesFlush(); } catch (_) {}
+    }
+
     // Render widget-specific content
     const contentContainer = card.querySelector(`#content-${widget.id}`);
     Dashboard.createWidgetContent(widget, contentContainer);
