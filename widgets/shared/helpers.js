@@ -142,7 +142,9 @@ function createWidgetContent(widget, container) {
     // switch here was dead code — every registered type has a render() method, so the only
     // case that reaches here is an unknown/corrupt type id (already logged above). We show
     // a clear message instead of silently re-implementing renderers.
-    container.innerHTML = `<p>Unknown widget type: ${widget.type}</p>`;
+    const p = document.createElement('p');
+    p.textContent = 'Unknown widget type: ' + String(widget && widget.type != null ? widget.type : '');
+    container.replaceChildren(p);
 }
 
 // P2-9: publish on the shared namespace.

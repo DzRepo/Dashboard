@@ -207,23 +207,42 @@ function applySettings() {
     // Apply Background
     const bgOverlay = document.getElementById('background-overlay');
     if (bgOverlay) {
+        function setBgImage(src) {
+            if (!src) {
+                bgOverlay.style.backgroundImage = 'none';
+                return;
+            }
+            // Escape for use inside url("…"); fall back to a conservative replace.
+            const esc = (typeof CSS !== 'undefined' && typeof CSS.escape === 'function')
+                ? CSS.escape(src)
+                : String(src).replace(/["\\]/g, '\\$&');
+            bgOverlay.style.backgroundImage = `url("${esc}")`;
+        }
+
         // Use the URL branch when type is 'url', OR when a URL exists and type isn't 'upload'
         // (handles legacy state where the user saved a URL but type was still 'none').
         if ((background.type === 'url' || background.type !== 'upload') && background.imageUrl) {
-            // If the user entered a local absolute path (e.g. /Users/...),
-            // convert it to a file:/// URL so the browser can load it.
             let bgSrc = background.imageUrl;
-            if (bgSrc.startsWith('/') && !bgSrc.startsWith('//') && location.protocol === 'file:') {
-                bgSrc = 'file://' + encodeURIComponent(bgSrc).replace(/%2F/g, '/');
+            // Reject dangerous schemes; allow http(s), data:image, and intentional file: paths.
+            const schemeOk = /^(https?:|data:image\/|file:)/i.test(bgSrc)
+                || (bgSrc.startsWith('/') && !bgSrc.startsWith('//') && location.protocol === 'file:');
+            if (!schemeOk) {
+                setBgImage(null);
+            } else {
+                // If the user entered a local absolute path (e.g. /Users/...),
+                // convert it to a file:/// URL so the browser can load it.
+                if (bgSrc.startsWith('/') && !bgSrc.startsWith('//') && location.protocol === 'file:') {
+                    bgSrc = 'file://' + encodeURIComponent(bgSrc).replace(/%2F/g, '/');
+                }
+                setBgImage(bgSrc);
             }
-            bgOverlay.style.backgroundImage = `url(${bgSrc})`;
         } else if (background.type === 'upload') {
             // T6: imageDataUrl may be present inline (just uploaded / migrated) or
             // loaded from IDB by _loadBgImageFromIdb(). Either way it's on state now.
             const src = background.imageDataUrl;
-            bgOverlay.style.backgroundImage = src ? `url(${src})` : 'none';
+            setBgImage(src && /^data:image\//i.test(src) ? src : null);
         } else {
-            bgOverlay.style.backgroundImage = 'none';
+            setBgImage(null);
         }
 
         // P3-3: use the CSS variable instead of an inline style so 0% opacity

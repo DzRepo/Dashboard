@@ -143,7 +143,12 @@ function renderRss(widget, container) {
         block.className = 'rss-feed';
         const labelEl = document.createElement('h4');
         labelEl.className = 'rss-feed-label';
-        labelEl.textContent = feed.label || new URL(feed.url).hostname;
+        let feedLabel = feed.label || '';
+        if (!feedLabel) {
+            try { feedLabel = new URL(feed.url).hostname; }
+            catch (_) { feedLabel = String(feed.url || 'Feed'); }
+        }
+        labelEl.textContent = feedLabel;
         block.appendChild(labelEl);
 
         if (state2.loading) {
@@ -157,7 +162,8 @@ function renderRss(widget, container) {
             ul.className = 'rss-items';
             state2.items.forEach(item => {
                 const li = document.createElement('li');
-                if (item.link) {
+                const linkOk = item.link && Dashboard.Storage.isValidHttpUrl(item.link);
+                if (linkOk) {
                     const a = document.createElement('a');
                     a.href = item.link;
                     a.target = '_blank';

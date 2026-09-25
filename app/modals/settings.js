@@ -70,12 +70,12 @@ function openSettingsModal() {
         <h3 style="margin:4px 0 8px;">Background</h3>
         <div class="settings-group">
             <label>Background Image URL:</label>
-            <input type="text" id="bg-url" value="${state.settings.background.imageUrl || ''}">
+            <input type="text" id="bg-url" value="${escapeAttr(state.settings.background.imageUrl || '')}">
         </div>
         <div class="settings-group">
             <label>Upload Background:</label>
             <input type="file" id="bg-upload" accept="image/*">
-            <p style="font-size: 10px; margin-top: 5px; opacity: 0.7;">Note: Large images may exceed localStorage limits.</p>
+            <p style="font-size: 10px; margin-top: 5px; opacity: 0.7;">Uploads are stored in IndexedDB (not localStorage).</p>
         </div>
         <div class="settings-group">
             <label>Overlay Opacity:</label>
@@ -178,7 +178,14 @@ function openSettingsModal() {
         const stockLinkEl = document.getElementById('stock-link-template');
         if (stockLinkEl) {
             const tmpl = stockLinkEl.value.trim();
-            state.settings.stockLinkTemplate = tmpl || null;
+            if (!tmpl) {
+                state.settings.stockLinkTemplate = null;
+            } else if (tmpl.includes('{ticker}') && Dashboard.Storage.isValidHttpUrl(tmpl.replace('{ticker}', 'AAPL'))) {
+                state.settings.stockLinkTemplate = tmpl;
+            } else {
+                state.settings.stockLinkTemplate = null;
+                alert('Stock link template must be an http(s) URL containing {ticker}. Cleared to default.');
+            }
         }
         const bgUrlVal = (document.getElementById('bg-url').value || '').trim();
         state.settings.background.imageUrl = bgUrlVal || null;

@@ -88,14 +88,13 @@ function renderStocks(widget, container) {
             const displayName = s.name || s.symbol;
             let nameHtml;
             const _st = Dashboard.state;
+            const DEFAULT_STOCK_LINK = 'https://www.google.com/finance/beta/quote/' + encodeURIComponent(s.symbol);
+            let url = DEFAULT_STOCK_LINK;
             if (_st && _st.settings && typeof _st.settings.stockLinkTemplate === 'string' && _st.settings.stockLinkTemplate.includes('{ticker}')) {
-                const url = _st.settings.stockLinkTemplate.replace('{ticker}', encodeURIComponent(s.symbol));
-                nameHtml = `<a class="stock-name stock-link" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayName)}</a>`;
-            } else {
-                // Fallback default template
-                const url = 'https://www.google.com/finance/beta/quote/' + encodeURIComponent(s.symbol);
-                nameHtml = `<a class="stock-name stock-link" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayName)}</a>`;
+                const candidate = _st.settings.stockLinkTemplate.replace('{ticker}', encodeURIComponent(s.symbol));
+                if (Dashboard.Storage.isValidHttpUrl(candidate)) url = candidate;
             }
+            nameHtml = `<a class="stock-name stock-link" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(displayName)}</a>`;
 
             row.innerHTML = `
                 ${nameHtml}
