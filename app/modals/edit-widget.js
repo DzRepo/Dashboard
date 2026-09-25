@@ -24,6 +24,8 @@ function openAddWidgetModal() {
             ${typeButtons}
         </div>
     `;
+    // P2-1: set the accessible name so screen readers announce "Add New Widget".
+    _setModalTitle('Add New Widget');
     modalContainer.hidden = false;
     _focusIntoModal();
 
@@ -145,6 +147,8 @@ function openEditWidgetModal(widget) {
         </div>
         ${deleteHtml}
     `;
+    // P2-1: set the accessible name so screen readers announce "Edit Widget".
+    _setModalTitle('Edit Widget');
     modalContainer.hidden = false;
     _focusIntoModal();
 

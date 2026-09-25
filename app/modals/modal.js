@@ -16,6 +16,16 @@ function closeModal() {
 }
 
 /**
+ * P2-1: set the modal's accessible name. The #modal-title element is referenced
+ * by aria-labelledby on #modal-container; without this, screen readers announce
+ * every dialog as "Dialog". Call with the modal's title before showing it.
+ */
+function _setModalTitle(title) {
+    const el = document.getElementById('modal-title');
+    if (el) el.textContent = title || 'Dialog';
+}
+
+/**
  * Focus management for modals: remember the trigger, then move focus into the
  * dialog (first input or first button). Call right after setting modalContainer.hidden=false.
  */
@@ -49,3 +59,4 @@ function _trapModalFocus(e) {
 Dashboard.closeModal = closeModal;
 Dashboard._focusIntoModal = _focusIntoModal;
 Dashboard._trapModalFocus = _trapModalFocus;
+Dashboard._setModalTitle = _setModalTitle;

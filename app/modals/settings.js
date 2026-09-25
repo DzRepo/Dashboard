@@ -114,6 +114,8 @@ function openSettingsModal() {
         <button id="import-data">Import JSON</button>
         <button id="reset-data" style="color: red;">Reset Dashboard</button>
     `;
+    // P2-1: set the accessible name so screen readers announce "Settings".
+    _setModalTitle('Settings');
     modalContainer.hidden = false;
     _focusIntoModal();
 

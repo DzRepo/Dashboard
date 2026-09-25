@@ -69,6 +69,7 @@
     "closeModal": "readonly",
     "_focusIntoModal": "readonly",
     "_trapModalFocus": "readonly",
+    "_setModalTitle": "readonly",
 
     // toasts.js (used by modals/).
     "showUndoToast": "readonly",
