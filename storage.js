@@ -352,6 +352,14 @@ const Storage = {
                 throw new Error('Invalid data structure');
             }
 
+            // P3-8: warn when importing from a newer version. The migration loop below
+            // only runs forward (v < CURRENT_VERSION), so a newer export passes through
+            // unmigrated. Don't silently accept — let the user know some features may not work.
+            if (data.version > CURRENT_VERSION) {
+                console.warn('Import: data is from a newer version (' + data.version +
+                    ' vs current ' + CURRENT_VERSION + '); some features may not work.');
+            }
+
             // Run the same version-migration chain as getData() so imports from older
             // builds (v1/v2/…) get per-version fixes — e.g. v1→v2 `span` normalization
             // and settings backfilling — instead of skipping straight to CURRENT_VERSION.
