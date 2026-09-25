@@ -217,18 +217,30 @@ Treat an exported JSON file as a personal document: it contains your notes, list
 - **RSS card stuck on "Loading…" or errors** — check *Settings → CORS Proxy URL* is set (see above); verify with `curl` that your worker returns 200 for one of your feeds; otherwise the feed host may be down or blocking bots.
 - **Stocks widget empty** — no Twelve Data key saved yet, or a free-tier rate limit; add/verify the key in Settings and refresh the card (↻).
 - **Weather shows "Your Location" prompt** — geolocation was denied; set an explicit city or coordinates on the widget's edit page.
-- **UI looks stale after you deploy new code** — [sw.js](sw.js) caches the app shell *cache-first* and only swaps when its `CACHE_NAME` version string changes. Bump that constant (e.g. `-v2` → `-v3`) on every release, redeploy, then hard-refresh once. Old caches are garbage-collected automatically by the worker's activate step.
+- **UI looks stale after you deploy new code** — see the [Deploy checklist](#deploy-checklist) below.
 - **PWA won't install** — you're probably opening via `file://`; serve over HTTP(S) as described above.
+
+## Deploy checklist
+
+The service worker ([sw.js](sw.js)) caches the app shell **cache-first** and only swaps when `CACHE_NAME` changes. If you deploy new JS/CSS without bumping the version, PWA/HTTP users will keep getting stale code from cache. **Every release:**
+
+1. **Bump** `CACHE_NAME` in [sw.js](sw.js) (e.g. `'personal-dashboard-v3'` → `'personal-dashboard-v4'`).
+2. **Deploy** the updated files to your host.
+3. **Hard-refresh once** (⌘⇧R / Ctrl+Shift+R) so the browser fetches the new `sw.js` and triggers a re-install. The old cache is garbage-collected automatically by the worker's `activate` handler.
+
+> **Why this matters:** a v1→v2 incident (see [CHANGELOG.md](CHANGELOG.md)) showed that stale cached JS can cause "Unknown widget type" regressions for PWA users. The bump is one line; skipping it costs a support round.
 
 ## Project layout
 
-| File | Purpose |
+| File / folder | Purpose |
 |---|---|
 | [index.html](index.html) | App shell: header, grid, modals, command palette markup |
-| [app.js](app.js) | Boot/state, settings & edit modals, drag-and-drop reorder, command palette, toasts/undo |
-| [widgets.js](widgets.js) | All widget renderers + shared helpers (escaping, sparkline, timer registry) and the RSS fetch pipeline |
+| [app/](app/) | Boot/state, settings & edit modals, drag-and-drop reorder, command palette, toasts/undo |
+| [widgets/](widgets/) | One file per widget type + shared helpers (escaping, sparkline, timer registry) and the RSS fetch pipeline |
 | [registry.js](registry.js) | `WidgetRegistry` — per-type defaults, edit UI, sanitization; adding a type starts here |
 | [storage.js](storage.js) | localStorage/IndexedDB persistence, version migrations, import/export/reset |
 | [sw.js](sw.js) | Service worker: app-shell caching for offline/PWA use |
 | [style.css](style.css) | Theming (CSS variables + `data-theme`) and all component styles |
 | [manifest.webmanifest](manifest.webmanifest), icons | PWA metadata and install icons |
+| [test/](test/) | Dev-only unit tests (Node's built-in runner); never loaded by the page |
+| [CHANGELOG.md](CHANGELOG.md) | Notable change history (SW incidents, architecture decisions) |
