@@ -83,9 +83,16 @@ function loadFile(name) {
   vm.runInContext(code, context, { filename: name });
 }
 
-// Order matches index.html: storage → widgets → registry, then app.js.
+// Order matches index.html: storage → widget files (shared first) → registry, then app.js.
 loadFile('storage.js');
-loadFile('widgets.js');
+const WIDGET_FILES = [
+  'widgets/shared/helpers.js',
+  'widgets/shortcuts.js', 'widgets/lists.js', 'widgets/clock.js',
+  'widgets/search.js', 'widgets/weather.js', 'widgets/notes.js',
+  'widgets/stocks.js', 'widgets/countdown.js', 'widgets/rss.js',
+  'widgets/pomodoro.js', 'widgets/currency.js', 'widgets/habits.js'
+];
+for (const f of WIDGET_FILES) loadFile(f);
 loadFile('registry.js');
 
 // Pre-seed localStorage with a complete v5 default state so app.js's init()
@@ -95,11 +102,24 @@ const _seed = sandbox.Dashboard.Storage._defaultState();
 _seed.settings.theme = 'light'; // avoid the matchMedia system-theme path
 sandbox.localStorage.setItem('personalDashboard:data', JSON.stringify(_seed));
 
-// app.js's IIFE ends with a guarded boot: `if (typeof window !== 'undefined') Dashboard.init()`.
-// In the VM, sandbox.window IS defined (we set it above), so init() WILL run.
-// The stubbed DOM makes all its operations no-ops, which is fine for tests that only
-// exercise pure helpers (hexToRgb, adjustFillForTheme, etc.).
-loadFile('app.js');
+// P2-10: app split into app/ files, loaded in dependency order (matches index.html).
+// The last file (boot.js) ends with a guarded boot: `if (typeof window !== 'undefined')
+// Dashboard.init()`. In the VM, sandbox.window IS defined (we set it above), so init()
+// WILL run. The stubbed DOM makes all its operations no-ops, which is fine for tests
+// that only exercise pure helpers (hexToRgb, adjustFillForTheme, etc.).
+const APP_FILES = [
+  'app/state.js',
+  'app/toasts.js',
+  'app/dnd.js',
+  'app/widget-card.js',
+  'app/grid.js',
+  'app/palette.js',
+  'app/modals/modal.js',
+  'app/modals/edit-widget.js',
+  'app/modals/settings.js',
+  'app/boot.js'
+];
+for (const f of APP_FILES) loadFile(f);
 
 // Expose the namespace for tests. All public API is on sandbox.Dashboard.
 module.exports = {

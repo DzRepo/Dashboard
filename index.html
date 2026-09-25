@@ -7,7 +7,7 @@
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.webmanifest">
-    <!-- C13: default (light) accent; app.js updates this per-theme at runtime. -->
+    <!-- C13: default (light) accent; app/boot.js updates this per-theme at runtime. -->
     <meta id="meta-theme-color" name="theme-color" content="#007AFF">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -65,16 +65,41 @@
         </div>
 
         <!-- Undo toasts: transient, dismissible notifications with an optional Undo button.
-             Rendered by app.js (showUndoToast). Container is a fixed region; individual
+             Rendered by app/toasts.js (showUndoToast). Container is a fixed region; individual
              toasts stack from the bottom-right and auto-dismiss after ~6s. -->
         <div id="undo-toast-region" class="toast-region" aria-live="polite" aria-atomic="false"></div>
 
         <!-- Live region for status announcements (e.g. "Weather updated", "Saved"). -->
         <div id="status-live-region" class="visually-hidden" role="status" aria-live="polite"></div>
     </div>
+    <!-- P2-10: widgets split into per-type files. Load shared helpers first, then each renderer.
+         All are classic scripts sharing the global scope; namespace footers publish to Dashboard. -->
     <script src="storage.js"></script>
-    <script src="widgets.js"></script>
+    <script src="widgets/shared/helpers.js"></script>
+    <script src="widgets/shortcuts.js"></script>
+    <script src="widgets/lists.js"></script>
+    <script src="widgets/clock.js"></script>
+    <script src="widgets/search.js"></script>
+    <script src="widgets/weather.js"></script>
+    <script src="widgets/notes.js"></script>
+    <script src="widgets/stocks.js"></script>
+    <script src="widgets/countdown.js"></script>
+    <script src="widgets/rss.js"></script>
+    <script src="widgets/pomodoro.js"></script>
+    <script src="widgets/currency.js"></script>
+    <script src="widgets/habits.js"></script>
     <script src="registry.js"></script>
-    <script src="app.js"></script>
+    <!-- P2-10: app split into app/ (loaded in dependency order; boot.js last — it wires
+         listeners, calls Dashboard.init(), and publishes the shared globals). -->
+    <script src="app/state.js"></script>
+    <script src="app/toasts.js"></script>
+    <script src="app/dnd.js"></script>
+    <script src="app/widget-card.js"></script>
+    <script src="app/grid.js"></script>
+    <script src="app/palette.js"></script>
+    <script src="app/modals/modal.js"></script>
+    <script src="app/modals/edit-widget.js"></script>
+    <script src="app/modals/settings.js"></script>
+    <script src="app/boot.js"></script>
 </body>
 </html>

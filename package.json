@@ -5,7 +5,7 @@
   "description": "Local-first personal dashboard (classic scripts, file://-safe). Dev-only tooling below is never loaded by the page.",
   "scripts": {
     "test": "node --test \"test/**/*.test.js\"",
-    "lint": "eslint *.js"
+    "lint": "eslint *.js widgets/*.js widgets/shared/*.js app/*.js app/modals/*.js"
   },
   "devDependencies": {
     "eslint": "^8.57.0"

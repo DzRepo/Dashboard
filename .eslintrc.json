@@ -9,11 +9,101 @@
     "sourceType": "script"
   },
   "globals": {
-    // P2-9: the Dashboard namespace is created by storage.js and published on window.
-    // Referenced bare in app.js's UMD footer (Dashboard.init()).
-    "Dashboard": "readonly",
+    // P2-9/P2-10: the Dashboard namespace is created by storage.js and published on window.
+    // Referenced bare in UMD footers (Dashboard.init()).
+    "Dashboard": "writable",
     // Node.js module system — used in UMD footers (guarded by typeof checks).
-    "module": "readonly"
+    "module": "readonly",
+
+    // ── Cross-file globals (classic scripts share the global scope) ─────────────
+    // P2-10: widgets are split into per-type files. Each file defines its render
+    // functions at the top level (globals) and uses helpers from shared/helpers.js.
+    // These are declared here so no-undef passes; the namespace footers make the
+    // public API explicit even though the mechanism is still shared globals.
+    "escapeHtml": "readonly",
+    "escapeAttr": "readonly",
+    "toLocalInputValue": "readonly",
+    "truncate": "readonly",
+    "emptyStateText": "readonly",
+    "cachedDisplayName": "readonly",
+    "safeDomainForFavicon": "readonly",
+    "_dateKey": "readonly",
+    "setWidgetTimer": "readonly",
+    "clearWidgetTimer": "readonly",
+    "clearAllWidgetTimers": "readonly",
+
+    // ── app/ split-file globals (classic scripts share the global scope) ───────
+    // app/state.js defines state + DOM refs + escape aliases; every other app file
+    // reads them as bare globals. boot.js defines the UI/render/modal functions and
+    // publishes saveFullState/announceStatus/color utils on Dashboard.
+    "state": "readonly",
+    "dashboardGrid": "readonly",
+    "addWidgetBtn": "readonly",
+    "settingsBtn": "readonly",
+    "modalContainer": "readonly",
+    "modalBody": "readonly",
+    "lastFocusedBeforeModal": "writable",
+
+    // boot.js UI + render (used by modals/, dnd, palette).
+    "announceStatus": "readonly",
+    "_applyUiScale": "readonly",
+    "_applyGridColumns": "readonly",
+    "applySettings": "readonly",
+    "hexToRgb": "readonly",
+    "rgbaString": "readonly",
+    "adjustFillForTheme": "readonly",
+    "renderDashboard": "readonly",
+    "saveFullState": "readonly",
+    "closeModal": "readonly",
+    "_focusIntoModal": "readonly",
+    "addWidget": "readonly",
+
+    // modals/edit-widget.js (used by boot.js handleWidgetAction + init).
+    "openAddWidgetModal": "readonly",
+    "openEditWidgetModal": "readonly",
+
+    // modals/settings.js (used by boot.js init).
+    "openSettingsModal": "readonly",
+
+    // modals/modal.js (shared modal plumbing; used by boot + all open functions).
+    "closeModal": "readonly",
+    "_focusIntoModal": "readonly",
+    "_trapModalFocus": "readonly",
+
+    // toasts.js (used by modals/).
+    "showUndoToast": "readonly",
+
+    // grid.js (delegated handlers; used by boot.js init + handleWidgetAction).
+    "handleGridClick": "readonly",
+    "handleGridInput": "readonly",
+    "handleGridChange": "readonly",
+    "handleGridKeypress": "readonly",
+    "handleGlobalShortcuts": "readonly",
+    "runPerplexitySearch": "readonly",
+
+    // widget-card.js (used by boot.js renderDashboard).
+    "createWidgetElement": "readonly",
+
+    // boot.js widget actions (used by grid.js handleGridClick).
+    "handleWidgetAction": "readonly",
+
+    // dnd.js (used by boot.js createWidgetElement + init).
+    "handleDragStart": "readonly",
+    "handleDragEnd": "readonly",
+    "handleDragOver": "readonly",
+    "handleDrop": "readonly",
+    "getDropPosition": "readonly",
+    "ensureDropIndicator": "readonly",
+    "showDropIndicator": "readonly",
+    "showDropIndicatorAtEnd": "readonly",
+    "clearDropIndicator": "readonly",
+    "handleGridDragOver": "readonly",
+    "handleGridDragLeave": "readonly",
+    "handleGridDrop": "readonly",
+    "commitReorder": "readonly",
+    "commitReorderToEnd": "readonly",
+    "persistReorder": "readonly",
+    "reorderWidgetByOffset": "readonly"
   },
   "rules": {
     // no-undef is the key rule: it mechanically exposes hidden global coupling.

@@ -14,7 +14,10 @@
 // Bumped v1→v2 on 2026-09-13: T1–T7 changed all JS files; the SW was still
 // serving stale cached copies to PWA/HTTP users, causing "Unknown widget type"
 // regressions. The activate handler below deletes non-matching caches automatically.
-const CACHE_NAME = 'personal-dashboard-v2';
+// Bumped v2→v3 on 2026-09-24: P2-10 split widgets.js into per-type files under
+// widgets/ and will split app.js into app/ — the asset list below changed, so a
+// cache bump is required (see README Deploy checklist).
+const CACHE_NAME = 'personal-dashboard-v3';
 // I4: kept a single canonical key ('./index.html') — the bare './' entry was
 // redundant and caused duplicate cache entries. The navigate handler below also
 // uses './index.html' as its put() target, so all paths agree on one key.
@@ -22,9 +25,32 @@ const APP_SHELL = [
     './index.html',          // start_url (canonical)
     './style.css',
     './storage.js',
-    './widgets.js',
+    // P2-10: widgets split into per-type files (shared helpers first, then renderers).
+    './widgets/shared/helpers.js',
+    './widgets/shortcuts.js',
+    './widgets/lists.js',
+    './widgets/clock.js',
+    './widgets/search.js',
+    './widgets/weather.js',
+    './widgets/notes.js',
+    './widgets/stocks.js',
+    './widgets/countdown.js',
+    './widgets/rss.js',
+    './widgets/pomodoro.js',
+    './widgets/currency.js',
+    './widgets/habits.js',
     './registry.js',
-    './app.js',
+    // P2-10: app split into app/ (loaded in dependency order; boot last).
+    './app/state.js',
+    './app/toasts.js',
+    './app/dnd.js',
+    './app/widget-card.js',
+    './app/grid.js',
+    './app/palette.js',
+    './app/modals/modal.js',
+    './app/modals/edit-widget.js',
+    './app/modals/settings.js',
+    './app/boot.js',
     './manifest.webmanifest',
     // Icons referenced by the manifest + <link> tags.
     './icon-16.png',
