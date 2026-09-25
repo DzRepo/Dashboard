@@ -34,6 +34,11 @@ const DEFAULT_STATE = {
         // Optional CORS proxy endpoint used to fetch cross-origin RSS feeds
         // around browser CORS blocks. Supports a {url} placeholder for the feed URL.
         corsProxyUrl: '',
+        // P1-7: opt-in flag for third-party public proxy fallbacks (allorigins,
+        // corsproxy.io, codetabs). Default off — routing a user's feed URL through
+        // strangers' public proxies is flaky and a mild privacy smell. The user's own
+        // proxy (corsProxyUrl) is always tried first when set.
+        rssAllowPublicProxies: false,
         background: {
             type: 'none',
             imageUrl: null,

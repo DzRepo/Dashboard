@@ -88,7 +88,14 @@ function openSettingsModal() {
         <div class="settings-group">
             <label>CORS Proxy URL (RSS feeds, optional):</label>
             <input type="text" id="cors-proxy-url" placeholder="e.g. https://myproxy.example.com/proxy?url={url}" value="${escapeHtml(state.settings.corsProxyUrl || '')}">
-            <p style="font-size:10px;opacity:.7;margin-top:4px;">Browsers block cross-origin RSS feeds (CORS). Public proxies are often down. If you have a working proxy endpoint, paste it here — use the placeholder <code>{url}</code> where the feed URL should go. Leave blank to rely on built-in public proxies only.</p>
+            <p style="font-size:10px;opacity:.7;margin-top:4px;">Browsers block cross-origin RSS feeds (CORS). If you have a working proxy endpoint, paste it here — use the placeholder <code>{url}</code> where the feed URL should go. The README recommends running your own Cloudflare Worker (see RSS section).</p>
+        </div>
+        <div class="settings-group">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" id="rss-allow-public-proxies" ${state.settings.rssAllowPublicProxies ? 'checked' : ''}>
+                Allow third-party public proxies for RSS
+            </label>
+            <p style="font-size:10px;opacity:.7;margin-top:4px;">When enabled, feeds that fail via direct fetch and your own proxy will also be tried through well-known public proxies (allorigins, corsproxy.io, codetabs). These are unreliable and route your feed URL through third-party servers. Default: off.</p>
         </div>
         <hr>
         <h3 style="margin:8px 0 4px;">Stocks &amp; APIs</h3>
@@ -162,6 +169,9 @@ function openSettingsModal() {
 
         state.settings.twelvedataApiKey = (document.getElementById('twelvedata-key') ? document.getElementById('twelvedata-key').value : '').trim();
         state.settings.corsProxyUrl = (document.getElementById('cors-proxy-url') ? document.getElementById('cors-proxy-url').value : '').trim();
+        // P1-7: opt-in flag for third-party public RSS proxy fallbacks.
+        const rssProxyEl = document.getElementById('rss-allow-public-proxies');
+        state.settings.rssAllowPublicProxies = rssProxyEl ? rssProxyEl.checked : false;
         // T14: Stock link URL template.
         const stockLinkEl = document.getElementById('stock-link-template');
         if (stockLinkEl) {
