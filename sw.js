@@ -67,10 +67,18 @@ const APP_SHELL = [
     './maskable-512.png'
 ];
 
+// P2-6: cache items individually instead of the atomic cache.addAll().
+// addAll() is all-or-nothing: if ANY one asset 404s (e.g. someone deletes
+// maskable-512.png), the entire install cache silently fails and there is no
+// offline shell at all. Caching each URL independently means one missing icon
+// degrades to "missing icon" instead of killing the whole offline mode.
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-            .catch(err => console.warn('[sw] install: addAll failed', err))
+        caches.open(CACHE_NAME).then((cache) =>
+            Promise.all(APP_SHELL.map(u =>
+                cache.add(u).catch(err => console.warn('[sw] install: failed to cache', u, err))
+            ))
+        )
     );
 });
 
