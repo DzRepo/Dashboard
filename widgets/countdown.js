@@ -8,6 +8,8 @@ function renderCountdown(widget, container) {
     widget.data = widget.data || {};
     if (!Array.isArray(widget.data.events)) widget.data.events = [];
 
+    container.innerHTML = '';
+
     const listEl = document.createElement('div');
     listEl.className = 'countdown-list';
     container.appendChild(listEl);

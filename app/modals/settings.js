@@ -271,8 +271,37 @@ function openSettingsModal() {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = ev => {
-                Dashboard.Storage.importData(ev.target.result);
-                closeModal();
+                const result = Dashboard.Storage.importData(ev.target.result);
+                if (!result || !result.ok || !result.data) {
+                    closeModal();
+                    return;
+                }
+                // Apply into the live in-memory state (mutate in place so closures stay valid).
+                const imported = result.data;
+                state.widgets = imported.widgets;
+                state.settings = imported.settings;
+                state.version = imported.version;
+                // Keep bg data URL available for immediate paint when present.
+                const bg = state.settings && state.settings.background;
+                const finish = () => {
+                    applySettings();
+                    renderDashboard();
+                    closeModal();
+                    const droppedNote = result.dropped
+                        ? ` (${result.dropped} widget${result.dropped === 1 ? '' : 's'} dropped)`
+                        : '';
+                    showUndoToast(`Imported ${result.kept} widget${result.kept === 1 ? '' : 's'}${droppedNote}`, null);
+                };
+                if (bg && bg.hasIdbImage && !bg.imageDataUrl) {
+                    Dashboard.Storage._idbGetBgImage().then((dataUrl) => {
+                        if (typeof dataUrl === 'string' && dataUrl.length > 0) {
+                            bg.imageDataUrl = dataUrl;
+                        }
+                        finish();
+                    }).catch(() => finish());
+                } else {
+                    finish();
+                }
             };
             reader.readAsText(file);
         };

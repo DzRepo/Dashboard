@@ -41,22 +41,24 @@ function showUndoToast(label, onUndo) {
     `;
 
     let dismissed = false;
-
-    // P2-3: track the leave timer so it can be cleared on re-hover and in
-    // dismiss(). The old code scheduled an untracked 2 s setTimeout on every
-    // mouseleave — re-entering the toast within that window still dismissed it,
-    // and repeated leave/enter cycles stacked multiple timers.
-    let autoTimer = setTimeout(dismiss, undoToasts.autoDismissMs);
+    let autoTimer = null;
     let leaveTimer = null;
 
-    const dismiss = () => {
+    // Function declaration (not const) so setTimeout can reference it without TDZ.
+    function dismiss() {
         if (dismissed) return;
         dismissed = true;
         clearTimeout(autoTimer);
         if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
         el.classList.add('leaving');
         setTimeout(() => el.remove(), 200);
-    };
+    }
+
+    // P2-3: track the leave timer so it can be cleared on re-hover and in
+    // dismiss(). The old code scheduled an untracked 2 s setTimeout on every
+    // mouseleave — re-entering the toast within that window still dismissed it,
+    // and repeated leave/enter cycles stacked multiple timers.
+    autoTimer = setTimeout(dismiss, undoToasts.autoDismissMs);
 
     if (onUndo) {
         el.querySelector('.toast-undo-btn').addEventListener('click', () => {

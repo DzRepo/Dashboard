@@ -288,10 +288,26 @@ const Storage = {
     },
 
     /**
-     * Exports the dashboard data as a JSON string.
+     * Exports the dashboard data as a JSON download.
+     * Async: when a background upload lives in IndexedDB, embeds imageDataUrl in the
+     * payload so export→import round-trips keep the image.
      */
-    exportData() {
+    async exportData() {
         const data = this.getData();
+        const bg = (data.settings && data.settings.background) || {};
+        if (bg.hasIdbImage && !bg.imageDataUrl) {
+            try {
+                const dataUrl = await this._idbGetBgImage();
+                if (typeof dataUrl === 'string' && dataUrl.length > 0) {
+                    data.settings = data.settings || {};
+                    data.settings.background = data.settings.background || {};
+                    data.settings.background.imageDataUrl = dataUrl;
+                    data.settings.background.type = data.settings.background.type || 'upload';
+                }
+            } catch (err) {
+                console.warn('Export: failed to read bg image from IndexedDB', err);
+            }
+        }
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -344,6 +360,8 @@ const Storage = {
 
     /**
      * Imports dashboard data from a JSON string.
+     * On success returns `{ ok: true, data, kept, dropped }`; on failure `{ ok: false }`.
+     * Callers must apply `data` into the live in-memory state and re-render.
      */
     importData(jsonString) {
         try {
@@ -367,10 +385,12 @@ const Storage = {
                 data = this.migrate(data);
             }
 
+            const rawCount = data.widgets.length;
             // Sanitize each widget; drop any that fail validation.
             const sanitized = data.widgets
                 .map(w => this.sanitizeWidget(w))
                 .filter(w => w !== null);
+            const dropped = rawCount - sanitized.length;
 
             // Re-index positions for a clean layout.
             sanitized.forEach((w, i) => { w.position = i; });
@@ -397,11 +417,11 @@ const Storage = {
                 }).catch(err => console.warn('Import: failed to store bg image in IDB', err));
             }
 
-            return true;
+            return { ok: true, data: cleanData, kept: sanitized.length, dropped };
         } catch (e) {
             console.error('Import failed:', e);
             alert('Failed to import dashboard data. The format might be incorrect.');
-            return false;
+            return { ok: false };
         }
     },
 

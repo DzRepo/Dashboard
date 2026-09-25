@@ -864,7 +864,7 @@ WidgetRegistry['habits'] = {
     render: (widget, container) => root.Dashboard.renderHabits(widget, container),
     applyEdit(widget, modalBody) {
         // Persist the edited habit list. The log is managed by the widget itself and
-        // untouched here.
+        // untouched here. Preserve existing ids so completion log entries stay linked.
         widget.data = widget.data || {};
         const habits = [];
         modalBody.querySelectorAll('.habit-row-editor').forEach(row => {
@@ -872,15 +872,26 @@ WidgetRegistry['habits'] = {
             if (!labelEl) return;
             const label = (labelEl.value || '').trim();
             if (!label) return; // skip blank rows
-            habits.push({ id: 'habit-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), label });
+            const existingId = (row.getAttribute('data-habit-id') || '').trim();
+            const id = existingId || ('habit-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7));
+            habits.push({ id, label });
         });
+        // Drop log entries for habits that were removed.
+        if (widget.data.log && typeof widget.data.log === 'object') {
+            const keep = new Set(habits.map(h => h.id));
+            for (const key of Object.keys(widget.data.log)) {
+                const arr = widget.data.log[key];
+                if (!Array.isArray(arr)) continue;
+                widget.data.log[key] = arr.filter(id => keep.has(id));
+            }
+        }
         widget.data.habits = habits;
     },
     editFields(widget) {
         const d = widget.data || {};
         if (!Array.isArray(d.habits)) d.habits = [];
         const rows = d.habits.map(h => `
-            <div class="habit-row-editor">
+            <div class="habit-row-editor" data-habit-id="${root.Dashboard.escapeAttr(h.id || '')}">
                 <input type="text" class="habit-label-input" value="${root.Dashboard.escapeHtml(h.label || '')}" placeholder="Habit name (e.g. Read 20 min)">
                 <button type="button" class="habit-remove-entry" title="Remove habit">×</button>
             </div>

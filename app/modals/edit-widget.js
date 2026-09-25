@@ -255,11 +255,18 @@ function openEditWidgetModal(widget) {
         addBtn.addEventListener('click', () => {
             const hint = editor.querySelector('.hint');
             if (hint) hint.remove();
-            const row = document.createElement('div');
-            row.innerHTML = newRowHtml;
-            // innerHTML may produce a single element or text+element; append the node(s).
-            Array.from(row.childNodes).forEach(n => editor.appendChild(n));
-            const focusEl = focusSelector ? editor.querySelector(focusSelector) : null;
+            const wrap = document.createElement('div');
+            wrap.innerHTML = newRowHtml;
+            const appended = [];
+            Array.from(wrap.childNodes).forEach(n => {
+                editor.appendChild(n);
+                appended.push(n);
+            });
+            // Focus within the newly inserted row, not the first match in the editor.
+            const newRow = appended.find(n => n.nodeType === 1) || null;
+            const focusEl = focusSelector && newRow
+                ? newRow.querySelector(focusSelector)
+                : (focusSelector ? editor.querySelector(focusSelector) : null);
             if (focusEl && typeof focusEl.focus === 'function') focusEl.focus();
         });
     }
@@ -454,19 +461,8 @@ function openEditWidgetModal(widget) {
                 const clone = JSON.parse(JSON.stringify(snapshot));
                 state.widgets.splice(Math.min(indexInArray, state.widgets.length), 0, clone);
                 saveFullState();
+                // renderDashboard mounts widgets via the registry (including timers).
                 renderDashboard();
-                // Re-register any tick timers the widget needs (clock / countdown).
-                if (clone.type === 'clock') {
-                    const card = dashboardGrid.querySelector(`.widget-card[data-id="${CSS.escape(clone.id)}"]`);
-                    if (card) { Dashboard.clearClockTimer(clone.id); Dashboard.renderClock(clone, card.querySelector('.widget-content')); }
-                } else if (clone.type === 'countdown') {
-                    const card = dashboardGrid.querySelector(`.widget-card[data-id="${CSS.escape(clone.id)}"]`);
-                    if (card) { Dashboard.clearCountdownTimer(clone.id); Dashboard.renderCountdown(clone, card.querySelector('.widget-content')); }
-                } else if (clone.type === 'pomodoro') {
-                    // T7: Pomodoro resumes from persisted state on re-render.
-                    const card = dashboardGrid.querySelector(`.widget-card[data-id="${CSS.escape(clone.id)}"]`);
-                    if (card) { Dashboard.clearPomodoroTimer(clone.id); Dashboard.renderPomodoro(clone, card.querySelector('.widget-content')); }
-                }
             });
         });
     }
