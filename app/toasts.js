@@ -41,34 +41,46 @@ function showUndoToast(label, onUndo) {
     `;
 
     let dismissed = false;
+
+    // P2-3: track the leave timer so it can be cleared on re-hover and in
+    // dismiss(). The old code scheduled an untracked 2 s setTimeout on every
+    // mouseleave — re-entering the toast within that window still dismissed it,
+    // and repeated leave/enter cycles stacked multiple timers.
+    let autoTimer = setTimeout(dismiss, undoToasts.autoDismissMs);
+    let leaveTimer = null;
+
     const dismiss = () => {
         if (dismissed) return;
         dismissed = true;
+        clearTimeout(autoTimer);
+        if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
         el.classList.add('leaving');
         setTimeout(() => el.remove(), 200);
     };
 
-    // Auto-dismiss timer.
-    const autoTimer = setTimeout(dismiss, undoToasts.autoDismissMs);
-
     if (onUndo) {
         el.querySelector('.toast-undo-btn').addEventListener('click', () => {
-            clearTimeout(autoTimer);
             try { onUndo(); } catch (e) { console.error('Undo failed:', e); }
             dismiss();
         });
     }
 
     el.querySelector('.toast-dismiss-btn').addEventListener('click', () => {
-        clearTimeout(autoTimer);
         dismiss();
     });
 
     // Pause the auto-dismiss while hovering so users have time to read / click.
-    el.addEventListener('mouseenter', () => { if (!dismissed) clearTimeout(autoTimer); });
+    el.addEventListener('mouseenter', () => {
+        if (dismissed) return;
+        clearTimeout(autoTimer);
+        // P2-3: also cancel any pending leave-dismiss so a quick re-hover
+        // doesn't still fire the old timer.
+        if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+    });
     el.addEventListener('mouseleave', () => {
         if (dismissed) return;
-        setTimeout(dismiss, 2000);
+        // P2-3: store the timer so mouseenter / dismiss can cancel it.
+        leaveTimer = setTimeout(dismiss, 2000);
     });
 
     region.appendChild(el);
