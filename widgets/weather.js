@@ -206,6 +206,12 @@ function renderWeather(widget, container) {
             if (count > 0) {
                 const strip = document.createElement('div');
                 strip.className = 'weather-hourly';
+                // P3-7: the hourly times are in the viewer's local timezone
+                // (Open-Meteo returns them in the location's TZ, but we render
+                // with toLocaleTimeString which uses the browser's TZ). Add a
+                // tooltip so users aren't confused when viewing a saved city in
+                // a different timezone.
+                strip.title = 'Hours shown in your local time';
                 for (let i = 0; i < count; i++) {
                     const idx = startIdx + 1 + i;
                     const hLabel = new Date(hourlyData.time[idx]).toLocaleTimeString('en-US', { hour: 'numeric' });
