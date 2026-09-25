@@ -226,10 +226,11 @@ function applySettings() {
             bgOverlay.style.backgroundImage = 'none';
         }
 
-        const contentOverlay = document.querySelector('.background-overlay-content');
-        if (contentOverlay) {
-            contentOverlay.style.opacity = background.overlayOpacity;
-        }
+        // P3-3: use the CSS variable instead of an inline style so 0% opacity
+        // also affects the palette scrim (which reads --overlay-opacity). The old
+        // inline style only affected .background-overlay-content, leaving the
+        // palette backdrop fully opaque even at 0%.
+        document.documentElement.style.setProperty('--overlay-opacity', background.overlayOpacity);
     }
 }
 

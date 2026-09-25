@@ -51,7 +51,7 @@ All configuration is done in-app via the **Settings (⚙)** button — no config
 |---|---|
 | Dashboard title | Shown in the header. |
 | Theme | `System`, `Light`, or `Dark`. |
-| Layout columns / UI scale | Grid density; UI scale ranges 50–200%. |
+| Layout columns / UI scale | Grid density (auto or 3–6 fixed); UI scale ranges 75–125%. |
 | Header color & opacity | Tint and transparency of the top bar. |
 | Background image | By **URL** or by **upload**. Uploads are stored in IndexedDB (not bloated into localStorage). Overlay **opacity** and **blur** sliders dim/soften it behind the cards. |
 
@@ -89,17 +89,26 @@ See [RSS feeds & the Cloudflare proxy](#rss-feeds--the-cloudflare-proxy) below �
 | Currency converter | [frankfurter.dev](https://frankfurter.dev) v1 (ECB rates) — keyless. Base currency + target codes in the widget's edit page. |
 | Habit tracker | Local habits + daily log; toggle from the card, manage in the edit page. |
 
+### Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| `⌘K` / `Ctrl+K` | Open the command palette (jump to a widget or open a shortcut link). |
+| `/` | Focus the search input (when not already in an input field). |
+| `↑↓←→` on a card's drag handle | Reorder the widget without dragging. Focus the handle (Tab to it), then use arrow keys; `Enter`/`Space` commits. |
+| `Esc` | Close the command palette or any open modal. |
+
 ---
 
 ## RSS feeds & the Cloudflare proxy
 
 ### Why you need a proxy
 
-The browser enforces **CORS**: an `RSS`/`News` feed served by another domain usually doesn't send `Access-Control-Allow-Origin`, so a direct fetch from your dashboard is blocked. The app copes in this order (see [widgets.js](widgets.js), `buildProxyStrategies`):
+The browser enforces **CORS**: an `RSS`/`News` feed served by another domain usually doesn't send `Access-Control-Allow-Origin`, so a direct fetch from your dashboard is blocked. The app copes in this order (see [widgets/rss.js](widgets/rss.js), `buildProxyStrategies`):
 
 1. **Direct fetch** of the feed URL;
 2. **Your proxy**, if you set one in *Settings → CORS Proxy URL*;
-3. A few well-known public proxies (`allorigins`, `corsproxy.io`, `codetabs`) — best-effort, frequently down or rate-limited.
+3. *(Opt-in only)* A few well-known public proxies (`allorigins`, `corsproxy.io`, `codetabs`) — enabled via the **"Allow third-party public proxies for RSS"** checkbox in Settings. Default: off.
 
 Relying on step 3 is the worst experience: slow, flaky, and your feed URLs pass through strangers' servers. **The recommended setup is a tiny Cloudflare Worker you own.** It takes ~5 minutes and makes RSS reliable forever.
 

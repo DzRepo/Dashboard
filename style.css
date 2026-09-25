@@ -63,6 +63,10 @@ body {
     max-width: 95%;
     margin: 0 auto;
     padding: 10px;
+    /* P3-3: clear the notch on devices with viewport-fit=cover. */
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
 }
 
 header {
@@ -129,9 +133,26 @@ button {
     transition: all 0.2s;
 }
 
+/* P3-3: scope the accent hover to primary buttons only. The old global
+   button:hover turned every unstyled button (including the red-text Reset
+   Dashboard and neutral "Use theme default") accent-blue on hover. */
 button:hover {
     background: var(--accent-color);
     color: white;
+}
+/* Danger buttons keep their own hover (soft red wash), not the accent. */
+button.danger:hover {
+    background: rgba(198, 40, 40, 0.1);
+    color: var(--color-danger);
+}
+[data-theme="dark"] button.danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+}
+/* Neutral / utility buttons (e.g. "Use theme default") get a subtle
+   background shift instead of the full accent wash. */
+button:not(.danger):not(.primary):hover {
+    background: var(--card-border);
+    color: var(--text-color);
 }
 
 .dashboard-grid {
@@ -1715,6 +1736,9 @@ a.currency-row:focus-visible {
     position: fixed;
     bottom: 20px;
     right: 20px;
+    /* P3-3: clear the notch on devices with viewport-fit=cover. */
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    right: calc(20px + env(safe-area-inset-right, 0px));
     display: flex;
     flex-direction: column-reverse; /* newest on top visually, oldest at the bottom of the stack */
     gap: 8px;
@@ -1933,5 +1957,17 @@ button.danger:hover { background: rgba(198, 40, 40, 0.1); }
     .widget-card.span-2,
     .widget-card.span-3 {
         grid-column: auto;
+    }
+}
+
+/* P3-3: respect the user's reduced-motion preference. Disable the palette
+   flash highlight and toast slide-in animations for users who have asked
+   their OS/browser to reduce motion. */
+@media (prefers-reduced-motion: reduce) {
+    .widget-card.palette-flash {
+        animation: none;
+    }
+    .toast {
+        animation: none;
     }
 }
