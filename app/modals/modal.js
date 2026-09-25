@@ -42,7 +42,11 @@ function _focusIntoModal() {
 /** Simple trap: keep Tab / Shift+Tab inside the open modal. */
 function _trapModalFocus(e) {
     if (e.key !== 'Tab' || modalContainer.hidden) return;
-    const focusables = Array.from(modalBody.querySelectorAll(
+    // P2-2: query from modalContainer (not modalBody) so the .modal-close ×
+    // button — which lives in .modal-content, a sibling of #modal-body — is
+    // included in Tab cycling. Previously keyboard users could only close via
+    // Esc or backdrop click (mouse-only).
+    const focusables = Array.from(modalContainer.querySelectorAll(
         'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])'
     )).filter(el => el.offsetParent !== null);
     if (focusables.length === 0) return;
