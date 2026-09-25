@@ -616,74 +616,77 @@ WidgetRegistry['countdown'] = {
 // ── RSS Feed Reader ────────────────────────────────────────────────────────
 WidgetRegistry['rss'] = {
     label: 'RSS / News',
-    emptyState: 'None yet — open Edit to add some.',
-    hint: 'Read RSS feeds inline; failed feeds show their error.',
+    emptyState: 'None yet — open Edit to set a feed URL.',
+    hint: 'One RSS/Atom feed per widget; failed loads show their error.',
     defaults() {
-        return { config: {}, data: { feeds: [] } };
+        return { config: {}, data: { url: '', maxItems: 8 } };
     },
     render: (widget, container) => root.Dashboard.renderRss(widget, container),
     refresh(widget) {
         if (typeof widget.__rssRefresh === 'function') widget.__rssRefresh();
     },
     applyEdit(widget, modalBody) {
-        // Persist the edited feed list (optional label + url).
         widget.data = widget.data || {};
-        const feeds = [];
-        modalBody.querySelectorAll('.rss-feed-row').forEach(row => {
-            const labelEl = row.querySelector('.rss-feed-label');
-            const urlEl   = row.querySelector('.rss-feed-url');
-            if (!urlEl) return;
-            let url = (urlEl.value || '').trim();
-            if (!url) return; // skip rows without a URL
-            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-            if (!root.Dashboard.Storage.isValidHttpUrl(url)) {
-                window.alert('Invalid feed URL: "' + url + '" (must be http/https).');
-                return;
-            }
-            feeds.push({ label: (labelEl && labelEl.value.trim()) || '', url, maxItems: 8 });
-        });
-        widget.data.feeds = feeds;
+        const urlEl = document.getElementById('edit-rss-url');
+        const maxEl = document.getElementById('edit-rss-max');
+        let url = urlEl ? (urlEl.value || '').trim() : '';
+        if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+        if (url && !root.Dashboard.Storage.isValidHttpUrl(url)) {
+            window.alert('Invalid feed URL (must be http/https).');
+            url = '';
+        }
+        let maxItems = maxEl ? parseInt(maxEl.value, 10) : 8;
+        if (!Number.isFinite(maxItems)) maxItems = 8;
+        maxItems = Math.min(50, Math.max(1, maxItems));
+        widget.data.url = url;
+        widget.data.maxItems = maxItems;
+        delete widget.data.feeds; // drop legacy multi-feed shape
     },
     editFields(widget) {
         const d = widget.data || {};
-        if (!Array.isArray(d.feeds)) d.feeds = [];
-        const rows = d.feeds.map(f => `
-            <div class="rss-feed-row">
-                <input type="text" class="rss-feed-label" placeholder="Label (optional)" value="${root.Dashboard.escapeHtml(f.label || '')}">
-                <input type="url" class="rss-feed-url" placeholder="Feed URL (https://…/feed.xml)" value="${root.Dashboard.escapeAttr(f.url || '')}">
-                <button type="button" class="rss-remove-entry" title="Remove feed">×</button>
-            </div>
-        `).join('');
+        // Prefer the single-feed shape; fall back to the first legacy feeds[] entry.
+        let url = typeof d.url === 'string' ? d.url : '';
+        let max = Number.isFinite(d.maxItems) ? d.maxItems : 8;
+        if (!url && Array.isArray(d.feeds) && d.feeds[0] && typeof d.feeds[0].url === 'string') {
+            url = d.feeds[0].url;
+            if (Number.isFinite(d.feeds[0].maxItems)) max = d.feeds[0].maxItems;
+        }
+        max = Math.min(50, Math.max(1, max | 0));
         return `
             <div class="settings-group">
-                <label>Feeds (each with an optional label and a URL):</label>
-                <p class="hint" style="font-size:12px;opacity:0.7;margin-top:4px;">Some feeds block cross-origin requests; if one fails, the widget shows its error.</p>
-                <div id="rss-feeds-editor" class="rss-feeds-editor">
-                    ${rows || '<p class="hint" style="font-size:12px;opacity:0.7;">No feeds yet.</p>'}
-                </div>
-                <button type="button" id="rss-add-feed" style="margin-top:8px;">+ Add Feed</button>
+                <label for="edit-rss-url">Feed URL:</label>
+                <input type="url" id="edit-rss-url" placeholder="https://…/feed.xml" value="${root.Dashboard.escapeAttr(url)}">
+                <p class="hint" style="font-size:12px;opacity:0.7;margin-top:4px;">One feed per widget. Some hosts block cross-origin requests — set a CORS proxy in Settings if needed.</p>
+            </div>
+            <div class="settings-group">
+                <label for="edit-rss-max">Max items to display:</label>
+                <input type="number" id="edit-rss-max" min="1" max="50" step="1" value="${max}" style="width:auto;">
             </div>
         `;
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const feeds = Array.isArray(raw.data?.feeds) ? raw.data.feeds: [];
+        const d = (raw.data && typeof raw.data === 'object') ? raw.data : {};
+        let url = typeof d.url === 'string' ? d.url.trim() : '';
+        let maxItems = Number.isFinite(d.maxItems) ? d.maxItems : 8;
+        // Migrate legacy multi-feed widgets: keep the first valid feed only.
+        if ((!url || !root.Dashboard.Storage.isValidHttpUrl(url)) && Array.isArray(d.feeds)) {
+            const first = d.feeds.find(f => f && typeof f === 'object' && root.Dashboard.Storage.isValidHttpUrl(f.url));
+            if (first) {
+                url = first.url;
+                if (Number.isFinite(first.maxItems)) maxItems = first.maxItems;
+            }
+        }
+        if (url && !root.Dashboard.Storage.isValidHttpUrl(url)) url = '';
+        maxItems = Math.min(50, Math.max(1, Number.isFinite(maxItems) ? (maxItems | 0) : 8));
         return {
             id: raw.id || genWidgetId(),
             type: 'rss',
             title: raw.title || 'RSS / News',
-            position: typeof raw.position === 'number' ? raw.position: 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
-            config: (raw.config && typeof raw.config === 'object') ? raw.config: {},
-            data: {
-                feeds: feeds
-.filter(f => f && typeof f === 'object' && root.Dashboard.Storage.isValidHttpUrl(f.url))
-.map(f => ({
-                        label: typeof f.label === 'string' ? f.label: '',
-                        url: f.url,
-                        maxItems: Number.isFinite(f.maxItems) ? Math.min(50, Math.max(1, f.maxItems | 0)): 8
-                    }))
-            }
+            position: typeof raw.position === 'number' ? raw.position : 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
+            config: (raw.config && typeof raw.config === 'object') ? raw.config : {},
+            data: { url, maxItems }
         };
     }
 };

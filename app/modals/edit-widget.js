@@ -2,7 +2,7 @@
  * app/modals/edit-widget.js — the Add-Widget and Edit-Widget modals. Both are fully
  * registry-driven: the add modal builds its type buttons from WidgetRegistry, and
  * the edit modal renders each type's fields via entry.editFields + saves via
- * entry.applyEdit. Shared "list of rows" editors (clock times, tickers, events, feeds,
+ * entry.applyEdit. Shared "list of rows" editors (clock times, tickers, events,
  * codes, habits) are wired by wireRowEditor. Published to Dashboard.
  */
 
@@ -231,7 +231,7 @@ function openEditWidgetModal(widget) {
 
     /**
      * Shared wiring for every "list of rows" row editor (clock times, stock
-     * tickers, countdown events, RSS feeds, currency codes, habits). Each widget
+     * tickers, countdown events, currency codes, habits). Each widget
      * supplies its own DOM specifics; the add/remove behavior is implemented once.
      * Convention: existing rows render `<type>-remove-entry` and new rows added in-session
      * use the same class (see each config below), so removal works identically for both —
@@ -326,21 +326,6 @@ function openEditWidgetModal(widget) {
                 <div class="habit-row-editor">
                     <input type="text" class="habit-label-input" placeholder="Habit name (e.g. Read 20 min)">
                     <button type="button" class="habit-remove-entry" title="Remove habit">×</button>
-                </div>`
-        });
-    }
-
-    // Wire up the RSS feeds editor (only present for rss widgets).
-    if (widget.type === 'rss') {
-        wireRowEditor({
-            editorId: 'rss-feeds-editor',
-            addBtnId: 'rss-add-feed',
-            focusSelector: '.rss-feed-url',
-            newRowHtml: `
-                <div class="rss-feed-row">
-                    <input type="text" class="rss-feed-label" placeholder="Label (optional)">
-                    <input type="url" class="rss-feed-url" placeholder="Feed URL (https://…/feed.xml)">
-                    <button type="button" class="rss-remove-entry" title="Remove feed">×</button>
                 </div>`
         });
     }

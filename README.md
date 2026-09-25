@@ -26,7 +26,9 @@ Core UI, settings, and local widgets work on `file://`. Live widgets (weather, s
 
 ### Option B — Local HTTP (optional; enables PWA)
 
-Use this when you want install-as-app / offline app-shell caching:
+A **PWA** (*Progressive Web App*) is a web page that the browser can install like a native app: its own window/icon, and an offline-capable shell via a service worker. Browsers only allow that when the page is served over `http://` or `https://` — not from `file://`.
+
+Use a local server when you want those install / offline features:
 
 ```bash
 python3 -m http.server 8080
@@ -36,7 +38,16 @@ npx serve .
 
 Then open **http://localhost:8080**.
 
-Browsers refuse to register a service worker without a secure context, so on `file://` the PWA/offline features are skipped (see [app/boot.js](app/boot.js)). Serving over HTTP(S) is required for installable / offline shell use.
+**Why bother with a local server instead of opening from disk?**
+
+| Benefit | Detail |
+|---|---|
+| Install as an app | Chrome/Edge/Safari can add it to the dock / home screen with its own window. |
+| Offline app shell | [sw.js](sw.js) caches HTML/CSS/JS so the UI still loads without network (live widgets still need the internet). |
+| Stable storage origin | `http://localhost` keeps localStorage/IndexedDB across folder moves; `file://` ties storage to the file path. |
+| Closer to real hosting | Same constraints as GitHub Pages / Netlify — useful when debugging CORS, the service worker, or deploy caching. |
+
+Day-to-day use from disk (Option A) is still fine if you don’t need install or offline shell. Serving over HTTP(S) is required for installable / offline shell use (see [app/boot.js](app/boot.js)).
 
 **Support matrix**
 
@@ -65,9 +76,28 @@ Any static host works — GitHub Pages, Netlify, Cloudflare Pages, a home server
 
 ---
 
+## Widget quick-reference
+
+| Widget | Data source / setup |
+|---|---|
+| Shortcuts | Your own links (label + URL), "most used" ordering tracked locally. |
+| Lists / Todo | Local only; optional due dates and completed-item visibility. |
+| World Clock | IANA timezones, e.g. `America/New_York`. No API needed. |
+| Weather | [Open-Meteo](https://open-meteo.com) — keyless. Falls back to browser geolocation if you don't set a city/coordinates (graceful message on denial). |
+| Notes | Local only, autosaved as you type. |
+| Stocks | Twelve Data API — add your free key in Settings first, then tickers like `AAPL`. |
+| Search launcher | Pick an engine (Perplexity, Google, Bing, DuckDuckGo); opens results in same or new tab. |
+| Countdowns | Your own dates/events (stored locally). |
+| RSS / News | One feed URL per widget — many public feeds are CORS-blocked; see proxy setup below. |
+| Pomodoro | Local timer with focus/break cycles and session counter. |
+| Currency converter | [frankfurter.dev](https://frankfurter.dev) v1 (ECB rates) — keyless. Base currency + target codes in the widget's edit page. |
+| Habit tracker | Local habits + daily log; toggle from the card, manage in the edit page. |
+
+---
+
 ## Configuration
 
-All configuration is done in-app via the **Settings (⚙)** button — no config files. Settings persist locally and are included in JSON exports. The Settings dialog is organized into tabs (**General**, **Layout**, **Appearance**, **APIs & Feeds**, **Data**); the app version (`v1.0.0`, from `Dashboard.APP_VERSION` in [storage.js](storage.js)) appears in the header and footer of that dialog.
+All configuration is done in-app via the **Settings (⚙)** button — no config files. Settings persist locally and are included in JSON exports. The Settings dialog is organized into tabs: **General**, **Layout**, **Appearance**, **APIs & Feeds**, and **Data**.
 
 ### General appearance & layout
 
@@ -95,23 +125,6 @@ See [RSS feeds & the Cloudflare proxy](#rss-feeds--the-cloudflare-proxy) below �
 - **Export JSON** — full backup of widgets, settings, and data.
 - **Import JSON** — restore a backup (imported payloads are sanitized before use).
 - **Reset Dashboard** — wipes local state back to the seeded starter layout. There is no server-side copy; if you don't export it, it's gone when you clear site data.
-
-### Widget quick-reference
-
-| Widget | Data source / setup |
-|---|---|
-| Shortcuts | Your own links (label + URL), "most used" ordering tracked locally. |
-| Lists / Todo | Local only; optional due dates and completed-item visibility. |
-| World Clock | IANA timezones, e.g. `America/New_York`. No API needed. |
-| Weather | [Open-Meteo](https://open-meteo.com) — keyless. Falls back to browser geolocation if you don't set a city/coordinates (graceful message on denial). |
-| Notes | Local only, autosaved as you type. |
-| Stocks | Twelve Data API — add your free key in Settings first, then tickers like `AAPL`. |
-| Search launcher | Pick an engine (Perplexity, Google, Bing, DuckDuckGo); opens results in same or new tab. |
-| Countdowns | Your own dates/events (stored locally). |
-| RSS / News | Feed URLs — many public feeds are CORS-blocked; see proxy setup below. |
-| Pomodoro | Local timer with focus/break cycles and session counter. |
-| Currency converter | [frankfurter.dev](https://frankfurter.dev) v1 (ECB rates) — keyless. Base currency + target codes in the widget's edit page. |
-| Habit tracker | Local habits + daily log; toggle from the card, manage in the edit page. |
 
 ### Keyboard shortcuts
 
@@ -147,11 +160,11 @@ The catalog lives in [registry.js](registry.js). Each entry should provide:
 3. Add `<script src="widgets/<type>.js">` in [index.html](index.html) **after** `widgets/shared/helpers.js` and **before** `registry.js`.
 4. Add the same path to `APP_SHELL` in [sw.js](sw.js) (order should match; [test/app-shell-sync.test.js](test/app-shell-sync.test.js) enforces this).
 5. Append the path to `WIDGET_FILES` in [test/setup.js](test/setup.js).
-6. If the card needs clicks / Enter handling, wire them in [app/grid.js](app/grid.js) **or** attach listeners inside the renderer (Pomodoro-style) — see [CodeReview.md](CodeReview.md).
+6. If the card needs clicks / Enter handling, wire them in [app/grid.js](app/grid.js) **or** attach listeners inside the renderer (Pomodoro-style).
 7. If the Edit modal needs “add/remove row” UI, add a `wireRowEditor(…)` block (or shortcuts-style immediate save) in [app/modals/edit-widget.js](app/modals/edit-widget.js).
 8. Add CSS in [style.css](style.css) only if needed.
 
-> Today, steps 6–7 are the main friction for new interactive types. Making them registry-driven is tracked as a maintainability goal in [CodeReview.md](CodeReview.md).
+> Today, steps 6–7 are the main friction for new interactive types; longer-term the goal is to drive those from the registry so shell files need fewer edits.
 
 ---
 
@@ -245,7 +258,7 @@ In **Settings → CORS Proxy URL**, paste (substituting your worker's host):
 https://rss-proxy.<you>.workers.dev/feed?url={url}
 ```
 
-The `{url}` placeholder is where the app injects each feed's encoded URL. (A plain base URL with no placeholder also works — the app appends `?url=<encoded>` itself.) Save, then add feeds in an **RSS/News** widget → *Edit*.
+The `{url}` placeholder is where the app injects each feed's encoded URL. (A plain base URL with no placeholder also works — the app appends `?url=<encoded>` itself.) Save, then set the feed URL on an **RSS/News** widget → *Edit*.
 
 ### Optional hardening for your worker
 
@@ -299,10 +312,3 @@ The service worker ([sw.js](sw.js)) caches the app shell **cache-first** and onl
 | [style.css](style.css) | Theming (CSS variables + `data-theme`) and all component styles |
 | [manifest.webmanifest](manifest.webmanifest), icons | PWA metadata and install icons |
 | [test/](test/) | Dev-only unit tests (Node's built-in runner); never loaded by the page |
-| [CodeReview.md](CodeReview.md) | Latest architecture / maintainability review |
-
----
-
-## Further reading
-
-- [CodeReview.md](CodeReview.md) — findings on maintainability, unused code, and making widget types fully systematic.

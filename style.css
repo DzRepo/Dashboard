@@ -2113,20 +2113,6 @@ a.currency-row:focus-visible {
 .rss-body {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-}
-
-.rss-feed {
-    border-top: 1px solid var(--card-border);
-    padding-top: 8px;
-}
-
-.rss-feed:first-child { border-top: none; padding-top: 0; }
-
-.rss-feed-label {
-    margin: 0 0 6px;
-    font-size: 0.95rem;
-    color: var(--accent-color);
 }
 
 .rss-items {
@@ -2135,54 +2121,30 @@ a.currency-row:focus-visible {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0;
+    font-size: 0.82rem;
 }
 
-.rss-items li { line-height: 1.35; }
+.rss-items li {
+    line-height: 1.35;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.rss-items li:last-child {
+    border-bottom: none;
+}
 
 .rss-items a {
     color: var(--text-color);
     text-decoration: none;
+    font-weight: 400;
 }
 
 .rss-items a:hover { text-decoration: underline; color: var(--accent-color); }
 
-.rss-item-date {
-    display: block;
-    opacity: 0.55;
-    font-size: 0.72rem;
-    margin-top: 1px;
-}
-
 .rss-status,.rss-error,.rss-empty { font-size: 0.85rem; }
 .rss-error { color: var(--color-danger); }
-
-/* RSS feeds editor (inside the edit modal) */
-.rss-feeds-editor {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 4px;
-}
-
-.rss-feed-row {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 6px;
-}
-
-.rss-feed-label,
-.rss-feed-url {
-    padding: 8px 10px;
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    background: var(--card-bg);
-    color: var(--text-color);
-    font-size: 14px;
-}
-
-.rss-feed-url { min-width: 0; }
 
 /* ── Edit modal danger zone (Delete Widget) ─────────── */
 .edit-danger-divider {
