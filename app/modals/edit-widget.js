@@ -1,19 +1,19 @@
 /**
  * app/modals/edit-widget.js — the Add-Widget and Edit-Widget modals. Both are fully
- * registry-driven (P2-8): the add modal builds its type buttons from WidgetRegistry, and
- * the edit modal renders each type's fields via entry.editFields() + saves via
- * entry.applyEdit(). Shared "list of rows" editors (clock times, tickers, events, feeds,
- * codes, habits) are wired by wireRowEditor(). Published to Dashboard.
+ * registry-driven: the add modal builds its type buttons from WidgetRegistry, and
+ * the edit modal renders each type's fields via entry.editFields + saves via
+ * entry.applyEdit. Shared "list of rows" editors (clock times, tickers, events, feeds,
+ * codes, habits) are wired by wireRowEditor. Published to Dashboard.
  */
 
 function openAddWidgetModal() {
     // Build the widget-type buttons from the registry so new types appear
     // automatically without editing this function.
-    // C7: each button now carries an optional hint from registry metadata, rendered
+    // each button now carries an optional hint from registry metadata, rendered
     // as a small caption below the label. New types that set `hint` get it for free.
     const typeButtons = Object.keys(Dashboard.WidgetRegistry).map(type => {
         const entry = Dashboard.WidgetRegistry[type];
-        const hint = (entry && typeof entry.hint === 'string') ? `<span class="widget-type-hint">${escapeHtml(entry.hint)}</span>` : '';
+        const hint = (entry && typeof entry.hint === 'string') ? `<span class="widget-type-hint">${escapeHtml(entry.hint)}</span>`: '';
         return `<button data-type="${type}"><span class="widget-type-label">${escapeHtml(entry.label)}</span>${hint}</button>`;
     }).join('');
 
@@ -24,7 +24,7 @@ function openAddWidgetModal() {
             ${typeButtons}
         </div>
     `;
-    // P2-1: set the accessible name so screen readers announce "Add New Widget".
+    // set the accessible name so screen readers announce "Add New Widget".
     _setModalTitle('Add New Widget');
     modalContainer.hidden = false;
     _focusIntoModal();
@@ -39,8 +39,8 @@ function openAddWidgetModal() {
 }
 
 function openEditWidgetModal(widget) {
-    // P2-8: the edit UI is fully registry-driven. Every registered type has an
-    // editFields() function, so the old per-type `else if` fallbacks (search/clock) were
+    // the edit UI is fully registry-driven. Every registered type has an
+    // editFields function, so the old per-type `else if` fallbacks (search/clock) were
     // unreachable dead code and are deleted. A new widget type now needs only a registry
     // entry — zero edits here.
     const entry = Dashboard.WidgetRegistry[widget.type];
@@ -50,19 +50,19 @@ function openEditWidgetModal(widget) {
     }
 
     // Size selector (span 1/2/3) — available for every widget type.
-    const currentSpan = [1, 2, 3].includes(widget.span) ? widget.span : 1;
+    const currentSpan = [1, 2, 3].includes(widget.span) ? widget.span: 1;
     const spanHtml = `
         <div class="settings-group">
             <label>Size:</label>
             <select id="edit-widget-span">
-                <option value="1" ${currentSpan === 1 ? 'selected' : ''}>Small (1 column)</option>
-                <option value="2" ${currentSpan === 2 ? 'selected' : ''}>Medium (2 columns)</option>
-                <option value="3" ${currentSpan === 3 ? 'selected' : ''}>Large (3 columns)</option>
+                <option value="1" ${currentSpan === 1 ? 'selected': ''}>Small (1 column)</option>
+                <option value="2" ${currentSpan === 2 ? 'selected': ''}>Medium (2 columns)</option>
+                <option value="3" ${currentSpan === 3 ? 'selected': ''}>Large (3 columns)</option>
             </select>
         </div>
     `;
 
-    // T22: per-widget icon — a shared dropdown of Material-style glyphs, shown next
+    // per-widget icon — a shared dropdown of Material-style glyphs, shown next
     // to the title. Empty value = no icon (original look). Applies to every type.
     const WIDGET_ICONS = [
         { v: '',            label: '(none)' },
@@ -79,16 +79,16 @@ function openEditWidgetModal(widget) {
         { v: '🌿', label: '🌿 Habits' },
         { v: '📝', label: '📝 Notes' }
     ];
-    const currentIcon = (typeof widget.icon === 'string') ? widget.icon : '';
+    const currentIcon = (typeof widget.icon === 'string') ? widget.icon: '';
     const iconOptions = WIDGET_ICONS.map(ic => {
         // If the stored icon isn't in our curated list, offer it as a custom option.
-        return `<option value="${escapeHtml(ic.v)}" ${ic.v === currentIcon ? 'selected' : ''}>${escapeHtml(ic.label)}</option>`;
+        return `<option value="${escapeHtml(ic.v)}" ${ic.v === currentIcon ? 'selected': ''}>${escapeHtml(ic.label)}</option>`;
     }).join('');
     const hasCustomIcon = currentIcon && !WIDGET_ICONS.some(ic => ic.v === currentIcon);
     // If a stored icon isn't in our curated list, offer it as the first (selected) option.
     const customOptionHtml = hasCustomIcon
         ? `<option value="${escapeHtml(currentIcon)}" selected>${escapeHtml(currentIcon)} (custom)</option>`
-        : '';
+: '';
     const iconHtml = `
         <div class="settings-group">
             <label>Icon:</label>
@@ -98,7 +98,7 @@ function openEditWidgetModal(widget) {
     `;
 
     // Fill color — available for every widget type. Empty = use theme default.
-    const currentFill = /^#[0-9a-fA-F]{6}$/.test(widget.fillColor || '') ? widget.fillColor : '';
+    const currentFill = /^#[0-9a-fA-F]{6}$/.test(widget.fillColor || '') ? widget.fillColor: '';
     // Opacity defaults to 1 (fully opaque) unless a number was previously stored.
     let currentOpacity = 1;
     if (typeof widget.fillOpacity === 'number' && isFinite(widget.fillOpacity)) {
@@ -111,7 +111,7 @@ function openEditWidgetModal(widget) {
                 <input type="color" id="edit-widget-fill" value="${currentFill || '#2a2a3e'}" aria-label="Choose a card fill color"
                        style="width:48px;height:36px;border:none;padding:0;cursor:pointer;background:none;">
                 <div id="fill-preview-swatch" style="flex:1;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#ccc;border:1px solid rgba(0,0,0,0.5);background:${currentFill || '#2a2a3e'};">
-                    ${currentFill ? 'Preview' : 'No fill (theme default)'}
+                    ${currentFill ? 'Preview': 'No fill (theme default)'}
                 </div>
             </div>
             <div style="margin-top:8px;">
@@ -147,7 +147,7 @@ function openEditWidgetModal(widget) {
         </div>
         ${deleteHtml}
     `;
-    // P2-1: set the accessible name so screen readers announce "Edit Widget".
+    // set the accessible name so screen readers announce "Edit Widget".
     _setModalTitle('Edit Widget');
     modalContainer.hidden = false;
     _focusIntoModal();
@@ -159,8 +159,8 @@ function openEditWidgetModal(widget) {
 
     function _updateFillPreview() {
         if (!swatch) return;
-        const hex  = fillInput ? (fillInput.value || '').trim() : '';
-        const pct  = opacityEl ? parseInt(opacityEl.value, 10) / 100 : 1;
+        const hex  = fillInput ? (fillInput.value || '').trim(): '';
+        const pct  = opacityEl ? parseInt(opacityEl.value, 10) / 100: 1;
         const rgb  = hexToRgb(hex);
         if (rgb) {
             swatch.style.background = rgbaString(rgb.r, rgb.g, rgb.b, pct);
@@ -233,10 +233,9 @@ function openEditWidgetModal(widget) {
      * Shared wiring for every "list of rows" row editor (clock times, stock
      * tickers, countdown events, RSS feeds, currency codes, habits). Each widget
      * supplies its own DOM specifics; the add/remove behavior is implemented once.
-     *
      * Convention: existing rows render `<type>-remove-entry` and new rows added in-session
      * use the same class (see each config below), so removal works identically for both —
-     * this makes the B2-style "saved row's × does nothing" bug structurally impossible.
+     * this makes the style "saved row's × does nothing" bug structurally impossible.
      */
     function wireRowEditor({ editorId, addBtnId, newRowHtml, focusSelector }) {
         const editor = document.getElementById(editorId);
@@ -266,7 +265,7 @@ function openEditWidgetModal(widget) {
             const newRow = appended.find(n => n.nodeType === 1) || null;
             const focusEl = focusSelector && newRow
                 ? newRow.querySelector(focusSelector)
-                : (focusSelector ? editor.querySelector(focusSelector) : null);
+: (focusSelector ? editor.querySelector(focusSelector): null);
             if (focusEl && typeof focusEl.focus === 'function') focusEl.focus();
         });
     }
@@ -317,7 +316,7 @@ function openEditWidgetModal(widget) {
         });
     }
 
-    // T7: Wire up the Habit Tracker row editor (add/remove habits).
+    // Wire up the Habit Tracker row editor (add/remove habits).
     if (widget.type === 'habits') {
         wireRowEditor({
             editorId: 'habit-editor',
@@ -367,7 +366,7 @@ function openEditWidgetModal(widget) {
         const spanEl = document.getElementById('edit-widget-span');
         if (spanEl) widget.span = parseInt(spanEl.value, 10);
 
-        // T22: persist the per-widget icon glyph ('' = none).
+        // persist the per-widget icon glyph ('' = none).
         const iconEl = document.getElementById('edit-widget-icon');
         if (iconEl) {
             const v = iconEl.value.trim();
@@ -375,7 +374,7 @@ function openEditWidgetModal(widget) {
         }
 
         // Persist fill color (or clear it).
-        const clearedFlag = typeof widget.__fillClearedFlag === 'function' ? widget.__fillClearedFlag() : false;
+        const clearedFlag = typeof widget.__fillClearedFlag === 'function' ? widget.__fillClearedFlag(): false;
         delete widget.__fillClearedFlag;
         if (clearedFlag) {
             delete widget.fillColor; // fall back to theme default
@@ -393,7 +392,7 @@ function openEditWidgetModal(widget) {
             }
         }
 
-        // P2-8: type-specific save logic now lives on the registry entry (applyEdit),
+        // type-specific save logic now lives on the registry entry (applyEdit),
         // so this handler is generic. Each type owns defaults → render → edit UI → save.
         widget.config = widget.config || {};
 
@@ -414,7 +413,6 @@ function openEditWidgetModal(widget) {
         clearCompletedBtn.addEventListener('click', () => {
             widget.data = widget.data || {};
             widget.data.items = widget.data.items || [];
-            const before = widget.data.items.length;
             // Snapshot the completed items we're about to remove so Undo can restore them.
             const removedItems = widget.data.items.filter(i => i.completed);
             if (removedItems.length === 0) { alert('There are no completed items to clear.'); return; }
@@ -425,7 +423,7 @@ function openEditWidgetModal(widget) {
             closeModal();
 
             // Undo: put the removed items back at their original positions.
-            showUndoToast(`Cleared ${removedItems.length} completed item${removedItems.length === 1 ? '' : 's'}`, () => {
+            showUndoToast(`Cleared ${removedItems.length} completed item${removedItems.length === 1 ? '': 's'}`, () => {
                 widget.data = widget.data || {};
                 widget.data.items = widget.data.items || [];
                 // Re-insert each removed item at the end (simplest correct restore);
@@ -451,7 +449,7 @@ function openEditWidgetModal(widget) {
             saveFullState();
             Dashboard.clearClockTimer(widget.id);
             Dashboard.clearCountdownTimer(widget.id);
-            if (typeof Dashboard.clearPomodoroTimer === 'function') Dashboard.clearPomodoroTimer(widget.id); // T7
+            if (typeof Dashboard.clearPomodoroTimer === 'function') Dashboard.clearPomodoroTimer(widget.id); //
             renderDashboard();
             closeModal();
 
@@ -469,8 +467,8 @@ function openEditWidgetModal(widget) {
 }
 
 /**
- * NOTE: the clock's time-entry editor is defined once, in WidgetRegistry['clock'].editFields()
- * (registry.js). It used to also exist here as buildClockTimesEditor(), which was a duplicate
+ * NOTE: the clock's time-entry editor is defined once, in WidgetRegistry['clock'].editFields
+ * (registry.js). It used to also exist here as buildClockTimesEditor, which was a duplicate
  * source of truth and could render the existing clocks twice. Removed — keep only the registry copy.
  */
 

@@ -2,14 +2,14 @@
  * app/boot.js — application boot + the core UI logic: settings/theme application, color
  * utilities, dashboard rendering (createWidgetElement), grid-level delegated event handlers
  * (click / input / change / keypress + global shortcuts), widget actions, modal plumbing
- * (open/close/focus-trap), addWidget/seedDashboard, and init(). Loaded last among the app/
- * files; it wires up all listeners, calls Dashboard.init() in a browser, and publishes the
+ * (open/close/focus-trap), addWidget/seedDashboard, and init. Loaded last among the app/
+ * files; it wires up all listeners, calls Dashboard.init in a browser, and publishes the
  * shared globals (state/saveFullState/announceStatus/color utils) on Dashboard.
  */
 
 /**
- * T6 — Load the background image from IndexedDB (if flagged) and set it on state.
- * Resolves immediately if there's nothing to load, so init() can await it safely.
+ * Load the background image from IndexedDB (if flagged) and set it on state.
+ * Resolves immediately if there's nothing to load, so init can await it safely.
  */
 async function _loadBgImageFromIdb() {
     const bg = state.settings && state.settings.background;
@@ -20,7 +20,7 @@ async function _loadBgImageFromIdb() {
             state.settings.background.imageDataUrl = dataUrl;
         }
     } catch (e) {
-        console.warn('T6: failed to load background image from IndexedDB', e);
+ console.warn('failed to load background image from IndexedDB', e);
     }
 }
 
@@ -28,10 +28,10 @@ async function _loadBgImageFromIdb() {
  * Initialization
  */
 async function init() {
-    // T6: fetch the bg image blob before first paint so applySettings can use it.
+    // fetch the bg image blob before first paint so applySettings can use it.
     await _loadBgImageFromIdb();
 
-    // B6: prune habit log entries older than 30 days once at load time and persist,
+    // prune habit log entries older than 30 days once at load time and persist,
     // instead of mutating state inside renderHabits on every render (which was never saved).
     if (typeof Dashboard.pruneHabitsLog === 'function') {
         let pruned = false;
@@ -63,20 +63,20 @@ async function init() {
     // stack duplicate handlers — the render functions are pure DOM builders.
     dashboardGrid.addEventListener('click', handleGridClick);
 
-    // I5: switched from deprecated 'keypress' to 'keydown'. The handler already
+    // switched from deprecated 'keypress' to 'keydown'. The handler already
     // checks e.key === 'Enter', so behavior is identical; keydown also works more
     // predictably with modifier keys.
     dashboardGrid.addEventListener('keydown', handleGridKeypress);
 
     // Delegated input/change handlers for controls that need live updates:
-    //   - .shortcut-filter  → filter shortcut items by label/desc/url (client-side)
-    //   - .shortcut-sort    → re-render with "most used" vs manual ordering
+    // -.shortcut-filter → filter shortcut items by label/desc/url (client-side)
+    // -.shortcut-sort → re-render with "most used" vs manual ordering
     dashboardGrid.addEventListener('input', handleGridInput);
     dashboardGrid.addEventListener('change', handleGridChange);
 
     // Global keyboard shortcuts:
-    //   "/"      → focus the first Search widget input (if not already typing)
-    //   Alt+P    → same, as an unambiguous alternative
+    // "/" → focus the first Search widget input (if not already typing)
+    // Alt+P → same, as an unambiguous alternative
     document.addEventListener('keydown', handleGlobalShortcuts);
 
     // Command palette: ⌘K / Ctrl+K opens a global overlay that searches widget titles +
@@ -99,9 +99,9 @@ async function init() {
         });
     }
 
-    // Seed only on true first run (P1-5): an empty `widgets` array can mean the user
+    // Seed only on true first run: an empty `widgets` array can mean the user
     // deleted every widget, which must stay empty across reloads. `settings.seeded`
-    // is set by seedDashboard() on first run, so it distinguishes the two cases.
+    // is set by seedDashboard on first run, so it distinguishes the two cases.
     if (state.widgets.length === 0 && !(state.settings && state.settings.seeded)) {
         seedDashboard();
     }
@@ -121,7 +121,7 @@ function announceStatus(message) {
 }
 
 /**
- * T18: Apply the global UI scale (zoom) by adjusting the root font size.
+ * Apply the global UI scale (zoom) by adjusting the root font size.
  * The dashboard is rem-based, so scaling `font-size` scales everything cleanly
  * without a transform. 100 = default (~16px).
  */
@@ -132,7 +132,7 @@ function _applyUiScale(pct) {
 }
 
 /**
- * T18: Apply the grid column count. "auto"/null → theme default (auto-fill);
+ * Apply the grid column count. "auto"/null → theme default (auto-fill);
  * otherwise set a fixed repeat(n, 1fr) via --grid-cols and flag data-layout.
  */
 function _applyGridColumns(value) {
@@ -162,9 +162,9 @@ let _systemThemeHandler = null;
 function applySettings() {
     const { theme, background } = state.settings;
 
-    // T18: apply layout (columns + UI scale) first so the grid reflects settings.
+    // apply layout (columns + UI scale) first so the grid reflects settings.
     _applyGridColumns(state.settings.gridColumns);
-    _applyUiScale(state.settings.uiScale != null ? state.settings.uiScale : 100);
+    _applyUiScale(state.settings.uiScale != null ? state.settings.uiScale: 100);
 
     // Tear down any previous system-theme listener before (re)attaching.
     if (_systemThemeMq && _systemThemeHandler) {
@@ -178,8 +178,8 @@ function applySettings() {
     if (theme === 'system') {
         const mq = window.matchMedia('(prefers-color-scheme: dark)');
         const applySystemTheme = () => {
-            document.documentElement.setAttribute('data-theme', mq.matches ? 'dark' : 'light');
-            _updateMetaThemeColor(); // C13: keep browser chrome in sync
+            document.documentElement.setAttribute('data-theme', mq.matches ? 'dark': 'light');
+            _updateMetaThemeColor(); // keep browser chrome in sync
         };
         applySystemTheme();
         // React to OS light/dark flips mid-session (fixes #5). One listener only.
@@ -190,13 +190,13 @@ function applySettings() {
     } else {
         document.documentElement.setAttribute('data-theme', theme);
     }
-    _updateMetaThemeColor(); // C13: sync meta after either branch
+    _updateMetaThemeColor(); // sync meta after either branch
 
-    // T13: Apply custom header background color + opacity (if set in Settings).
+    // Apply custom header background color + opacity (if set in Settings).
     const headerEl = document.querySelector('header');
     if (headerEl) {
         const hColor = state.settings.headerBgColor;
-        const hOp = state.settings.headerOpacity != null ? state.settings.headerOpacity : 0.9;
+        const hOp = state.settings.headerOpacity != null ? state.settings.headerOpacity: 0.9;
         if (hColor && /^#[0-9a-fA-F]{6}$/.test(hColor)) {
             const rgb = hexToRgb(hColor);
             headerEl.style.background = rgbaString(rgb.r, rgb.g, rgb.b, hOp);
@@ -215,7 +215,7 @@ function applySettings() {
     const titleEl = document.getElementById('dashboard-title');
     if (titleEl) {
         const t = state.settings.dashboardTitle;
-        titleEl.textContent = (typeof t === 'string' && t.trim()) ? t : 'My Dashboard';
+        titleEl.textContent = (typeof t === 'string' && t.trim()) ? t: 'My Dashboard';
     }
 
     // Apply Background
@@ -229,7 +229,7 @@ function applySettings() {
             // Escape for use inside url("…"); fall back to a conservative replace.
             const esc = (typeof CSS !== 'undefined' && typeof CSS.escape === 'function')
                 ? CSS.escape(src)
-                : String(src).replace(/["\\]/g, '\\$&');
+: String(src).replace(/["\\]/g, '\\$&');
             bgOverlay.style.backgroundImage = `url("${esc}")`;
         }
 
@@ -251,23 +251,23 @@ function applySettings() {
                 setBgImage(bgSrc);
             }
         } else if (background.type === 'upload') {
-            // T6: imageDataUrl may be present inline (just uploaded / migrated) or
-            // loaded from IDB by _loadBgImageFromIdb(). Either way it's on state now.
+            // imageDataUrl may be present inline (just uploaded / migrated) or
+            // loaded from IDB by _loadBgImageFromIdb. Either way it's on state now.
             const src = background.imageDataUrl;
-            setBgImage(src && /^data:image\//i.test(src) ? src : null);
+            setBgImage(src && /^data:image\//i.test(src) ? src: null);
         } else {
             setBgImage(null);
         }
 
-        // P3-3: use the CSS variable instead of an inline style so 0% opacity
+        // use the CSS variable instead of an inline style so 0% opacity
         // also affects the palette scrim (which reads --overlay-opacity). The old
-        // inline style only affected .background-overlay-content, leaving the
+        // inline style only affected.background-overlay-content, leaving the
         // palette backdrop fully opaque even at 0%.
         document.documentElement.style.setProperty('--overlay-opacity', background.overlayOpacity);
     }
 }
 
-/* ── Color utilities (I1) ────────────────────────────────────────────────
+/* ── Color utilities ────────────────────────────────────────────────
    Centralize the hex→rgb / rgba-string math that was copy-pasted across the
    header color, fill preview swatch, header live preview, and per-widget card
    fill. `adjustFillForTheme` encapsulates the dark-mode lightness nudge so a
@@ -301,9 +301,9 @@ function adjustFillForTheme({ r, g, b }, theme) {
     let h = 0, s = 0; let l = (maxC + minC) / 2;
     if (maxC !== minC) {
         const d = maxC - minC;
-        s = l > 0.5 ? d / (2 - maxC - minC) : d / (maxC + minC);
+        s = l > 0.5 ? d / (2 - maxC - minC): d / (maxC + minC);
         switch (maxC) {
-            case rn: h = ((gn - bn) / d + (gn < bn ? 6 : 0)); break;
+            case rn: h = ((gn - bn) / d + (gn < bn ? 6: 0)); break;
             case gn: h = ((bn - rn) / d + 2); break;
             default: h = ((rn - gn) / d + 4);
         }
@@ -322,7 +322,7 @@ function adjustFillForTheme({ r, g, b }, theme) {
     let rr, gg, bb;
     if (s === 0) { rr = gg = bb = l; }
     else {
-        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const q = l < 0.5 ? l * (1 + s): l + s - l * s;
         const p = 2 * l - q;
         rr = hue2rgb(p, q, h + 1 / 3);
         gg = hue2rgb(p, q, h);
@@ -332,7 +332,7 @@ function adjustFillForTheme({ r, g, b }, theme) {
 }
 
 /**
- * C13: keep <meta name="theme-color"> in sync with the active theme's accent.
+ * keep <meta name="theme-color"> in sync with the active theme's accent.
  * Light/default → #007AFF, dark → #0A84FF. Called from applySettings after each
  * data-theme set (including system-mode OS flips) so the browser chrome matches.
  */
@@ -340,7 +340,7 @@ function _updateMetaThemeColor() {
     const meta = document.getElementById('meta-theme-color');
     if (!meta) return;
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
-    meta.setAttribute('content', (theme === 'dark') ? '#0A84FF' : '#007AFF');
+    meta.setAttribute('content', (theme === 'dark') ? '#0A84FF': '#007AFF');
 }
 
 function renderDashboard() {
@@ -351,7 +351,7 @@ function renderDashboard() {
         }
     }
 
-    // C2: clear any tick timers from the previous render so we don't leak
+    // clear any tick timers from the previous render so we don't leak
     // orphaned 1s intervals (see widgetTimers in widgets/shared/helpers.js).
     if (typeof Dashboard.clearAllWidgetTimers === 'function') {
         Dashboard.clearAllWidgetTimers();
@@ -365,11 +365,11 @@ function renderDashboard() {
 }
 
 // createWidgetElement (builds a single widget card's DOM + fill color + drag/keyboard
-// reorder wiring) lives in app/widget-card.js — extracted from this file (P2-10).
+// reorder wiring) lives in app/widget-card.js — extracted from this file.
 
 // Grid-level delegated event handlers (click / input / change / keypress, global
 // shortcuts, and the search runner) live in app/grid.js — extracted from this
-// file (P2-10) to keep boot.js under the ~500-line target. They are attached in init()
+// file to keep boot.js under the ~500-line target. They are attached in init
 // above via the shared globals.
 
 /**
@@ -397,12 +397,10 @@ function saveFullState() {
 }
 
 // Modal plumbing (closeModal / _focusIntoModal / _trapModalFocus) lives in
-// app/modals/modal.js — extracted from this file (P2-10) to keep boot.js under the
-// ~500-line target. They are shared by all modal open functions and boot's init().
+// app/modals/modal.js — extracted from this file to keep boot.js under the
+// ~500-line target. They are shared by all modal open functions and boot's init.
 
 function addWidget(type) {
-    const id = 'widget-' + Date.now();
-
     // Prefer registry defaults so new types need zero edits here.
     const entry = Dashboard.WidgetRegistry[type];
     let config = {};
@@ -411,14 +409,12 @@ function addWidget(type) {
         try { ({ config, data } = entry.defaults()); } catch(e) { console.warn('defaults() failed', e); }
     }
 
-    // P2-8: defaults come exclusively from the registry (entry.defaults()). The old
-    // per-type fallback block here was dead code — every registered type has a defaults()
-    // method, so an unknown `type` is the only case that reaches here and it's handled by
-    // sanitizeWidget() on save. New widget types need zero edits in this function.
+    // Defaults come exclusively from the registry (entry.defaults). Unknown types
+    // still get an empty config/data and are handled by sanitizeWidget on save.
     const newWidget = {
-        id: (typeof Dashboard.genWidgetId === 'function') ? Dashboard.genWidgetId() : ('widget-' + Date.now()),
+        id: (typeof Dashboard.genWidgetId === 'function') ? Dashboard.genWidgetId(): ('widget-' + Date.now()),
         type,
-        title: entry ? `New ${entry.label}` : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+        title: entry ? `New ${entry.label}`: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
         position: state.widgets.length,
         span: 1,
         config,
@@ -436,7 +432,7 @@ function addWidget(type) {
  */
 function seedDashboard() {
     // Mark first-run seeding so a later intentionally-emptied dashboard is not
-    // re-seeded on reload (P1-5).
+    // re-seeded on reload.
     state.settings = state.settings || {};
     state.settings.seeded = true;
 
@@ -487,7 +483,7 @@ Dashboard.adjustFillForTheme = adjustFillForTheme;
 // Boot.
 Dashboard.init = init;
 
-// UMD footer (P2-9): expose the app module for Node tests.
+// UMD footer: expose the app module for Node tests.
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     // Under Node, the files above have already run and populated globalThis.Dashboard.
     module.exports = globalThis.Dashboard;

@@ -1,5 +1,5 @@
 /**
- * weather — widget renderer. Part of the widgets/ split (P2-10).
+ * weather — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -7,12 +7,12 @@
 function renderWeather(widget, container) {
     widget.data = widget.data || {};
     const cfg = widget.config || {};
-    const units = cfg.units === 'imperial' ? 'imperial' : 'metric';
+    const units = cfg.units === 'imperial' ? 'imperial': 'metric';
 
     // State for this card instance (not persisted; refreshed on each render).
     let currentData = null;
     let forecastData = null;
-    let hourlyData = null;   // T4: next-hours strip
+    let hourlyData = null;   // next-hours strip
     let lastError = '';      // error message shown in the retry box when fetch fails
     let loading = false;
 
@@ -43,14 +43,14 @@ function renderWeather(widget, container) {
             current_weather: 'true',
             timezone: 'auto'
         });
-        // T4: request humidity + UV index for the meta row.
+        // request humidity + UV index for the meta row.
         if (cfg.showHumidity !== false) {
             params.set('current', 'relative_humidity_2m,uv_index');
         }
         if (cfg.showForecast !== false) {
             params.set('daily', 'weather_code,temperature_2m_max,temperature_2m_min');
             params.set('forecast_days', '5');
-            // T4: next-hours strip — temperature + precip chance for the coming hours.
+            // next-hours strip — temperature + precip chance for the coming hours.
             if (cfg.showHourly !== false) {
                 params.set('hourly', 'temperature_2m,precipitation_probability,weather_code');
             }
@@ -65,14 +65,14 @@ function renderWeather(widget, container) {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const json = await res.json();
             currentData = json.current_weather || null;
-            // T4: merge the `current` block (humidity, UV) into currentData so renderBody
+            // merge the `current` block (humidity, UV) into currentData so renderBody
             // can read them alongside temperature/wind. Guard each field — some API
             // responses may omit it.
             if (json.current && typeof json.current === 'object') {
                 currentData = Object.assign({}, currentData || {}, json.current);
             }
             forecastData = json.daily || null;
-            hourlyData = (cfg.showHourly !== false) ? (json.hourly || null) : null;
+            hourlyData = (cfg.showHourly !== false) ? (json.hourly || null): null;
             lastError = '';
         } catch (e) {
             console.warn('weather fetch failed', e);
@@ -85,11 +85,11 @@ function renderWeather(widget, container) {
         renderBody();
         // Announce the update to screen readers via the global live region.
         if (typeof Dashboard.announceStatus === 'function') {
-            const t = currentData && typeof currentData.temperature === 'number' ? Math.round(currentData.temperature) + '°' : '';
-            // NOTE: compute the label here — `cityLabel` is scoped inside renderBody() and
+            const t = currentData && typeof currentData.temperature === 'number' ? Math.round(currentData.temperature) + '°': '';
+            // NOTE: compute the label here — `cityLabel` is scoped inside renderBody and
             // would be a ReferenceError if referenced from this outer function.
             const city = (widget.data && widget.data.city) || 'Your Location';
-            Dashboard.announceStatus('Weather updated for ' + city + (t ? ', currently ' + t : '') + '.');
+            Dashboard.announceStatus('Weather updated for ' + city + (t ? ', currently ' + t: '') + '.');
         }
     }
 
@@ -121,7 +121,7 @@ function renderWeather(widget, container) {
 
     function formatTemp(t) {
         if (t == null || isNaN(t)) return '--°';
-        const unit = units === 'imperial' ? 'F' : 'C';
+        const unit = units === 'imperial' ? 'F': 'C';
         // Open-Meteo returns metric by default; convert for imperial.
         let value = t;
         if (units === 'imperial') {
@@ -174,15 +174,15 @@ function renderWeather(widget, container) {
             <div class="weather-temp">${formatTemp(currentData.temperature)}</div>
             <div class="weather-desc">${escapeHtml(weatherCodeToText(code))}</div>
             <div class="weather-meta">
-                ${cfg.showHumidity !== false && currentData.relative_humidity_2m != null ? `<span>💧 ${Math.round(currentData.relative_humidity_2m)}%</span>` : ''}
-                ${cfg.showHumidity !== false && currentData.uv_index != null ? `<span>🔆 UV ${currentData.uv_index}</span>` : ''}
-                ${currentData.windspeed != null ? `<span>💨 ${Math.round(units === 'imperial' ? currentData.windspeed * 2.23694 : currentData.windspeed)} ${units === 'imperial' ? 'mph' : 'km/h'}</span>` : ''}
-                ${currentData.winddirection != null ? `<span>🧭 ${Math.round(currentData.winddirection)}°</span>` : ''}
+                ${cfg.showHumidity !== false && currentData.relative_humidity_2m != null ? `<span>💧 ${Math.round(currentData.relative_humidity_2m)}%</span>`: ''}
+                ${cfg.showHumidity !== false && currentData.uv_index != null ? `<span>🔆 UV ${currentData.uv_index}</span>`: ''}
+                ${currentData.windspeed != null ? `<span>💨 ${Math.round(units === 'imperial' ? currentData.windspeed * 2.23694: currentData.windspeed)} ${units === 'imperial' ? 'mph': 'km/h'}</span>`: ''}
+                ${currentData.winddirection != null ? `<span>🧭 ${Math.round(currentData.winddirection)}°</span>`: ''}
             </div>
         `;
         body.appendChild(main);
 
-        // T4: compact next-hours strip. Find the current hour index in hourly.time
+        // compact next-hours strip. Find the current hour index in hourly.time
         // and show the following N hours.
         if (cfg.showHourly !== false &&
             hourlyData && Array.isArray(hourlyData.time) && hourlyData.time.length > 1 &&
@@ -206,7 +206,7 @@ function renderWeather(widget, container) {
             if (count > 0) {
                 const strip = document.createElement('div');
                 strip.className = 'weather-hourly';
-                // P3-7: the hourly times are in the viewer's local timezone
+                // the hourly times are in the viewer's local timezone
                 // (Open-Meteo returns them in the location's TZ, but we render
                 // with toLocaleTimeString which uses the browser's TZ). Add a
                 // tooltip so users aren't confused when viewing a saved city in
@@ -215,7 +215,7 @@ function renderWeather(widget, container) {
                 for (let i = 0; i < count; i++) {
                     const idx = startIdx + 1 + i;
                     const hLabel = new Date(hourlyData.time[idx]).toLocaleTimeString('en-US', { hour: 'numeric' });
-                    const hTemp = formatTemp(hourlyData.temperature_2m ? hourlyData.temperature_2m[idx] : null);
+                    const hTemp = formatTemp(hourlyData.temperature_2m ? hourlyData.temperature_2m[idx]: null);
                     const hCode = (hourlyData.weather_code && hourlyData.weather_code[idx]) || 0;
                     let precipHtml = '';
                     if (hourlyData.precipitation_probability != null && hourlyData.precipitation_probability[idx] != null) {
@@ -241,8 +241,8 @@ function renderWeather(widget, container) {
             const days = Math.min(5, forecastData.time.length - 1);
             for (let i = 1; i <= days; i++) {
                 const dayLabel = new Date(forecastData.time[i]).toLocaleDateString('en-US', { weekday: 'short' });
-                const hi = formatTemp(forecastData.temperature_2m_max ? forecastData.temperature_2m_max[i] : null);
-                const lo = formatTemp(forecastData.temperature_2m_min ? forecastData.temperature_2m_min[i] : null);
+                const hi = formatTemp(forecastData.temperature_2m_max ? forecastData.temperature_2m_max[i]: null);
+                const lo = formatTemp(forecastData.temperature_2m_min ? forecastData.temperature_2m_min[i]: null);
                 const dayCode = (forecastData.weather_code && forecastData.weather_code[i]) || 0;
                 fc.insertAdjacentHTML('beforeend', `
                     <div class="weather-fc-day">
@@ -255,15 +255,15 @@ function renderWeather(widget, container) {
             body.appendChild(fc);
         }
 
-        // T12: "Use my location" and "Refresh" buttons moved to the card header.
+        // "Use my location" and "Refresh" buttons moved to the card header.
         // The locate button remains only in the empty-state above (when no coords set).
         // Refresh is triggered via the ↻ icon next to the gear (app/boot.js handleWidgetAction).
     }
 
     // Button actions.
     // Convention: render functions must not attach listeners to elements they may
-    // re-render (the error/empty states are rebuilt by renderBody() after wiring ran,
-    // which orphaned the listeners — P1-3). Instead we expose locate/refresh on the
+    // re-render (the error/empty states are rebuilt by renderBody after wiring ran,
+    // which orphaned the listeners — 3). Instead we expose locate/refresh on the
     // widget and let app/grid.js's delegated click handler dispatch them, the
     // same pattern lists/shortcuts/search already use.
     const locate = () => {
@@ -295,7 +295,7 @@ function renderWeather(widget, container) {
         fetchWeather(widget.data.lat, widget.data.lon);
     };
 
-    // T12: .weather-refresh-btn no longer exists in the body (moved to header).
+    //.weather-refresh-btn no longer exists in the body (moved to header).
     // Expose locate + refresh on the widget so the header ↻ icon (app/boot.js) and the
     // in-card Retry / "Use my location" buttons (via app/grid.js delegation) can call them.
     widget.__weatherLocate = locate;
@@ -310,7 +310,7 @@ function renderWeather(widget, container) {
 }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderWeather = renderWeather;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

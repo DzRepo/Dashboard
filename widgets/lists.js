@@ -1,5 +1,5 @@
 /**
- * lists — widget renderer. Part of the widgets/ split (P2-10).
+ * lists — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -10,13 +10,13 @@ function renderLists(widget, container) {
 
     const items = widget.data.items || [];
     const showCompleted = widget.data.showCompleted ?? true;
-    let visible = showCompleted ? items.slice() : items.filter(i => !i.completed).slice();
+    let visible = showCompleted ? items.slice(): items.filter(i => !i.completed).slice();
 
     // Optional: sort by due date (nulls last), then text. Only when the user toggles it on.
     if (widget.data.sortByDueDate) {
         visible.sort((a, b) => {
-            const ad = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
-            const bd = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+            const ad = a.dueDate ? new Date(a.dueDate).getTime(): Infinity;
+            const bd = b.dueDate ? new Date(b.dueDate).getTime(): Infinity;
             if (ad !== bd) return ad - bd;
             return String(a.text || '').localeCompare(String(b.text || ''));
         });
@@ -58,7 +58,7 @@ function renderLists(widget, container) {
         }
 
         const li = document.createElement('li');
-        li.className = 'list-item' + (item.completed ? ' completed' : '') + (overdue ? ' overdue' : '');
+        li.className = 'list-item' + (item.completed ? ' completed': '') + (overdue ? ' overdue': '');
         // The whole row is a click target that opens the inline editor for due date + note.
         // NOTE: intentionally NOT role="button" / tabindex — this <li> also contains real
         // interactive controls (checkbox + delete). A button role wrapping other interactives
@@ -72,7 +72,7 @@ function renderLists(widget, container) {
         checkbox.className = 'list-item-checkbox';
         checkbox.checked = !!item.completed;
         checkbox.dataset.index = realIndex;
-        checkbox.setAttribute('aria-label', `Mark \"${item.text}\" as ${item.completed ? 'not completed' : 'completed'}`);
+        checkbox.setAttribute('aria-label', `Mark \"${item.text}\" as ${item.completed ? 'not completed': 'completed'}`);
 
         const labelWrap = document.createElement('span');
         labelWrap.className = 'list-item-label';
@@ -86,8 +86,8 @@ function renderLists(widget, container) {
         if (item.dueDate) {
             const dLabel = new Date(item.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const dueChip = document.createElement('span');
-            dueChip.className = 'list-due-chip list-due-chip-static' + (overdue ? ' overdue' : '');
-            dueChip.textContent = (overdue ? '⚠ ' : '') + dLabel;
+            dueChip.className = 'list-due-chip list-due-chip-static' + (overdue ? ' overdue': '');
+            dueChip.textContent = (overdue ? '⚠ ': '') + dLabel;
             li.appendChild(dueChip);
         }
 
@@ -121,7 +121,7 @@ function renderLists(widget, container) {
         const dueInputWrap = document.createElement('label');
         dueInputWrap.className = 'list-edit-field';
         dueInputWrap.innerHTML = '<span>Due date</span>' +
-            `<input type="date" class="list-due-input" value="${escapeAttr((item.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(item.dueDate)) ? item.dueDate : '')}">`;
+            `<input type="date" class="list-due-input" value="${escapeAttr((item.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(item.dueDate)) ? item.dueDate: '')}">`;
 
         const noteWrap = document.createElement('label');
         noteWrap.className = 'list-edit-field';
@@ -146,7 +146,7 @@ function renderLists(widget, container) {
     if (visible.length === 0) {
         const empty = document.createElement('li');
         empty.className = 'list-empty';
-        empty.textContent = showCompleted ? 'No items yet.' : 'No remaining items — all done!';
+        empty.textContent = showCompleted ? 'No items yet.': 'No remaining items — all done!';
         list.appendChild(empty);
     }
 
@@ -162,7 +162,7 @@ function renderLists(widget, container) {
 }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderLists = renderLists;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

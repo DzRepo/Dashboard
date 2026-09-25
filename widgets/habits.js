@@ -1,5 +1,5 @@
 /**
- * habits — widget renderer. Part of the widgets/ split (P2-10).
+ * habits — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -9,11 +9,11 @@ function renderHabits(widget, container) {
     if (!Array.isArray(widget.data.habits)) widget.data.habits = [];
     if (typeof widget.data.log !== 'object' || widget.data.log === null) widget.data.log = {};
 
-    // B6: log pruning now happens once at load time in app/boot.js init() via pruneHabitsLog().
+    // log pruning now happens once at load time in app/boot.js init via pruneHabitsLog.
     container.innerHTML = '';
 
     // ── Helpers ────────────────────────────────────────────────
-    // B6: _dateKey lives in widgets/shared/helpers.js (published on Dashboard).
+    // _dateKey lives in widgets/shared/helpers.js (published on Dashboard).
 
     // Build the last-7-days array ending today.
     function lastSevenDays() {
@@ -46,7 +46,7 @@ function renderHabits(widget, container) {
         html += '<div class="habit-header-row" role="row"><span class="habit-col-name"></span>';
         for (const d of days) {
             const isToday = d.key === todayKey;
-            html += `<span class="habit-day-label${isToday ? ' habit-today' : ''}" role="columnheader">${escapeHtml(d.label)}</span>`;
+            html += `<span class="habit-day-label${isToday ? ' habit-today': ''}" role="columnheader">${escapeHtml(d.label)}</span>`;
         }
         html += '</div>';
 
@@ -58,11 +58,11 @@ function renderHabits(widget, container) {
                 const done = isDone(h.id, d.key);
                 const clickable = d.key === todayKey; // only today is toggleable
                 html += `
-                    <button type="button" class="habit-cell${done ? ' habit-done' : ''}${clickable ? ' habit-clickable' : ''}"
+                    <button type="button" class="habit-cell${done ? ' habit-done': ''}${clickable ? ' habit-clickable': ''}"
                             role="cell"
-                            aria-label="${escapeHtml(h.label)} — ${d.label}: ${done ? 'completed' : 'not completed'}"
-                            data-habit-id="${escapeAttr(h.id)}" data-date-key="${d.key}"${clickable ? '' : ' disabled'}>
-                        ${done ? '✓' : ''}
+                            aria-label="${escapeHtml(h.label)} — ${d.label}: ${done ? 'completed': 'not completed'}"
+                            data-habit-id="${escapeAttr(h.id)}" data-date-key="${d.key}"${clickable ? '': ' disabled'}>
+                        ${done ? '✓': ''}
                     </button>`;
             }
             html += '</div>';
@@ -76,7 +76,7 @@ function renderHabits(widget, container) {
     // Clicks are handled by handleGridClick (.habit-cell) — no per-render listener.
 }
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderHabits = renderHabits;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

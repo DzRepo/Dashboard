@@ -1,5 +1,5 @@
 /**
- * countdown — widget renderer. Part of the widgets/ split (P2-10).
+ * countdown — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -42,7 +42,7 @@ function renderCountdown(widget, container) {
             const past = diff < 0;
 
             const row = document.createElement('div');
-            row.className = 'countdown-row' + (past ? ' past' : '');
+            row.className = 'countdown-row' + (past ? ' past': '');
 
             const labelEl = document.createElement('span');
             labelEl.className = 'countdown-label';
@@ -50,13 +50,13 @@ function renderCountdown(widget, container) {
 
             const valueEl = document.createElement('span');
             // Right-justified so the d/h/m/s blocks line up at the right edge;
-            // white text instead of the accent blue (see .countdown-value.future).
-            valueEl.className = 'countdown-value' + (past ? '' : ' future');
+            // white text instead of the accent blue (see.countdown-value.future).
+            valueEl.className = 'countdown-value' + (past ? '': ' future');
             if (past) {
                 // Parentheses so the ternary binds to `diff < 60000`, not the string concat.
                 valueEl.textContent = (Math.abs(diff) > 60000)
                     ? fmtRemaining(Math.abs(diff)) + ' ago'
-                    : 'Just now';
+: 'Just now';
             } else {
                 valueEl.textContent = fmtRemaining(diff);
             }
@@ -74,17 +74,17 @@ function renderCountdown(widget, container) {
 
     function tick() { renderList(); }
 
-    // C2: clear any previous interval for this widget so re-renders don't stack timers.
+    // clear any previous interval for this widget so re-renders don't stack timers.
     clearWidgetTimer(widget.id);
     tick();
     setWidgetTimer(widget.id, setInterval(tick, 1000));
 }
 
-/** C2: thin alias over the shared registry — kept so existing call-sites read naturally. */
+/** thin alias over the shared registry — kept so existing call-sites read naturally. */
 function clearCountdownTimer(widgetId) { return clearWidgetTimer(widgetId); }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderCountdown = renderCountdown;
 Dashboard.clearCountdownTimer = clearCountdownTimer;
 

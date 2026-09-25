@@ -1,5 +1,5 @@
 /**
- * pomodoro — widget renderer. Part of the widgets/ split (P2-10).
+ * pomodoro — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -22,7 +22,7 @@ function renderPomodoro(widget, container) {
     // Duration (seconds) for a given mode — single source of truth for the progress bar,
     // session completion, and timestamp math.
     function modeSec(mode) {
-        return (mode === 'focus' ? focusMin : mode === 'short' ? shortBrkMin : longBrkMin) * 60;
+        return (mode === 'focus' ? focusMin: mode === 'short' ? shortBrkMin: longBrkMin) * 60;
     }
 
     container.innerHTML = '';
@@ -32,7 +32,7 @@ function renderPomodoro(widget, container) {
 
     // Static skeleton: build the DOM once and update only textContent / style.width
     // per tick. Rebuilding innerHTML on every render would destroy the buttons and
-    // orphan their listeners (P0-1). The mode label, time, progress fill and session
+    // orphan their listeners. The mode label, time, progress fill and session
     // count are computed per render because widget.data.mode changes when a session
     // completes — but the elements themselves are created exactly once here.
     const modeEl = document.createElement('div');
@@ -40,9 +40,9 @@ function renderPomodoro(widget, container) {
 
     const timeEl = document.createElement('div');
     timeEl.className = 'pomodoro-time';
-    // P1-6: role="timer" (implicit aria-live "off") — the per-second countdown is not
+    // role="timer" (implicit aria-live "off") — the per-second countdown is not
     // announced. Session completion is a discrete event and is announced via
-    // announceStatus() in startTick().
+    // announceStatus in startTick.
     timeEl.setAttribute('role', 'timer');
 
     const progressEl = document.createElement('div');
@@ -87,8 +87,8 @@ function renderPomodoro(widget, container) {
         const totalSec = modeSec(widget.data.mode);
         barEl.style.width = Math.max(0, Math.min(100, (widget.data.remainingSec / totalSec) * 100)).toFixed(1) + '%';
 
-        sessionsEl.textContent = `✓ ${widget.data.completedSessions} session${widget.data.completedSessions === 1 ? '' : 's'} completed`;
-        startPauseBtn.textContent = widget.data.running ? '⏸ Pause' : '▶ Start';
+        sessionsEl.textContent = `✓ ${widget.data.completedSessions} session${widget.data.completedSessions === 1 ? '': 's'} completed`;
+        startPauseBtn.textContent = widget.data.running ? '⏸ Pause': '▶ Start';
     }
 
     renderState();
@@ -103,7 +103,7 @@ function renderPomodoro(widget, container) {
         if (widget.data.mode === 'focus') {
             widget.data.completedSessions++;
             const shouldLong = (widget.data.completedSessions % sessionsUntilLong === 0);
-            widget.data.mode = shouldLong ? 'long' : 'short';
+            widget.data.mode = shouldLong ? 'long': 'short';
         } else {
             // Break finished → back to focus.
             widget.data.mode = 'focus';
@@ -119,9 +119,9 @@ function renderPomodoro(widget, container) {
     function startTick() {
         clearTimer(); // prevent stacking on re-render / double-start
         widget.data.running = true;
-        // P1-1: time is derived from a wall-clock endTime, not a decremented counter.
+        // time is derived from a wall-clock endTime, not a decremented counter.
         // The interval below is only a ~250 ms render heartbeat — browsers may throttle
-        // it in background tabs, but the displayed time always comes from Date.now(),
+        // it in background tabs, but the displayed time always comes from Date.now,
         // so a running Pomodoro never loses or gains time when the tab is unfocused.
         widget.data.endTime = Date.now() + Math.max(0, widget.data.remainingSec) * 1000;
         persist();
@@ -184,7 +184,7 @@ function renderPomodoro(widget, container) {
         });
     }
 
-    // ── Load-time resume (P1-1) ───────────────────────────────────────
+    // ── Load-time resume ───────────────────────────────────────
     // If the timer was running when the page last saved, fast-forward across any
     // sessions that completed while we were closed instead of silently resuming a
     // stale counter. We complete as many full sessions as the elapsed wall-clock time
@@ -195,13 +195,13 @@ function renderPomodoro(widget, container) {
             // At least one full session elapsed while closed. Fast-forward through them.
             let guard = 0;
             while (widget.data.endTime <= now && guard < 1000) {
-                const label = advanceSession();
+                advanceSession();
                 widget.data.endTime += modeSec(widget.data.mode) * 1000;
                 guard++;
             }
             if (typeof Dashboard.announceStatus === 'function') {
                 const n = widget.data.completedSessions;
-                Dashboard.announceStatus('Pomodoro caught up — ' + (n === 1 ? '1 session' : n + ' sessions') + ' completed while away.');
+                Dashboard.announceStatus('Pomodoro caught up — ' + (n === 1 ? '1 session': n + ' sessions') + ' completed while away.');
             }
         }
         // Resume the (possibly fast-forwarded) session from its wall-clock endTime.
@@ -213,11 +213,11 @@ function renderPomodoro(widget, container) {
     }
 }
 
-/** C2: thin alias over the shared registry — kept so existing call-sites read naturally. */
+/** thin alias over the shared registry — kept so existing call-sites read naturally. */
 function clearPomodoroTimer(widgetId) { return clearWidgetTimer(widgetId); }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderPomodoro = renderPomodoro;
 Dashboard.clearPomodoroTimer = clearPomodoroTimer;
 

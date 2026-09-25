@@ -2,28 +2,28 @@
  * Widget Registry
  * ---------------
  * Single source of truth for every widget type. Each entry provides:
- *   label      – display name (add-widget modal, edit modal)
- *   defaults() – returns { config, data } for a new widget
- *   render()   – (widget, container) => void  (pure DOM builder)
- *   editFields() – (widget) => HTML string for the edit modal body
- *   applyEdit()  – optional: (widget, formEl) => void. Persists the type-specific edit
- *                   modal fields onto widget.config / widget.data, then the generic Save
- *                   handler in app/modals/edit-widget.js saves + re-renders. This is what makes the registry
- *                   the single source of truth (P2-8): each type owns defaults → render →
- *                   edit UI → save/validate. Types with no modal-specific fields (e.g.
- *                   notes) omit it; the generic handler still saves title/size/danger-zone.
- *   sanitize() – (raw) => clean widget object | null
- *   emptyState – optional: shared empty-state copy (C5); rendered when a list-type
- *                widget has no rows yet. Kept in one place so new widgets inherit it.
- *   hint       – optional: short description shown under the add-widget picker button (C7).
- *
- * Adding a new widget = one new entry here + one render function.
- * Zero edits to app/, storage.js, or widget core logic.
+ * label – display name (add-widget modal, edit modal)
+ * defaults – returns { config, data } for a new widget
+ * render – (widget, container) => void (pure DOM builder)
+ * editFields – (widget) => HTML string for the edit modal body
+ * applyEdit – optional: (widget, formEl) => void. Persists the type-specific edit
+ * modal fields onto widget.config / widget.data, then the generic Save
+ * handler in app/modals/edit-widget.js saves + re-renders. This is what makes the registry
+ * the single source of truth: each type owns defaults → render →
+ * edit UI → save/validate. Types with no modal-specific fields (e.g.
+ * notes) omit it; the generic handler still saves title/size/danger-zone.
+ * sanitize – (raw) => clean widget object | null
+ * emptyState – optional: shared empty-state copy; rendered when a list-type
+ * widget has no rows yet. Kept in one place so new widgets inherit it.
+ * hint – optional: short description shown under the add-widget picker button.
+ * Adding a new widget = registry entry here + widgets/<type>.js renderer, plus the
+ * load-list updates documented in README (“Adding a widget type”). Interactive cards
+ * may still need app/grid.js and/or edit-modal row wiring — see CodeReview.md.
  */
 
-// P2-9: publish the widget registry on the shared namespace created by storage.js
+// publish the widget registry on the shared namespace created by storage.js
 // (Dashboard.WidgetRegistry). The whole module body lives in an IIFE so nothing leaks
-// to the global scope; a UMD footer at the bottom makes it `require()`-able in Node.
+// to the global scope; a UMD footer at the bottom makes it `require`-able in Node.
 (function (root) {
     'use strict';
 
@@ -68,26 +68,26 @@ WidgetRegistry['shortcuts'] = {
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const items = Array.isArray(raw.data?.items) ? raw.data.items : [];
+        const items = Array.isArray(raw.data?.items) ? raw.data.items: [];
         // v3 migration: backfill clickCount for shortcuts added before that field existed.
         return {
             id: raw.id || genWidgetId(),
             type: 'shortcuts',
             title: raw.title || 'Shortcuts',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
             config: raw.config || {},
             data: {
                 items: items
-                    .filter(it => it && typeof it === 'object' && root.Dashboard.Storage.isValidHttpUrl(it.url))
-                    .map(it => ({
+.filter(it => it && typeof it === 'object' && root.Dashboard.Storage.isValidHttpUrl(it.url))
+.map(it => ({
                         label: it.label || '',
                         url: it.url,
                         description: it.description || '',
                         // Default to opening in a new tab; only an explicit `false` opts out.
                         openInNewTab: it.openInNewTab !== false,
-                        icon: typeof it.icon === 'string' ? it.icon : '',
-                        clickCount: Number.isFinite(it.clickCount) ? Math.max(0, it.clickCount | 0) : 0
+                        icon: typeof it.icon === 'string' ? it.icon: '',
+                        clickCount: Number.isFinite(it.clickCount) ? Math.max(0, it.clickCount | 0): 0
                     }))
             }
         };
@@ -118,10 +118,10 @@ WidgetRegistry['lists'] = {
             <div class="settings-group">
                 <label>Display options:</label>
                 <label class="checkbox-label" style="display:block;margin-top:6px;">
-                    <input type="checkbox" id="edit-lists-show-completed" ${showCompleted ? 'checked' : ''}> Show completed items
+                    <input type="checkbox" id="edit-lists-show-completed" ${showCompleted ? 'checked': ''}> Show completed items
                 </label>
                 <label class="checkbox-label" style="display:block;margin-top:4px;">
-                    <input type="checkbox" id="edit-lists-sort-due" ${sortByDueDate ? 'checked' : ''}> Sort by due date (earliest first)
+                    <input type="checkbox" id="edit-lists-sort-due" ${sortByDueDate ? 'checked': ''}> Sort by due date (earliest first)
                 </label>
             </div>
             <div class="settings-group">
@@ -132,24 +132,24 @@ WidgetRegistry['lists'] = {
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const items = Array.isArray(raw.data?.items) ? raw.data.items : [];
+        const items = Array.isArray(raw.data?.items) ? raw.data.items: [];
         return {
             id: raw.id || genWidgetId(),
             type: 'lists',
             title: raw.title || 'Lists',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
             config: raw.config || {},
             data: {
                 items: items
-                    .filter(it => it && typeof it === 'object' && typeof it.text === 'string')
-                    .map(it => ({
+.filter(it => it && typeof it === 'object' && typeof it.text === 'string')
+.map(it => ({
                         text: it.text,
                         completed: !!it.completed,
-                        dueDate: (typeof it.dueDate === 'string' && it.dueDate) ? it.dueDate : null,
-                        note: typeof it.note === 'string' ? it.note : ''
+                        dueDate: (typeof it.dueDate === 'string' && it.dueDate) ? it.dueDate: null,
+                        note: typeof it.note === 'string' ? it.note: ''
                     })),
-                showCompleted: typeof raw.data?.showCompleted === 'boolean' ? raw.data.showCompleted : true,
+                showCompleted: typeof raw.data?.showCompleted === 'boolean' ? raw.data.showCompleted: true,
                 sortByDueDate: !!raw.data?.sortByDueDate
             }
         };
@@ -204,18 +204,18 @@ WidgetRegistry['clock'] = {
             <div class="settings-group">
                 <label>Time format:</label>
                 <select id="edit-clock-format">
-                    <option value="12" ${cfg.formatType === 12 ? 'selected' : ''}>12-hour</option>
-                    <option value="24" ${cfg.formatType === 24 ? 'selected' : ''}>24-hour</option>
+                    <option value="12" ${cfg.formatType === 12 ? 'selected': ''}>12-hour</option>
+                    <option value="24" ${cfg.formatType === 24 ? 'selected': ''}>24-hour</option>
                 </select>
             </div>
             <div class="settings-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="edit-clock-seconds" ${cfg.showSeconds ? 'checked' : ''}> Show seconds
+                    <input type="checkbox" id="edit-clock-seconds" ${cfg.showSeconds ? 'checked': ''}> Show seconds
                 </label>
             </div>
             <div class="settings-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="edit-clock-date" ${cfg.showDate !== false ? 'checked' : ''}> Show date
+                    <input type="checkbox" id="edit-clock-date" ${cfg.showDate !== false ? 'checked': ''}> Show date
                 </label>
             </div>
             <div class="settings-group">
@@ -229,13 +229,13 @@ WidgetRegistry['clock'] = {
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const times = Array.isArray(raw.data?.times) ? raw.data.times : [];
+        const times = Array.isArray(raw.data?.times) ? raw.data.times: [];
         return {
             id: raw.id || genWidgetId(),
             type: 'clock',
             title: raw.title || 'World Clock',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
             config: {
                 formatType: raw.config?.formatType || 12,
                 showSeconds: !!raw.config?.showSeconds,
@@ -243,8 +243,8 @@ WidgetRegistry['clock'] = {
             },
             data: {
                 times: times
-                    .filter(t => t && typeof t === 'object' && typeof t.timezone === 'string')
-                    .map(t => ({
+.filter(t => t && typeof t === 'object' && typeof t.timezone === 'string')
+.map(t => ({
                         label: t.label || t.timezone,
                         timezone: t.timezone
                     }))
@@ -254,10 +254,10 @@ WidgetRegistry['clock'] = {
 };
 
 // ── Search Widget (multi-engine) ───────────────────────────────────────────
-// C3: type id renamed from 'perplexity' → 'search'. The widget is engine-neutral
+// type id renamed from 'perplexity' → 'search'. The widget is engine-neutral
 // (Perplexity, Google, Bing, DDG); the old name leaked into saved data, palette,
 // CSS classes and storage fallbacks. A one-line migration in storage.js + an alias
-// in sanitizeWidget() keep old exports importable.
+// in sanitizeWidget keep old exports importable.
 WidgetRegistry['search'] = {
     label: 'Search Widget',
     defaults() {
@@ -285,7 +285,7 @@ WidgetRegistry['search'] = {
             { id: 'ddg', label: 'DuckDuckGo' }
         ];
         const engineOptions = engines.map(e =>
-            `<option value="${e.id}" ${cfg.engine === e.id ? 'selected' : ''}>${e.label}</option>`
+            `<option value="${e.id}" ${cfg.engine === e.id ? 'selected': ''}>${e.label}</option>`
         ).join('');
         return `
             <div class="settings-group">
@@ -296,30 +296,30 @@ WidgetRegistry['search'] = {
             </div>
             <div class="settings-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="edit-open-tab" ${cfg.openInNewTab !== false ? 'checked' : ''}> Open results in new tab
+                    <input type="checkbox" id="edit-open-tab" ${cfg.openInNewTab !== false ? 'checked': ''}> Open results in new tab
                 </label>
             </div>
         `;
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        // C3 alias: accept legacy 'perplexity' imports so old exports still work.
-        if (raw.type === 'perplexity') raw = { ...raw, type: 'search' };
+        // alias: accept legacy 'perplexity' imports so old exports still work.
+        if (raw.type === 'perplexity') raw = {...raw, type: 'search' };
         return {
             id: raw.id || genWidgetId(),
             type: 'search',
             title: raw.title || 'Search Widget',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
             config: {
                 title: raw.config?.title || 'Search',
                 openInNewTab: raw.config?.openInNewTab !== false,
-                engine: ['perplexity', 'google', 'bing', 'ddg'].includes(raw.config?.engine) ? raw.config.engine : 'perplexity'
+                engine: ['perplexity', 'google', 'bing', 'ddg'].includes(raw.config?.engine) ? raw.config.engine: 'perplexity'
             },
             data: {
                 recentQueries: Array.isArray(raw.data?.recentQueries)
                     ? raw.data.recentQueries.filter(q => typeof q === 'string').slice(0, 10)
-                    : []
+: []
             }
         };
     }
@@ -344,7 +344,7 @@ WidgetRegistry['weather'] = {
             const el = document.getElementById(id);
             if (!el || el.value.trim() === '') return null;
             const n = parseFloat(el.value);
-            return isNaN(n) ? null : n;
+            return isNaN(n) ? null: n;
         };
 
         widget.config = widget.config || {};
@@ -362,12 +362,12 @@ WidgetRegistry['weather'] = {
         }
 
         const unitsEl = document.getElementById('edit-weather-units');
-        if (unitsEl) widget.config.units = unitsEl.value === 'imperial' ? 'imperial' : 'metric';
+        if (unitsEl) widget.config.units = unitsEl.value === 'imperial' ? 'imperial': 'metric';
 
         const forecastEl = document.getElementById('edit-weather-forecast');
         if (forecastEl) widget.config.showForecast = forecastEl.checked;
 
-        // B7: persist the two previously-dead flags now that they're exposed in the editor.
+        // persist the two previously-dead flags now that they're exposed in the editor.
         const humidityEl = document.getElementById('edit-weather-humidity');
         if (humidityEl) widget.config.showHumidity = humidityEl.checked;
         const hourlyEl = document.getElementById('edit-weather-hourly');
@@ -392,24 +392,24 @@ WidgetRegistry['weather'] = {
             <div class="settings-group">
                 <label>Units:</label>
                 <select id="edit-weather-units">
-                    <option value="metric" ${cfg.units === 'metric' ? 'selected' : ''}>Metric (°C)</option>
-                    <option value="imperial" ${cfg.units === 'imperial' ? 'selected' : ''}>Imperial (°F)</option>
+                    <option value="metric" ${cfg.units === 'metric' ? 'selected': ''}>Metric (°C)</option>
+                    <option value="imperial" ${cfg.units === 'imperial' ? 'selected': ''}>Imperial (°F)</option>
                 </select>
             </div>
             <div class="settings-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="edit-weather-forecast" ${cfg.showForecast !== false ? 'checked' : ''}> Show 5-day forecast
+                    <input type="checkbox" id="edit-weather-forecast" ${cfg.showForecast !== false ? 'checked': ''}> Show 5-day forecast
                 </label>
             </div>
-            <!-- B7: expose the two previously-dead config flags as real toggles. -->
+            <!-- Expose previously unused weather config flags as toggles. -->
             <div class="settings-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="edit-weather-humidity" ${cfg.showHumidity !== false ? 'checked' : ''}> Show humidity + UV index
+                    <input type="checkbox" id="edit-weather-humidity" ${cfg.showHumidity !== false ? 'checked': ''}> Show humidity + UV index
                 </label>
             </div>
             <div class="settings-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="edit-weather-hourly" ${cfg.showHourly !== false ? 'checked' : ''}> Show hourly strip (next 24h)
+                    <input type="checkbox" id="edit-weather-hourly" ${cfg.showHourly !== false ? 'checked': ''}> Show hourly strip (next 24h)
                 </label>
             </div>
         `;
@@ -420,18 +420,18 @@ WidgetRegistry['weather'] = {
             id: raw.id || genWidgetId(),
             type: 'weather',
             title: raw.title || 'Weather',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 2,
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 2,
             config: {
-                units: raw.config?.units === 'imperial' ? 'imperial' : 'metric',
+                units: raw.config?.units === 'imperial' ? 'imperial': 'metric',
                 showForecast: raw.config?.showForecast !== false,
-                // B7: backfill the two previously-dead flags so old imports keep working.
+                // backfill the two previously-dead flags so old imports keep working.
                 showHumidity: raw.config?.showHumidity !== false,
                 showHourly:   raw.config?.showHourly   !== false
             },
             data: {
-                lat: typeof raw.data?.lat === 'number' ? raw.data.lat : null,
-                lon: typeof raw.data?.lon === 'number' ? raw.data.lon : null,
+                lat: typeof raw.data?.lat === 'number' ? raw.data.lat: null,
+                lon: typeof raw.data?.lon === 'number' ? raw.data.lon: null,
                 city: raw.data?.city || 'Your Location'
             }
         };
@@ -454,11 +454,11 @@ WidgetRegistry['notes'] = {
             id: raw.id || genWidgetId(),
             type: 'notes',
             title: raw.title || 'Notes',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
             config: raw.config || {},
             data: {
-                text: typeof raw.data?.text === 'string' ? raw.data.text : '',
+                text: typeof raw.data?.text === 'string' ? raw.data.text: '',
                 updatedAt: raw.data?.updatedAt || null
             }
         };
@@ -512,22 +512,22 @@ WidgetRegistry['stocks'] = {
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const symbols = Array.isArray(raw.data?.symbols) ? raw.data.symbols : [];
+        const symbols = Array.isArray(raw.data?.symbols) ? raw.data.symbols: [];
         return {
             id: raw.id || genWidgetId(),
             type: 'stocks',
             title: raw.title || 'Stock Watchlist',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
             config: raw.config || {},
             data: {
                 symbols: symbols
-                    .filter(s => s && typeof s === 'object' && typeof s.symbol === 'string')
-                    .map(s => {
+.filter(s => s && typeof s === 'object' && typeof s.symbol === 'string')
+.map(s => {
                         const out = {
                             symbol: s.symbol.toUpperCase(),
                             name: s.name || '',
-                            lastPrice: typeof s.lastPrice === 'number' ? s.lastPrice : null
+                            lastPrice: typeof s.lastPrice === 'number' ? s.lastPrice: null
                         };
                         if (typeof s.change === 'number' && isFinite(s.change)) out.change = s.change;
                         if (typeof s.changePct === 'number' && isFinite(s.changePct)) out.changePct = s.changePct;
@@ -537,9 +537,9 @@ WidgetRegistry['stocks'] = {
                         }
                         return out;
                     }),
-                ...(typeof raw.data?.updatedAt === 'number' && isFinite(raw.data.updatedAt)
+...(typeof raw.data?.updatedAt === 'number' && isFinite(raw.data.updatedAt)
                     ? { updatedAt: raw.data.updatedAt }
-                    : {})
+: {})
             }
         };
     }
@@ -563,8 +563,8 @@ WidgetRegistry['countdown'] = {
             const dtEl  = row.querySelector('.countdown-ev-dt');
             if (!labelEl || !dtEl) return;
             const whenVal = (dtEl.value || '').trim();
-            // datetime-local is local time; new Date() parses it as local.
-            const whenMs = whenVal ? new Date(whenVal).getTime() : NaN;
+            // datetime-local is local time; new Date parses it as local.
+            const whenMs = whenVal ? new Date(whenVal).getTime(): NaN;
             if (!Number.isFinite(whenMs)) return; // skip rows without a valid date
             events.push({ label: (labelEl.value || '').trim(), when: whenMs });
         });
@@ -576,7 +576,7 @@ WidgetRegistry['countdown'] = {
         const rows = d.events.map(ev => `
             <div class="countdown-event-row">
                 <input type="text" class="countdown-ev-label" placeholder="Label (e.g. Launch)" value="${root.Dashboard.escapeHtml(ev.label || '')}">
-                <input type="datetime-local" class="countdown-ev-dt" step="60" value="${root.Dashboard.escapeAttr(ev.when ? root.Dashboard.toLocalInputValue(new Date(ev.when)) : '')}">
+                <input type="datetime-local" class="countdown-ev-dt" step="60" value="${root.Dashboard.escapeAttr(ev.when ? root.Dashboard.toLocalInputValue(new Date(ev.when)): '')}">
                 <button type="button" class="countdown-remove-entry" title="Remove event">×</button>
             </div>
         `).join('');
@@ -593,20 +593,20 @@ WidgetRegistry['countdown'] = {
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const events = Array.isArray(raw.data?.events) ? raw.data.events : [];
+        const events = Array.isArray(raw.data?.events) ? raw.data.events: [];
         return {
             id: raw.id || genWidgetId(),
             type: 'countdown',
             title: raw.title || 'Countdown',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
-            config: (raw.config && typeof raw.config === 'object') ? raw.config : {},
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
+            config: (raw.config && typeof raw.config === 'object') ? raw.config: {},
             data: {
                 events: events
-                    .filter(ev => ev && typeof ev === 'object' && ev.when)
-                    .map(ev => ({
-                        label: typeof ev.label === 'string' ? ev.label : '',
-                        when: (typeof ev.when === 'number' || typeof ev.when === 'string') ? ev.when : null
+.filter(ev => ev && typeof ev === 'object' && ev.when)
+.map(ev => ({
+                        label: typeof ev.label === 'string' ? ev.label: '',
+                        when: (typeof ev.when === 'number' || typeof ev.when === 'string') ? ev.when: null
                     }))
             }
         };
@@ -667,28 +667,28 @@ WidgetRegistry['rss'] = {
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const feeds = Array.isArray(raw.data?.feeds) ? raw.data.feeds : [];
+        const feeds = Array.isArray(raw.data?.feeds) ? raw.data.feeds: [];
         return {
             id: raw.id || genWidgetId(),
             type: 'rss',
             title: raw.title || 'RSS / News',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
-            config: (raw.config && typeof raw.config === 'object') ? raw.config : {},
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
+            config: (raw.config && typeof raw.config === 'object') ? raw.config: {},
             data: {
                 feeds: feeds
-                    .filter(f => f && typeof f === 'object' && root.Dashboard.Storage.isValidHttpUrl(f.url))
-                    .map(f => ({
-                        label: typeof f.label === 'string' ? f.label : '',
+.filter(f => f && typeof f === 'object' && root.Dashboard.Storage.isValidHttpUrl(f.url))
+.map(f => ({
+                        label: typeof f.label === 'string' ? f.label: '',
                         url: f.url,
-                        maxItems: Number.isFinite(f.maxItems) ? Math.min(50, Math.max(1, f.maxItems | 0)) : 8
+                        maxItems: Number.isFinite(f.maxItems) ? Math.min(50, Math.max(1, f.maxItems | 0)): 8
                     }))
             }
         };
     }
 };
 
-// ── T7: Pomodoro / Focus Timer ─────────────────────────────────────────
+// ── Pomodoro / Focus Timer ─────────────────────────────────────────
 WidgetRegistry['pomodoro'] = {
     label: 'Pomodoro / Focus',
     defaults() {
@@ -706,7 +706,7 @@ WidgetRegistry['pomodoro'] = {
             const el = document.getElementById(id);
             if (!el) return null;
             const n = parseInt(el.value, 10);
-            return Number.isFinite(n) && n >= 1 ? n : fallback;
+            return Number.isFinite(n) && n >= 1 ? n: fallback;
         };
         const f = readNum('pom-focus-min', 25);   if (f != null) widget.config.focusMin = f;
         const s = readNum('pom-short-brk', 5);    if (s != null) widget.config.shortBreakMin = s;
@@ -737,14 +737,14 @@ WidgetRegistry['pomodoro'] = {
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const cfg = (raw.config && typeof raw.config === 'object') ? raw.config : {};
-        const d   = (raw.data   && typeof raw.data   === 'object') ? raw.data   : {};
+        const cfg = (raw.config && typeof raw.config === 'object') ? raw.config: {};
+        const d   = (raw.data   && typeof raw.data   === 'object') ? raw.data: {};
         return {
             id: raw.id || genWidgetId(),
             type: 'pomodoro',
             title: raw.title || 'Pomodoro / Focus',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
             config: {
                 focusMin:          Math.max(1, Number(cfg.focusMin)        || 25),
                 shortBreakMin:     Math.max(1, Number(cfg.shortBreakMin)   || 5),
@@ -753,21 +753,21 @@ WidgetRegistry['pomodoro'] = {
             },
             data: {
                 running:           d.running === true,
-                mode:              ['focus','short','long'].includes(d.mode) ? d.mode : 'focus',
+                mode:              ['focus','short','long'].includes(d.mode) ? d.mode: 'focus',
                 remainingSec:      (typeof d.remainingSec === 'number' && isFinite(d.remainingSec) && d.remainingSec >= 0)
-                                    ? Math.round(d.remainingSec) : 25 * 60,
+                                    ? Math.round(d.remainingSec): 25 * 60,
                 completedSessions: (typeof d.completedSessions === 'number' && d.completedSessions >= 0)
-                                    ? Math.floor(d.completedSessions) : 0,
+                                    ? Math.floor(d.completedSessions): 0,
                 // Keep wall-clock target when running so import/reload can catch up.
-                ...(d.running === true && typeof d.endTime === 'number' && isFinite(d.endTime)
+...(d.running === true && typeof d.endTime === 'number' && isFinite(d.endTime)
                     ? { endTime: d.endTime }
-                    : {})
+: {})
             }
         };
     }
 };
 
-// ── T7: Currency Converter ─────────────────────────────────────────────
+// ── Currency Converter ─────────────────────────────────────────────
 WidgetRegistry['currency'] = {
     label: 'Currency Converter',
     defaults() {
@@ -793,17 +793,17 @@ WidgetRegistry['currency'] = {
             const c = String(inp.value).trim().toUpperCase();
             if (/^[A-Z]{3}$/.test(c) && c !== widget.config.from && !seenC.has(c)) { codes.push(c); seenC.add(c); }
         });
-        widget.config.toCodes = codes.length ? codes : ['EUR', 'GBP'];
+        widget.config.toCodes = codes.length ? codes: ['EUR', 'GBP'];
     },
     editFields(widget) {
         const c = widget.config || {};
         const curFrom  = (c.from || 'USD').toUpperCase();
         // Seed the list from toCodes, falling back to a legacy single `to` code.
-        let codes = Array.isArray(c.toCodes) ? c.toCodes.slice() : [];
+        let codes = Array.isArray(c.toCodes) ? c.toCodes.slice(): [];
         if (!codes.length && typeof c.to === 'string' && /^[A-Z]{3}$/.test((c.to || '').toUpperCase())) {
             codes.push(c.to.toUpperCase());
         }
-        const rows = (codes.length ? codes : ['EUR','GBP']).map(code => `
+        const rows = (codes.length ? codes: ['EUR','GBP']).map(code => `
             <div class="currency-code-row">
                 <input type="text" maxlength="3" class="currency-code-input"
                        style="text-transform:uppercase; width:72px;"
@@ -829,12 +829,12 @@ WidgetRegistry['currency'] = {
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const cfg = (raw.config && typeof raw.config === 'object') ? raw.config : {};
-        const d   = (raw.data   && typeof raw.data   === 'object') ? raw.data   : {};
+        const cfg = (raw.config && typeof raw.config === 'object') ? raw.config: {};
+        const d   = (raw.data   && typeof raw.data   === 'object') ? raw.data: {};
         // Normalise currency codes to 3-letter uppercase.
         const normCode = (v, fallback) => {
             const s = String(v || '').trim().toUpperCase();
-            return /^[A-Z]{3}$/.test(s) ? s : fallback;
+            return /^[A-Z]{3}$/.test(s) ? s: fallback;
         };
         const fromCode = normCode(cfg.from, 'USD');
 
@@ -864,21 +864,21 @@ WidgetRegistry['currency'] = {
             id: raw.id || genWidgetId(),
             type: 'currency',
             title: raw.title || 'Currency Converter',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
             config: {
                 from:    fromCode,
                 toCodes: codes
             },
             data: {
                 rates:     rates,
-                updatedAt: typeof d.updatedAt === 'number' ? d.updatedAt : null
+                updatedAt: typeof d.updatedAt === 'number' ? d.updatedAt: null
             }
         };
     }
 };
 
-// ── T7: Habit Tracker ────────────────────────────────────────────────────
+// ── Habit Tracker ────────────────────────────────────────────────────
 WidgetRegistry['habits'] = {
     label: 'Habit Tracker',
     emptyState: 'None yet — open Edit to add some.',
@@ -934,12 +934,12 @@ WidgetRegistry['habits'] = {
     },
     sanitize(raw) {
         if (!raw || typeof raw !== 'object') return null;
-        const d = (raw.data && typeof raw.data === 'object') ? raw.data : {};
+        const d = (raw.data && typeof raw.data === 'object') ? raw.data: {};
         // Normalise habits array.
-        let habits = Array.isArray(d.habits) ? d.habits : [];
+        let habits = Array.isArray(d.habits) ? d.habits: [];
         habits = habits
-            .filter(h => h && typeof h === 'object' && typeof h.label === 'string' && h.label.trim())
-            .map((h, i) => ({ id: (typeof h.id === 'string' && h.id) ? h.id : ('habit-' + Date.now() + '-' + i), label: h.label.trim().slice(0, 80) }));
+.filter(h => h && typeof h === 'object' && typeof h.label === 'string' && h.label.trim())
+.map((h, i) => ({ id: (typeof h.id === 'string' && h.id) ? h.id: ('habit-' + Date.now() + '-' + i), label: h.label.trim().slice(0, 80) }));
         // Normalise log object.
         const log = {};
         if (d.log && typeof d.log === 'object') {
@@ -953,9 +953,9 @@ WidgetRegistry['habits'] = {
             id: raw.id || genWidgetId(),
             type: 'habits',
             title: raw.title || 'Habit Tracker',
-            position: typeof raw.position === 'number' ? raw.position : 0,
-            span: [1, 2, 3].includes(raw.span) ? raw.span : 1,
-            config: (raw.config && typeof raw.config === 'object') ? raw.config : {},
+            position: typeof raw.position === 'number' ? raw.position: 0,
+            span: [1, 2, 3].includes(raw.span) ? raw.span: 1,
+            config: (raw.config && typeof raw.config === 'object') ? raw.config: {},
             data: { habits, log }
         };
     }
@@ -968,11 +968,6 @@ function genWidgetId() {
     return 'widget-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 }
 
-/** Get the list of all registered widget types (for the add-widget modal). */
-function getRegisteredTypes() {
-    return Object.keys(WidgetRegistry);
-}
-
 /** Get a widget type's registry entry. Returns null if unknown. */
 function getWidgetEntry(type) {
     return WidgetRegistry[type] || null;
@@ -980,7 +975,7 @@ function getWidgetEntry(type) {
 
 /**
  * Copy shared card chrome (icon / fill) and validate id onto a type-sanitized widget.
- * Called after each entry.sanitize() so import keeps fillColor/fillOpacity/icon.
+ * Called after each entry.sanitize so import keeps fillColor/fillOpacity/icon.
  */
 function applyWidgetShell(raw, typed) {
     if (!typed || typeof typed !== 'object') return null;
@@ -1012,24 +1007,23 @@ function applyWidgetShell(raw, typed) {
 }
 
 // ── Registration summary (diagnostic) ────────────────────────────────────────
-// P3-4: gated behind ?debug=1 so normal loads are quiet. If an earlier line in
+// gated behind ?debug=1 so normal loads are quiet. If an earlier line in
 // this file threw at runtime, the count will be low — check with ?debug=1.
 if (typeof location !== 'undefined' && /[?&]debug=1(&|$)/.test(location.search)) {
     console.info('[dashboard] WidgetRegistry loaded with', Object.keys(WidgetRegistry).length,
         'entries:', Object.keys(WidgetRegistry).join(', '));
 }
 
-    // P2-9: publish the registry + its helpers on the shared namespace.
+    // publish the registry + its helpers on the shared namespace.
     root.Dashboard.WidgetRegistry = WidgetRegistry;
     root.Dashboard.buildSearchUrl  = buildSearchUrl;
     root.Dashboard.genWidgetId     = genWidgetId;
-    root.Dashboard.getRegisteredTypes = getRegisteredTypes;
     root.Dashboard.getWidgetEntry  = getWidgetEntry;
     root.Dashboard.applyWidgetShell = applyWidgetShell;
 
-})(typeof window !== 'undefined' ? window : globalThis);
+})(typeof window !== 'undefined' ? window: globalThis);
 
-// UMD footer (P2-9): expose the registry object for Node tests.
+// UMD footer: expose the registry object for Node tests.
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = globalThis.Dashboard.WidgetRegistry;
 }

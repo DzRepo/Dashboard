@@ -4,12 +4,11 @@
  * element's class, so re-rendering widget content (or the whole dashboard) can never
  * stack duplicate handlers. Covers: click (widget actions + per-type content), live
  * input/change, keypress (Enter/Esc in inputs), global shortcuts (/ and Alt+P), and the
- * shared search runner. Published to Dashboard for boot.js's init().
+ * shared search runner. Published to Dashboard for boot.js's init.
  */
 
 /**
  * Grid-level delegated click handler.
- *
  * One listener on the stable `dashboardGrid` element dispatches to the right
  * handler based on the clicked element's class. Because the grid element is
  * never re-created, re-rendering widget content (or the whole dashboard)
@@ -27,10 +26,10 @@ function handleGridClick(e) {
     const contentContainer = card.querySelector('.widget-content');
 
     // Widget action buttons (Edit / Delete).
-    // Resolve from any .action-btn ancestor so the click still works when the
+    // Resolve from any.action-btn ancestor so the click still works when the
     // user hits an inner element of the button (e.g. the gear <svg>) or a text
     // node — this is what made the settings gear unreliable before.
-    const actionBtn = target.closest ? target.closest('.action-btn') : null;
+    const actionBtn = target.closest ? target.closest('.action-btn'): null;
     if (actionBtn && card.contains(actionBtn)) {
         handleWidgetAction(widget, actionBtn.dataset.action);
         return;
@@ -38,7 +37,7 @@ function handleGridClick(e) {
 
     // NOTE: "+ Add link" and its toggle no longer live in the card — they moved to
     // this widget's Edit page (see openEditWidgetModal + WidgetRegistry['shortcuts']).
-    // The old delegated branches for .shortcut-add-toggle / .add-shortcut-btn were removed.
+    // The old delegated branches for.shortcut-add-toggle /.add-shortcut-btn were removed.
 
     // Shortcuts: delete
     if (target.classList.contains('delete-shortcut-btn')) {
@@ -108,8 +107,8 @@ function handleGridClick(e) {
             const editor = li.querySelector(`.list-item-editor[data-index="${index}"]`);
             const dueInput = editor && editor.querySelector('input.list-due-input');
             const noteTa  = editor && editor.querySelector('textarea.list-note-input');
-            const dv = (dueInput && dueInput.value) ? dueInput.value.trim() : '';
-            item.dueDate = (/^\d{4}-\d{2}-\d{2}$/.test(dv)) ? dv : null;
+            const dv = (dueInput && dueInput.value) ? dueInput.value.trim(): '';
+            item.dueDate = (/^\d{4}-\d{2}-\d{2}$/.test(dv)) ? dv: null;
             if (noteTa) {
                 const nv = noteTa.value.trim();
                 item.note = nv; // empty string clears the note
@@ -132,7 +131,7 @@ function handleGridClick(e) {
             if (editor) {
                 const dueInput = editor.querySelector('input.list-due-input');
                 if (dueInput && item) {
-                    dueInput.value = (/^\d{4}-\d{2}-\d{2}$/.test(item.dueDate || '')) ? item.dueDate : '';
+                    dueInput.value = (/^\d{4}-\d{2}-\d{2}$/.test(item.dueDate || '')) ? item.dueDate: '';
                 }
                 const noteTa = editor.querySelector('textarea.list-note-input');
                 if (noteTa && item) noteTa.value = item.note || '';
@@ -178,13 +177,13 @@ function handleGridClick(e) {
 
     // Weather: in-card Retry (error state) and "Use my location" (empty state).
     // These buttons only exist in states rendered *after* mount, so they can't be
-    // wired once at render time — delegate here instead (P1-3).
+    // wired once at render time — delegate here instead.
     if (target.classList.contains('weather-retry-btn') || target.classList.contains('weather-locate-btn')) {
         if (typeof widget.__weatherLocate === 'function') widget.__weatherLocate();
         return;
     }
 
-    // Currency: in-card Retry (error state) — same delegation pattern (P1-4).
+    // Currency: in-card Retry (error state) — same delegation pattern.
     if (target.classList.contains('currency-retry')) {
         if (typeof widget.__currencyRetry === 'function') widget.__currencyRetry();
         return;
@@ -197,7 +196,7 @@ function handleGridClick(e) {
         if (typeof widget.data.log !== 'object' || widget.data.log === null) widget.data.log = {};
         const habitId = habitCell.dataset.habitId;
         const dateKey = habitCell.dataset.dateKey;
-        const arr = Array.isArray(widget.data.log[dateKey]) ? widget.data.log[dateKey] : [];
+        const arr = Array.isArray(widget.data.log[dateKey]) ? widget.data.log[dateKey]: [];
         if (arr.includes(habitId)) {
             widget.data.log[dateKey] = arr.filter(id => id !== habitId);
         } else {
@@ -224,11 +223,10 @@ function handleGridInput(e) {
 
     const card = target.closest('.widget-card');
     if (!card || !dashboardGrid.contains(card)) return;
-    const widgetId = card.dataset.id;
     const query = (target.value || '').trim().toLowerCase();
 
-    // Each .shortcut-item-container holds one link row; hide rows that don't match.
-    card.querySelectorAll('.shortcuts-list > .shortcut-item-container').forEach(row => {
+    // Each.shortcut-item-container holds one link row; hide rows that don't match.
+    card.querySelectorAll('.shortcuts-list >.shortcut-item-container').forEach(row => {
         if (!query) { row.hidden = false; return; }
         const labelEl = row.querySelector('.shortcut-label');
         const descEl  = row.querySelector('.shortcut-desc');
@@ -288,7 +286,6 @@ function handleGridKeypress(e) {
         if (!card) return;
         const widget = state.widgets.find(w => w.id === card.dataset.id);
         if (!widget) return;
-        const contentContainer = card.querySelector('.widget-content');
 
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -384,7 +381,7 @@ function handleGlobalShortcuts(e) {
  */
 function runSearch(widget, query) {
     const config = widget.config || {};
-    const engine = ['perplexity', 'google', 'bing', 'ddg'].includes(config.engine) ? config.engine : 'perplexity';
+    const engine = ['perplexity', 'google', 'bing', 'ddg'].includes(config.engine) ? config.engine: 'perplexity';
 
     // Record the query locally (dedupe, cap at 10).
     widget.data = widget.data || {};
@@ -397,7 +394,7 @@ function runSearch(widget, query) {
 
     // Open the result in a new tab by default.
     const url = Dashboard.buildSearchUrl(engine, query);
-    window.open(url, config.openInNewTab !== false ? '_blank' : '_self', 'noopener,noreferrer');
+    window.open(url, config.openInNewTab !== false ? '_blank': '_self', 'noopener,noreferrer');
 
     saveFullState();
     // Re-render so the recent-queries chips update immediately.

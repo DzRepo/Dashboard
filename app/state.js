@@ -8,7 +8,7 @@
 const state = Dashboard.Storage.getData();
 
 /** Stable DOM elements (queried once; the grid element is never re-created, so
- *  delegated listeners attached to it in boot.js survive every re-render). */
+ * delegated listeners attached to it in boot.js survive every re-render). */
 const dashboardGrid = document.getElementById('dashboard-grid');
 const addWidgetBtn  = document.getElementById('add-widget-btn');
 const settingsBtn   = document.getElementById('settings-btn');

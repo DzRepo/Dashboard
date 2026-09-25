@@ -2,32 +2,41 @@
 
 A local-first, installable (PWA) dashboard for your daily life: shortcuts, todo lists, world clock, weather, notes, stock watchlist, search launcher, countdowns, **RSS feeds**, Pomodoro timer, currency rates, and habit tracking.
 
-- **No build step** — it's a static site you can host anywhere (runtime has no npm dependencies; eslint/tests are optional and for development only).
+- **No build step** — static HTML/CSS/JS; open from disk or host anywhere (runtime has no npm dependencies; eslint/tests are optional and for development only).
 - **Local-first** — all data lives in your browser (localStorage + IndexedDB). Nothing is sent to any server except the public APIs each widget uses.
-- **Installable PWA** — add it to your home screen / desktop once served over HTTP(S).
+- **Works from disk** — open `index.html` directly (`file://`). Optional PWA/offline shell when served over HTTP(S).
 
 ---
 
 ## Install & run locally
 
-Requirements: a modern browser (Chrome, Edge, Firefox, or Safari) and Python 3 *or* Node.js for a local server. That's it.
+Requirements: a modern browser (Chrome, Edge, Firefox, or Safari). No server is required for day-to-day use.
+
+### Option A — Open from disk (primary)
 
 ```bash
-# 1. Get the code
-git clone <your-repo-url> dashboard   # or just copy the folder anywhere
-
+git clone <your-repo-url> dashboard   # or copy the folder anywhere
 cd dashboard
+open index.html                      # macOS; or double-click index.html
+```
 
-# 2a. Serve with Python (easiest, no install needed)
+Core UI, settings, and local widgets work on `file://`. Live widgets (weather, stocks, RSS, currency, favicons) still need network access and are subject to normal browser CORS rules.
+
+> **Note:** On Chromium, `file://` origins are path-sensitive. Moving or renaming the project folder can look like a “fresh install” (empty storage) because the origin changed. Export a JSON backup before relocating the folder if you care about existing data.
+
+### Option B — Local HTTP (optional; enables PWA)
+
+Use this when you want install-as-app / offline app-shell caching:
+
+```bash
 python3 -m http.server 8080
-
-# — or — 2b. Serve with Node
+# — or —
 npx serve .
 ```
 
-Then open **http://localhost:8080** in your browser.
+Then open **http://localhost:8080**.
 
-> **Why not just double-click `index.html`?** The app *works* from `file://`, but browsers refuse to register a service worker without a secure context, so the PWA/offline features are skipped (see [app/boot.js](app/boot.js), SW registration guard). Serving over HTTP(S) is the supported path for installable / offline use.
+Browsers refuse to register a service worker without a secure context, so on `file://` the PWA/offline features are skipped (see [app/boot.js](app/boot.js)). Serving over HTTP(S) is required for installable / offline shell use.
 
 **Support matrix**
 
@@ -38,21 +47,27 @@ Then open **http://localhost:8080** in your browser.
 
 Runtime has **zero npm dependencies**. Dev tooling (`eslint`, `node --test`) is optional and never loaded by the page.
 
+```bash
+npm install          # optional, for lint/tests only
+npm test
+npm run lint
+```
+
 ### Installing as an app (PWA)
 
-1. Serve it over `http://` or `https://` as above.
+1. Serve it over `http://` or `https://` as in Option B (or a static host).
 2. In Chrome/Edge: address-bar icon → **Install** / *Save and share* → *Install page as app*. In Safari: Share → **Add to Home Screen**. On desktop Linux, your browser's "Install" menu.
 3. It launches in its own window with the dashboard icon and works offline (app shell is cached by [sw.js](sw.js); live data still needs network).
 
 ### Hosting it for real
 
-Any static host works — GitHub Pages, Netlify, Cloudflare Pages, a home server, etc. Just upload/copy all files as-is; there's nothing to build. If you deploy updates, see the **Troubleshooting** note about the service-worker cache below.
+Any static host works — GitHub Pages, Netlify, Cloudflare Pages, a home server, etc. Just upload/copy all files as-is; there's nothing to build. If you deploy updates, see the **Deploy checklist** about the service-worker cache below.
 
 ---
 
 ## Configuration
 
-All configuration is done in-app via the **Settings (⚙)** button — no config files. Settings persist locally and are included in JSON exports.
+All configuration is done in-app via the **Settings (⚙)** button — no config files. Settings persist locally and are included in JSON exports. The Settings dialog is organized into tabs (**General**, **Layout**, **Appearance**, **APIs & Feeds**, **Data**); the app version (`v1.0.0`, from `Dashboard.APP_VERSION` in [storage.js](storage.js)) appears in the header and footer of that dialog.
 
 ### General appearance & layout
 
@@ -60,9 +75,9 @@ All configuration is done in-app via the **Settings (⚙)** button — no config
 |---|---|
 | Dashboard title | Shown in the header. |
 | Theme | `System`, `Light`, or `Dark`. |
-| Layout columns / UI scale | Grid density (auto or 3–6 fixed); UI scale ranges 75–125%. |
+| Layout columns / UI scale | Grid density (auto or 3–6 fixed); UI scale slider 75–125%. |
 | Header color & opacity | Tint and transparency of the top bar. |
-| Background image | By **URL** or by **upload**. Uploads are stored in IndexedDB (not bloated into localStorage). Overlay **opacity** and **blur** sliders dim/soften it behind the cards. |
+| Background image | By **URL** or by **upload**. Uploads are stored in IndexedDB (not bloated into localStorage). On `file://`, absolute local paths (e.g. `/Users/…/bg.jpg`) are also accepted. Overlay **opacity** and **blur** sliders dim/soften it behind the cards. |
 
 ### Stocks & APIs
 
@@ -91,7 +106,7 @@ See [RSS feeds & the Cloudflare proxy](#rss-feeds--the-cloudflare-proxy) below �
 | Weather | [Open-Meteo](https://open-meteo.com) — keyless. Falls back to browser geolocation if you don't set a city/coordinates (graceful message on denial). |
 | Notes | Local only, autosaved as you type. |
 | Stocks | Twelve Data API — add your free key in Settings first, then tickers like `AAPL`. |
-| Search launcher | Pick an engine; opens results in same or new tab. |
+| Search launcher | Pick an engine (Perplexity, Google, Bing, DuckDuckGo); opens results in same or new tab. |
 | Countdowns | Your own dates/events (stored locally). |
 | RSS / News | Feed URLs — many public feeds are CORS-blocked; see proxy setup below. |
 | Pomodoro | Local timer with focus/break cycles and session counter. |
@@ -103,9 +118,40 @@ See [RSS feeds & the Cloudflare proxy](#rss-feeds--the-cloudflare-proxy) below �
 | Key | Action |
 |---|---|
 | `⌘K` / `Ctrl+K` | Open the command palette (jump to a widget or open a shortcut link). |
-| `/` | Focus the search input (when not already in an input field). |
-| `↑↓←→` on a card's drag handle | Reorder the widget without dragging. Focus the handle (Tab to it), then use arrow keys; `Enter`/`Space` commits. |
+| `/` or `Alt+P` | Focus the search input (when not already in an input field). |
+| `↑↓←→` on a card's drag handle | Reorder the widget without dragging. Focus the handle (Tab to it), then use arrow keys. |
 | `Esc` | Close the command palette or any open modal. |
+
+---
+
+## Adding a widget type
+
+The catalog lives in [registry.js](registry.js). Each entry should provide:
+
+| Field | Required | Purpose |
+|---|---|---|
+| `label` | yes | Name in the Add Widget picker |
+| `defaults()` | yes | `{ config, data }` for a new instance |
+| `render(widget, container)` | yes | Pure DOM builder (usually delegates to `Dashboard.renderX`) |
+| `editFields(widget)` | yes | HTML string for type-specific Edit fields |
+| `sanitize(raw)` | yes | Clean import / load; return widget object or `null` |
+| `applyEdit(widget, modalBody)` | optional | Persist edit-modal fields onto `config` / `data` |
+| `refresh(widget)` | optional | Shows a ↻ button on the card when present |
+| `hint` | recommended | Short caption under the Add Widget button |
+| `emptyState` | recommended | Copy when a list-type card has no rows |
+
+**Checklist for a new type** (keep these in sync):
+
+1. Add `widgets/<type>.js` that implements the renderer and publishes it on `Dashboard` (see existing widgets for the footer pattern).
+2. Add a `WidgetRegistry['<type>']` entry in [registry.js](registry.js).
+3. Add `<script src="widgets/<type>.js">` in [index.html](index.html) **after** `widgets/shared/helpers.js` and **before** `registry.js`.
+4. Add the same path to `APP_SHELL` in [sw.js](sw.js) (order should match; [test/app-shell-sync.test.js](test/app-shell-sync.test.js) enforces this).
+5. Append the path to `WIDGET_FILES` in [test/setup.js](test/setup.js).
+6. If the card needs clicks / Enter handling, wire them in [app/grid.js](app/grid.js) **or** attach listeners inside the renderer (Pomodoro-style) — see [CodeReview.md](CodeReview.md).
+7. If the Edit modal needs “add/remove row” UI, add a `wireRowEditor(…)` block (or shortcuts-style immediate save) in [app/modals/edit-widget.js](app/modals/edit-widget.js).
+8. Add CSS in [style.css](style.css) only if needed.
+
+> Today, steps 6–7 are the main friction for new interactive types. Making them registry-driven is tracked as a maintainability goal in [CodeReview.md](CodeReview.md).
 
 ---
 
@@ -228,6 +274,7 @@ Treat an exported JSON file as a personal document: it contains your notes, list
 - **Weather shows "Your Location" prompt** — geolocation was denied; set an explicit city or coordinates on the widget's edit page.
 - **UI looks stale after you deploy new code** — see the [Deploy checklist](#deploy-checklist) below.
 - **PWA won't install** — you're probably opening via `file://`; serve over HTTP(S) as described above.
+- **Dashboard looks empty after moving the folder** — on `file://`, the storage origin changed; import a previous JSON export if you have one.
 
 ## Deploy checklist
 
@@ -237,19 +284,25 @@ The service worker ([sw.js](sw.js)) caches the app shell **cache-first** and onl
 2. **Deploy** the updated files to your host.
 3. **Hard-refresh once** (⌘⇧R / Ctrl+Shift+R) so the browser fetches the new `sw.js` and triggers a re-install. The old cache is garbage-collected automatically by the worker's `activate` handler.
 
-> **Why this matters:** a v1→v2 incident (see [CHANGELOG.md](CHANGELOG.md)) showed that stale cached JS can cause "Unknown widget type" regressions for PWA users. The bump is one line; skipping it costs a support round.
+> Skipping the bump can leave PWA users on stale JS (historically this surfaced as "Unknown widget type" for types that existed only in newer code).
 
 ## Project layout
 
 | File / folder | Purpose |
 |---|---|
-| [index.html](index.html) | App shell: header, grid, modals, command palette markup |
-| [app/](app/) | Boot/state, settings & edit modals, drag-and-drop reorder, command palette, toasts/undo |
-| [widgets/](widgets/) | One file per widget type + shared helpers (escaping, sparkline, timer registry) and the RSS fetch pipeline |
-| [registry.js](registry.js) | `WidgetRegistry` — per-type defaults, edit UI, sanitization; adding a type starts here |
-| [storage.js](storage.js) | localStorage/IndexedDB persistence, version migrations, import/export/reset |
-| [sw.js](sw.js) | Service worker: app-shell caching for offline/PWA use |
+| [index.html](index.html) | App shell: header, grid, modals, command palette markup; script load order |
+| [app/](app/) | Boot/state, settings & edit modals, drag-and-drop reorder, command palette, toasts/undo, grid event delegation |
+| [widgets/](widgets/) | One file per widget type + [shared/helpers.js](widgets/shared/helpers.js) (escaping, timers, fetch timeout). RSS fetch pipeline lives in [widgets/rss.js](widgets/rss.js); stock sparklines in [widgets/stocks.js](widgets/stocks.js) |
+| [registry.js](registry.js) | `WidgetRegistry` — per-type defaults, edit UI, sanitization; start here when adding a type |
+| [storage.js](storage.js) | localStorage/IndexedDB persistence, version migrations, import/export/reset; creates `Dashboard` namespace |
+| [sw.js](sw.js) | Service worker: app-shell caching for offline/PWA use (HTTP only) |
 | [style.css](style.css) | Theming (CSS variables + `data-theme`) and all component styles |
 | [manifest.webmanifest](manifest.webmanifest), icons | PWA metadata and install icons |
 | [test/](test/) | Dev-only unit tests (Node's built-in runner); never loaded by the page |
-| [CHANGELOG.md](CHANGELOG.md) | Notable change history (SW incidents, architecture decisions) |
+| [CodeReview.md](CodeReview.md) | Latest architecture / maintainability review |
+
+---
+
+## Further reading
+
+- [CodeReview.md](CodeReview.md) — findings on maintainability, unused code, and making widget types fully systematic.

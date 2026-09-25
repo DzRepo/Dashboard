@@ -2,18 +2,18 @@
  * app/widget-card.js — createWidgetElement: builds the DOM for a single widget card
  * (header with drag handle + title, action buttons, and the per-widget content container),
  * applies any user-chosen card fill color (with dark-mode lightness nudge + edge border),
- * and wires the drag/keyboard-reorder listeners. Called by renderDashboard() in boot.js
+ * and wires the drag/keyboard-reorder listeners. Called by renderDashboard in boot.js
  * for every widget on each (re)render. Published to Dashboard.createWidgetElement.
  */
 
 function createWidgetElement(widget) {
     const card = document.createElement('div');
-    card.className = 'widget-card' + (widget.span && widget.span > 1 ? ` span-${widget.span}` : '');
+    card.className = 'widget-card' + (widget.span && widget.span > 1 ? ` span-${widget.span}`: '');
     card.dataset.id = widget.id;
 
-    // T22: optional per-widget icon glyph shown next to the title.
+    // optional per-widget icon glyph shown next to the title.
     const widgetIcon = (typeof widget.icon === 'string' && widget.icon.trim())
-        ? `<span class="widget-icon" aria-hidden="true">${escapeHtml(widget.icon)}</span>` : '';
+        ? `<span class="widget-icon" aria-hidden="true">${escapeHtml(widget.icon)}</span>`: '';
 
     card.innerHTML = `
         <div class="widget-header">
@@ -34,19 +34,19 @@ function createWidgetElement(widget) {
     // Delete now lives on the Edit page (see openEditWidgetModal's danger zone).
     // The header control is a gear icon that opens the same edit modal.
 
-    // T12: network widgets get a ↻ refresh icon next to the gear when the registry
-    // exposes refresh().
+    // network widgets get a ↻ refresh icon next to the gear when the registry
+    // exposes refresh.
     const entry = Dashboard.getWidgetEntry && Dashboard.getWidgetEntry(widget.type);
     const showRefresh = !!(entry && typeof entry.refresh === 'function');
     const refreshBtnHtml = showRefresh ? `
         <button class="action-btn action-icon" data-action="refresh" title="Refresh ${escapeHtml(widget.title)}" aria-label="Refresh ${escapeHtml(widget.title)}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-        </button>` : '';
+        </button>`: '';
 
     actions.innerHTML = `
         ${refreshBtnHtml}
         <button class="action-btn action-icon" data-action="edit" title="Edit Widget" aria-label="Edit ${escapeHtml(widget.title)}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1-1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 3 18.4a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33z"></path></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0.33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1-1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 3 18.4a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33z"></path></svg>
         </button>
     `;
 
@@ -100,7 +100,7 @@ function createWidgetElement(widget) {
         }
     }
 
-    // P3-10: flush is done in renderDashboard before the grid is wiped. Keep a
+    // flush is done in renderDashboard before the grid is wiped. Keep a
     // secondary flush here for any path that rebuilds a single card without that loop.
     if (typeof widget.__notesFlush === 'function') {
         try { widget.__notesFlush(); } catch (_) {}

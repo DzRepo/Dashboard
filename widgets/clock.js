@@ -1,5 +1,5 @@
 /**
- * clock — widget renderer. Part of the widgets/ split (P2-10).
+ * clock — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -13,7 +13,7 @@ function renderClock(widget, container) {
 
     container.innerHTML = '';
 
-    // Capture "now" once for the initial badge render; tick() refreshes it each second.
+    // Capture "now" once for the initial badge render; tick refreshes it each second.
     let now = new Date();
 
     const list = document.createElement('div');
@@ -39,7 +39,7 @@ function renderClock(widget, container) {
 
         if (offsetBadge) {
             const badge = document.createElement('span');
-            badge.className = 'clock-day-badge' + (offsetBadge.tone ? ` ${offsetBadge.tone}` : '');
+            badge.className = 'clock-day-badge' + (offsetBadge.tone ? ` ${offsetBadge.tone}`: '');
             badge.textContent = offsetBadge.text;
             badge.title = `${entry.label || entry.timezone} is on a different calendar day than your local time.`;
             labelWrap.appendChild(badge);
@@ -53,10 +53,10 @@ function renderClock(widget, container) {
         const timeEl = document.createElement('span');
         timeEl.className = 'clock-time';
         timeEl.dataset.index = index;
-        // P1-6: no aria-live here. role="timer" has an implicit live value of "off",
+        // no aria-live here. role="timer" has an implicit live value of "off",
         // so the per-second time update is not announced. (Explicitly setting
         // aria-live="polite" overrode that and made screen readers read the clock
-        // every second.) Discrete events are announced via announceStatus() instead.
+        // every second.) Discrete events are announced via announceStatus instead.
 
         // Location name on top; date left, time right below it.
         info.appendChild(labelWrap);
@@ -102,7 +102,7 @@ function renderClock(widget, container) {
                     labelWrap.appendChild(badge);
                 }
                 badge.textContent = offset.text;
-                badge.className = 'clock-day-badge' + (offset.tone ? ` ${offset.tone}` : '');
+                badge.className = 'clock-day-badge' + (offset.tone ? ` ${offset.tone}`: '');
             } else if (badge) {
                 badge.remove();
             }
@@ -151,7 +151,7 @@ function renderClock(widget, container) {
 
     tick();
 
-    // C2: register the interval in the shared widget-timer registry so re-renders
+    // register the interval in the shared widget-timer registry so re-renders
     // and removal can clear it (fixes the timer leak).
     clearWidgetTimer(widget.id);
     setWidgetTimer(widget.id, setInterval(tick, 1000));
@@ -179,11 +179,11 @@ function clockDayOffset(timezone, now) {
     return null;
 }
 
-/** C2: thin alias over the shared registry — kept so existing call-sites read naturally. */
+/** thin alias over the shared registry — kept so existing call-sites read naturally. */
 function clearClockTimer(widgetId) { return clearWidgetTimer(widgetId); }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderClock = renderClock;
 Dashboard.clockDayOffset = clockDayOffset;
 Dashboard.clearClockTimer = clearClockTimer;

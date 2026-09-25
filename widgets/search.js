@@ -1,5 +1,5 @@
 /**
- * search — widget renderer. Part of the widgets/ split (P2-10).
+ * search — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -21,7 +21,7 @@ function renderSearch(widget, container) {
     ];
     const currentEngine = config.engine || 'perplexity';
     const engineOptions = engines.map(e =>
-        `<option value="${e.id}" ${currentEngine === e.id ? 'selected' : ''}>${escapeHtml(e.label)}</option>`
+        `<option value="${e.id}" ${currentEngine === e.id ? 'selected': ''}>${escapeHtml(e.label)}</option>`
     ).join('');
 
     // Multi-line search block: provider on its own row, then a taller textarea
@@ -58,7 +58,7 @@ function renderSearch(widget, container) {
     // (see handleGridClick / handleGridKeypress in app/grid.js).
 }
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderSearch = renderSearch;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

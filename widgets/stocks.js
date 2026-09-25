@@ -1,5 +1,5 @@
 /**
- * stocks — widget renderer. Part of the widgets/ split (P2-10).
+ * stocks — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -9,7 +9,7 @@ function getTwelveDataKey() {
 }
 
 /**
- * T5 — Build a small inline SVG sparkline from an array of numeric values.
+ * Build a small inline SVG sparkline from an array of numeric values.
  * Returns '' if fewer than 2 valid points. The path is colored by direction:
  * green when last >= first, red otherwise.
  */
@@ -37,7 +37,7 @@ function buildSparkline(values, width, height) {
     const first = Number(pts[0]);
     const last  = Number(pts[pts.length - 1]);
     // Track the semantic success/danger tokens so sparklines match theme + other widgets.
-    const color = (last >= first) ? 'var(--color-success, #3fb950)' : 'var(--color-danger, #f87171)';
+    const color = (last >= first) ? 'var(--color-success, #3fb950)': 'var(--color-danger, #f87171)';
 
     return `<svg class="stock-sparkline" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" aria-hidden="true">` +
            `<polyline points="${coords.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>` +
@@ -70,20 +70,20 @@ function renderStocks(widget, container) {
         widget.data.symbols.forEach((s, i) => {
             const row = document.createElement('div');
             row.className = 'stock-row';
-            const price = s.lastPrice != null ? `$${Number(s.lastPrice).toFixed(2)}` : '--';
+            const price = s.lastPrice != null ? `$${Number(s.lastPrice).toFixed(2)}`: '--';
             // Split the change into its two parts so they can be stacked under the
             // price (right-justified, smaller text).
             let changeText = '';
             let pctText = '';
             if (typeof s.change === 'number') {
-                const dir = s.change >= 0 ? '+' : '';
+                const dir = s.change >= 0 ? '+': '';
                 changeText = `${dir}${s.change.toFixed(2)}`;
                 pctText = `(${((s.changePct || 0)).toFixed(2)}%)`;
             }
             // Ticker symbol is intentionally hidden — show only name + price info.
-            const spark = s.sparkline ? buildSparkline(s.sparkline, 64, 28) : '';
+            const spark = s.sparkline ? buildSparkline(s.sparkline, 64, 28): '';
 
-            // T14: Make the stock name a clickable link to a configurable URL template.
+            // Make the stock name a clickable link to a configurable URL template.
             // Default: https://www.google.com/finance/beta/quote/{ticker}
             const displayName = s.name || s.symbol;
             let nameHtml;
@@ -100,7 +100,7 @@ function renderStocks(widget, container) {
                 ${nameHtml}
                 ${spark}
                 <div class="stock-value" data-index="${i}">
-                    <span class="stock-price">${price}</span>${changeText ? `<small class="stock-change ${s.change >= 0 ? 'up' : 'down'}">${escapeHtml(changeText)}&nbsp;${escapeHtml(pctText)}</small>` : ''}
+                    <span class="stock-price">${price}</span>${changeText ? `<small class="stock-change ${s.change >= 0 ? 'up': 'down'}">${escapeHtml(changeText)}&nbsp;${escapeHtml(pctText)}</small>`: ''}
                 </div>
             `;
             listEl.appendChild(row);
@@ -139,10 +139,10 @@ function renderStocks(widget, container) {
             return;
         }
 
-        // T5 — batched fetch: group symbols into chunks of 4 so we make
+        // batched fetch: group symbols into chunks of 4 so we make
         // ceil(N/4) parallel call-groups instead of N fully-sequential ones.
         //
-        // P2-7: each symbol costs TWO API calls (quote + time_series). A 4-ticker
+        // each symbol costs TWO API calls (quote + time_series). A 4-ticker
         // watchlist auto-refresh issues up to 8 concurrent calls — right at the free
         // tier's ~8 credits/minute. To stay under the limit, we skip time_series on
         // automatic refreshes (sparkline only updates on manual ↻). This halves the
@@ -154,8 +154,8 @@ function renderStocks(widget, container) {
         for (let c = 0; c < symbols.length; c += CHUNK) {
             const chunk = symbols.slice(c, c + CHUNK);
             await Promise.all(chunk.map(async (symbol) => {
-                // I2: resolve the target row once per symbol instead of calling
-                // widget.data.symbols.find() three times below.
+                // resolve the target row once per symbol instead of calling
+                // widget.data.symbols.find three times below.
                 const target = widget.data.symbols.find(s => s.symbol === symbol);
                 if (!target) return;
                 try {
@@ -173,7 +173,7 @@ function renderStocks(widget, container) {
                     );
                     if (isErr) {
                         failures++;
-                        // P2-7: detect rate-limit specifically so the status line can
+                        // detect rate-limit specifically so the status line can
                         // tell the user to wait a minute instead of blaming their key.
                         const errMsg = String(json.message || json.status || '').toLowerCase();
                         if (/rate.?limit|too many requests|exceeded/i.test(errMsg)) {
@@ -183,18 +183,18 @@ function renderStocks(widget, container) {
                         return; // keep cached price
                     }
 
-                    const rawPrice = json.close != null ? json.close : json.price;
+                    const rawPrice = json.close != null ? json.close: json.price;
                     const price = parseFloat(rawPrice);
                     if (Number.isFinite(price)) {
                         target.lastPrice = price;
-                        let chg = parseFloat(json.change != null ? json.change : null);
-                        let pct = parseFloat(json.percent_change != null ? json.percent_change : null);
+                        let chg = parseFloat(json.change != null ? json.change: null);
+                        let pct = parseFloat(json.percent_change != null ? json.percent_change: null);
                         if (!Number.isFinite(chg)) {
                             const prevClose = parseFloat(json.previous_close || json.close);
                             if (Number.isFinite(prevClose) && prevClose !== 0) chg = price - prevClose;
                         }
                         if (!Number.isFinite(pct)) {
-                            const prevClose = parseFloat(json.previous_close != null ? json.previous_close : rawPrice);
+                            const prevClose = parseFloat(json.previous_close != null ? json.previous_close: rawPrice);
                             if (Number.isFinite(prevClose) && prevClose !== 0) pct = ((price - prevClose) / prevClose) * 100;
                         }
                         if (Number.isFinite(chg)) target.change = chg; else delete target.change;
@@ -203,7 +203,7 @@ function renderStocks(widget, container) {
                         failures++;
                     }
 
-                    // T14: Only fill in the company name from the API if the user
+                    // Only fill in the company name from the API if the user
                     // hasn't already saved a custom one. A non-empty `target.name`
                     // means the user (or a prior fetch) set it — don't clobber.
                     if (!target.name && typeof json.name === 'string' && json.name) {
@@ -215,7 +215,7 @@ function renderStocks(widget, container) {
                 }
 
                 // --- Time-series call (sparkline data) ------------------------------
-                // P2-7: only fetch sparkline data on manual refresh (force=true).
+                // only fetch sparkline data on manual refresh (force=true).
                 // Automatic refreshes skip this to stay under the free-tier rate limit
                 // (~8 credits/min). The existing sparkline is kept as-is.
                 if (force) {
@@ -228,11 +228,11 @@ function renderStocks(widget, container) {
                         const json2 = await res2.json();
                         if (json2 && Array.isArray(json2.values) && json2.values.length >= 2) {
                             if (target) {
-                                // values[] is newest-first; reverse so the sparkline reads left→right.
+                                // values is newest-first; reverse so the sparkline reads left→right.
                                 target.sparkline = json2.values
-                                    .slice(0, 20)
-                                    .map(v => parseFloat(v.close))
-                                    .reverse();
+.slice(0, 20)
+.map(v => parseFloat(v.close))
+.reverse();
                             }
                         } else {
                             // No usable series — clear any stale sparkline so it doesn't linger.
@@ -250,7 +250,7 @@ function renderStocks(widget, container) {
         Dashboard.saveFullState();
         renderList();
         if (failures === symbols.length && key) {
-            // P2-7: distinguish rate-limit from other failures so the user knows
+            // distinguish rate-limit from other failures so the user knows
             // to wait a minute instead of assuming their key is broken.
             if (rateLimited) {
                 setStatus('<p class="stock-status-err">Rate limited by Twelve Data — wait a minute and try again. Showing cached prices.</p>');
@@ -265,13 +265,13 @@ function renderStocks(widget, container) {
     renderList();
     fetchQuotes();
 
-    // T12: "↻ Refresh quotes" button moved to the card header (app/boot.js).
+    // "↻ Refresh quotes" button moved to the card header (app/boot.js).
     // Expose a refresh fn on the widget so the header ↻ icon can trigger it.
     widget.__stocksRefresh = () => { setStatus('<p class="stock-status-loading">Loading…</p>'); fetchQuotes(true); };
 }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.getTwelveDataKey = getTwelveDataKey;
 Dashboard.buildSparkline = buildSparkline;
 Dashboard.renderStocks = renderStocks;

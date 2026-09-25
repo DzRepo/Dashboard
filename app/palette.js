@@ -2,7 +2,7 @@
  * app/palette.js — Command Palette (⌘K / Ctrl+K). A lightweight global overlay to jump
  * to a widget or open a shortcut link. Intentionally SEPARATE from #modal-container so it
  * doesn't fight the modal Escape/focus-trap handlers. Results are built fresh each open;
- * activation resolves links by stable item index (P1-2), never label equality.
+ * activation resolves links by stable item index, never label equality.
  */
 
 const palette = {
@@ -48,7 +48,7 @@ function _paletteInit() {
 function _paletteBuildResults(query) {
     const q = String(query || '').trim().toLowerCase();
     const out = [];
-    const widgets = Array.isArray(state.widgets) ? state.widgets : [];
+    const widgets = Array.isArray(state.widgets) ? state.widgets: [];
 
     for (const w of widgets) {
         // 1. The widget itself.
@@ -64,7 +64,7 @@ function _paletteBuildResults(query) {
                 const url   = String(item.url || '');
                 if (!q || label.toLowerCase().includes(q) || desc.toLowerCase().includes(q) || url.toLowerCase().includes(q)) {
                     // Carry the item's index as stable identity so activation can
-                    // resolve the exact URL even when labels are duplicated (P1-2).
+                    // resolve the exact URL even when labels are duplicated.
                     out.push({ kind: 'link', widgetId: w.id, id: null, itemIndex: index, label, sublabel: url });
                 }
             });
@@ -86,22 +86,22 @@ function _paletteRender(query) {
     if (results.length === 0) {
         const li = document.createElement('li');
         li.className = 'palette-empty';
-        li.textContent = query ? `No matches for “${query}”.` : 'Nothing to show yet.';
+        li.textContent = query ? `No matches for “${query}”.`: 'Nothing to show yet.';
         palette.listEl.appendChild(li);
         return;
     }
 
     results.forEach((r, i) => {
         const li = document.createElement('li');
-        li.className = 'palette-item' + (i === palette.activeIndex ? ' active' : '');
+        li.className = 'palette-item' + (i === palette.activeIndex ? ' active': '');
         li.dataset.index = String(i);
         li.setAttribute('role', 'option');
-        li.setAttribute('aria-selected', i === palette.activeIndex ? 'true' : 'false');
+        li.setAttribute('aria-selected', i === palette.activeIndex ? 'true': 'false');
 
-        const icon = r.kind === 'widget' ? '▣' : '↗';
+        const icon = r.kind === 'widget' ? '▣': '↗';
         li.innerHTML = `<span class="palette-item-icon" aria-hidden="true">${icon}</span>` +
             `<div class="palette-item-text"><strong>${escapeHtml(r.label)}</strong>` +
-            (r.sublabel ? `<small>${escapeHtml(r.sublabel)}</small>` : '') + `</div>`;
+            (r.sublabel ? `<small>${escapeHtml(r.sublabel)}</small>`: '') + `</div>`;
 
         li.addEventListener('click', () => _paletteActivate(i));
         palette.listEl.appendChild(li);
@@ -116,7 +116,7 @@ function _paletteSetActive(index) {
     if (palette.listEl) {
         palette.listEl.querySelectorAll('.palette-item').forEach((li, i) => {
             li.classList.toggle('active', i === palette.activeIndex);
-            li.setAttribute('aria-selected', i === palette.activeIndex ? 'true' : 'false');
+            li.setAttribute('aria-selected', i === palette.activeIndex ? 'true': 'false');
         });
         // Keep the active item in view.
         const active = palette.listEl.querySelector('.palette-item.active');
@@ -142,11 +142,11 @@ function _paletteActivate(index) {
         }
     } else if (r.kind === 'link') {
         const widget = state.widgets.find(w => w.id === r.widgetId);
-        // Resolve by the stable item index carried on the result (P1-2) — never
+        // Resolve by the stable item index carried on the result — never
         // by label equality, which breaks when two shortcuts share a label.
         const match = (widget && Array.isArray(widget.data?.items) && typeof r.itemIndex === 'number')
-            ? widget.data.items[r.itemIndex] : null;
-        const url = match ? (match.url || '') : '';
+            ? widget.data.items[r.itemIndex]: null;
+        const url = match ? (match.url || ''): '';
         if (!url) {
             // Stale result (item removed since the list was built): no-op + announce.
             if (typeof announceStatus === 'function') announceStatus('That link is no longer available.');
@@ -155,8 +155,8 @@ function _paletteActivate(index) {
         if (/^https?:\/\//i.test(url)) {
             // Shortcut items carry their own per-item flag; fall back to the widget config,
             // which defaults to "new tab" when unset (consistent with runSearch).
-            const openInNewTab = match ? !!match.openInNewTab : (widget?.config?.openInNewTab !== false);
-            window.open(url, openInNewTab ? '_blank' : '_self', 'noopener,noreferrer');
+            const openInNewTab = match ? !!match.openInNewTab: (widget?.config?.openInNewTab !== false);
+            window.open(url, openInNewTab ? '_blank': '_self', 'noopener,noreferrer');
         }
     }
 }

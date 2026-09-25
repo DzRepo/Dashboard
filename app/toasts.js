@@ -18,8 +18,8 @@ function _getToastRegion() {
 
 /**
  * Show a toast with an optional Undo button.
- * @param {string} label   Human-readable description of what was done.
- * @param {Function|null} onUndo  Called when the user clicks "Undo". Pass null for info-only toasts.
+ * @param {string} label Human-readable description of what was done.
+ * @param {Function|null} onUndo Called when the user clicks "Undo". Pass null for info-only toasts.
  */
 function showUndoToast(label, onUndo) {
     const region = _getToastRegion();
@@ -36,7 +36,7 @@ function showUndoToast(label, onUndo) {
     el.setAttribute('role', 'status');
     el.innerHTML = `
         <span class="toast-label">${escapeHtml(label)}</span>
-        ${onUndo ? '<button type="button" class="toast-undo-btn">Undo</button>' : ''}
+        ${onUndo ? '<button type="button" class="toast-undo-btn">Undo</button>': ''}
         <button type="button" class="toast-dismiss-btn" aria-label="Dismiss">×</button>
     `;
 
@@ -54,8 +54,8 @@ function showUndoToast(label, onUndo) {
         setTimeout(() => el.remove(), 200);
     }
 
-    // P2-3: track the leave timer so it can be cleared on re-hover and in
-    // dismiss(). The old code scheduled an untracked 2 s setTimeout on every
+    // track the leave timer so it can be cleared on re-hover and in
+    // dismiss. The old code scheduled an untracked 2 s setTimeout on every
     // mouseleave — re-entering the toast within that window still dismissed it,
     // and repeated leave/enter cycles stacked multiple timers.
     autoTimer = setTimeout(dismiss, undoToasts.autoDismissMs);
@@ -75,13 +75,13 @@ function showUndoToast(label, onUndo) {
     el.addEventListener('mouseenter', () => {
         if (dismissed) return;
         clearTimeout(autoTimer);
-        // P2-3: also cancel any pending leave-dismiss so a quick re-hover
+        // also cancel any pending leave-dismiss so a quick re-hover
         // doesn't still fire the old timer.
         if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
     });
     el.addEventListener('mouseleave', () => {
         if (dismissed) return;
-        // P2-3: store the timer so mouseenter / dismiss can cancel it.
+        // store the timer so mouseenter / dismiss can cancel it.
         leaveTimer = setTimeout(dismiss, 2000);
     });
 

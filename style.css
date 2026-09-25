@@ -10,7 +10,7 @@
     --grid-gap: 10px;
     --border-radius: 12px;
 
-    /* Semantic status + accent-tint tokens (C10/C11). Values match the previously
+    /* Semantic status + accent-tint tokens (/). Values match the previously
        hard-coded literals so there is no visual change; they now track per theme and
        give future widgets correct colors for free. */
     --color-danger: #c62828;
@@ -63,7 +63,7 @@ body {
     max-width: 95%;
     margin: 0 auto;
     padding: 10px;
-    /* P3-3: clear the notch on devices with viewport-fit=cover. */
+    /* clear the notch on devices with viewport-fit=cover. */
     padding-top: calc(10px + env(safe-area-inset-top, 0px));
     padding-left: calc(10px + env(safe-area-inset-left, 0px));
     padding-right: calc(10px + env(safe-area-inset-right, 0px));
@@ -103,7 +103,7 @@ header {
 #add-widget-btn { font-weight: 700; }
 #settings-btn svg { display: block; }
 
-/* T19: make the header +/gear buttons read as themed panels (not solid black)
+/* make the header +/gear buttons read as themed panels (not solid black)
    in dark mode. Explicit bg+border so they never fall back to a UA/black fill.
    Hover is still handled by the generic button:hover rule below. */
 #add-widget-btn,
@@ -114,11 +114,11 @@ header {
 }
 [data-theme="dark"] #add-widget-btn,
 [data-theme="dark"] #settings-btn {
-    background: rgba(70, 72, 84, 0.9); /* visible mid-gray panel on the dark header */
-    border-color: #3a3c46;
+    background: rgba(12, 22, 81, 0.9); /* visible mid-gray panel on the dark header */
+    border-color: #111112;
 }
 #add-widget-btn:hover,
-#settings-btn:hover { background: var(--accent-color); color: #fff; }
+#settings-btn:hover { background: var(--accent-color); color: #243585; }
 [data-theme="dark"] #add-widget-btn:hover,
 [data-theme="dark"] #settings-btn:hover { border-color: transparent; }
 
@@ -133,7 +133,7 @@ button {
     transition: all 0.2s;
 }
 
-/* P3-3: scope the accent hover to primary buttons only. The old global
+/* scope the accent hover to primary buttons only. The old global
    button:hover turned every unstyled button (including the red-text Reset
    Dashboard and neutral "Use theme default") accent-blue on hover. */
 button:hover {
@@ -162,9 +162,9 @@ button:not(.danger):not(.primary):hover {
     align-content: start;
 }
 
-/* T18: fixed column count (Settings → Layout). data-layout="fixed" + --grid-cols.
+/* fixed column count (Settings → Layout). data-layout="fixed" + --grid-cols.
    Falls back to auto-fill when the attribute is absent. */
-[data-layout="fixed"] .dashboard-grid {
+[data-layout="fixed"].dashboard-grid {
     grid-template-columns: repeat(var(--grid-cols, 4), minmax(0, 1fr));
 }
 
@@ -211,7 +211,7 @@ button:not(.danger):not(.primary):hover {
     font-size: 1.1rem;
 }
 
-/* T22: optional per-widget icon glyph shown before the title */
+/* optional per-widget icon glyph shown before the title */
 .widget-icon {
     font-size: 1.2rem;
     line-height: 1;
@@ -224,7 +224,7 @@ button:not(.danger):not(.primary):hover {
 .widget-actions {
     display: flex;
     align-items: center;
-    gap: 4px; /* T12: spacing between refresh + gear icons */
+ gap: 4px; /* spacing between refresh + gear icons */
 }
 
 /* Gear icon button in the widget header (replaces the old text Edit button) */
@@ -267,7 +267,7 @@ button:not(.danger):not(.primary):hover {
     outline-offset: 1px;
 }
 
-.widget-card.dragging .widget-drag-handle {
+.widget-card.dragging.widget-drag-handle {
     cursor: grabbing;
 }
 
@@ -304,7 +304,8 @@ button:not(.danger):not(.primary):hover {
 }
 
 .modal-content {
-    background: #f4f5f7; /* neutral light gray — not pure white */
+    background: #f4f5f7;
+    color: var(--text-color);
     padding: 30px;
     border-radius: var(--border-radius);
     max-width: 500px;
@@ -312,12 +313,277 @@ button:not(.danger):not(.primary):hover {
     max-height: 80vh;
     overflow-y: auto;
     position: relative;
-    border: 1px solid #c8cad0; /* visible edge in light mode */
+    border: 1px solid #c8cad0;
+}
+
+.modal-content.modal-content--settings {
+    max-width: 560px;
+    padding: 22px 24px 18px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* panels scroll internally */
+}
+
+.modal-content.modal-content--settings #modal-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
 }
 
 [data-theme="dark"] .modal-content {
-    background: #2a2a3e; /* dark gray — not near-black, reads as a panel */
-    border-color: #0f0f14; /* thin darker-than-fill border for edge definition */
+    background: #2a2a3e;
+    border-color: #0f0f14;
+}
+
+/* ── Settings modal (tabbed) ─────────────────────────── */
+.settings-modal {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: calc(80vh - 36px);
+    color: var(--text-color);
+}
+
+.settings-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-right: 28px; /* clear the × close button */
+}
+
+.settings-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.settings-version {
+    font-size: 0.75rem;
+    opacity: 0.75;
+    color: var(--text-color);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.settings-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    margin-bottom: 14px;
+    padding-bottom: 0;
+}
+
+[data-theme="dark"] .settings-tabs {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+.settings-tab {
+    appearance: none;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--text-color);
+    opacity: 0.85;
+    border-radius: 6px 6px 0 0;
+}
+
+.settings-tab:hover {
+    opacity: 1;
+    background: rgba(127, 127, 127, 0.1);
+}
+
+.settings-tab.is-active,
+.settings-tab[aria-selected="true"] {
+    opacity: 1;
+    border-bottom-color: var(--accent-color);
+    font-weight: 600;
+}
+
+.settings-panels {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.settings-panel[hidden] {
+    display: none;
+}
+
+.settings-subheader {
+    margin: 4px 0 10px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.65;
+    font-weight: 600;
+}
+
+.settings-subheader:not(:first-child) {
+    margin-top: 18px;
+}
+
+.settings-group {
+    margin-bottom: 14px;
+}
+
+.settings-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+}
+
+.settings-group input[type="text"],
+.settings-group input[type="password"],
+.settings-group input[type="url"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text-color);
+    font-size: 14px;
+    line-height: 1.5;
+    box-sizing: border-box;
+}
+
+.settings-group select {
+    width: auto;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text-color);
+    font-size: 14px;
+    line-height: 1.5;
+    box-sizing: border-box;
+}
+
+[data-theme="dark"] .settings-group input[type="text"],
+[data-theme="dark"] .settings-group input[type="password"],
+[data-theme="dark"] .settings-group input[type="url"],
+[data-theme="dark"] .settings-group select {
+    background: rgba(0, 0, 0, 0.35);
+    color: var(--text-color);
+    border-color: var(--card-border);
+}
+
+.settings-group input[type="color"] {
+    width: 48px;
+    height: 36px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+}
+
+.settings-hint {
+    font-size: 0.7rem;
+    margin: 4px 0 0;
+    opacity: 0.8;
+    color: var(--text-color);
+    line-height: 1.35;
+}
+
+.settings-hint-lead {
+    margin-bottom: 14px;
+}
+
+.settings-hint-inline {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.settings-inline-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.settings-secondary-btn {
+    margin-top: 6px;
+}
+
+.settings-data-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.settings-data-actions button {
+    width: 100%;
+}
+
+.settings-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .settings-footer {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-footer-version {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    color: var(--text-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.settings-footer .primary {
+    margin-left: auto;
+    background: var(--accent-color);
+    color: #fff;
+    border-color: var(--accent-color);
+}
+
+.settings-footer .primary:hover {
+    opacity: 0.92;
+    color: #fff;
+    background: var(--accent-color);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+@media (max-width: 520px) {
+.settings-tab {
+        padding: 7px 8px;
+        font-size: 0.78rem;
+    }
+.settings-footer {
+        flex-wrap: wrap;
+    }
+.settings-footer-version {
+        order: 2;
+        width: 100%;
+        text-align: center;
+    }
+    .settings-footer .primary {
+        margin-left: 0;
+        width: 100%;
+    }
 }
 
 .modal-close {
@@ -330,7 +596,7 @@ button:not(.danger):not(.primary):hover {
     cursor: pointer;
 }
 
-/* C7 — Add-widget picker buttons with optional hint captions. */
+/* Add-widget picker buttons with optional hint captions. */
 .widget-options {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -348,11 +614,11 @@ button:not(.danger):not(.primary):hover {
     padding: 10px 12px;
 }
 
-.widget-options .widget-type-label {
+.widget-options.widget-type-label {
     font-weight: 600;
 }
 
-.widget-options .widget-type-hint {
+.widget-options.widget-type-hint {
     display: block;
     font-size: 11.5px;
     line-height: 1.35;
@@ -398,7 +664,7 @@ button:not(.danger):not(.primary):hover {
 .list-item:last-child {
     border-bottom: none;
 }
-.list-item.completed .list-item-text {
+.list-item.completed.list-item-text {
     text-decoration: line-through;
     opacity: 0.6;
 }
@@ -487,7 +753,7 @@ button:not(.danger):not(.primary):hover {
     white-space: nowrap;
 }
 
-/* .clock-day-badge (base + tone variants) is defined later in this file with the Tomorrow/Yesterday colors — kept there as the single source of truth.
+/*.clock-day-badge (base + tone variants) is defined later in this file with the Tomorrow/Yesterday colors — kept there as the single source of truth.
    The per-row delete button was removed; add/remove times is managed on the Edit page. */
 
 .clock-empty {
@@ -522,7 +788,7 @@ button:not(.danger):not(.primary):hover {
     font-size: 14px;
 }
 
-.clock-time-row .clock-time-zone {
+.clock-time-row.clock-time-zone {
     flex: 1.2;
 }
 
@@ -612,7 +878,7 @@ button:not(.danger):not(.primary):hover {
     opacity: 0.7;
 }
 
-/* T4 — hourly forecast strip */
+/* hourly forecast strip */
 .weather-hourly {
     display: flex;
     justify-content: flex-start; /* default: left-aligned so overflow scrolls correctly */
@@ -622,10 +888,10 @@ button:not(.danger):not(.primary):hover {
     margin-top: 8px;
 }
 
-/* T21: on medium/large cards the strip usually fits — center it. When it does
+/* on medium/large cards the strip usually fits — center it. When it does
    overflow, `overflow-x:auto` keeps left-aligned scrolling so nothing is lost. */
-.widget-card.span-2 .weather-hourly,
-.widget-card.span-3 .weather-hourly {
+.widget-card.span-2.weather-hourly,
+.widget-card.span-3.weather-hourly {
     justify-content: center;
 }
 
@@ -672,8 +938,8 @@ button:not(.danger):not(.primary):hover {
 
 /* On medium/large cards the days usually fit — center them; when they overflow,
    `overflow-x:auto` keeps left-aligned scrolling so nothing is lost. */
-.widget-card.span-2 .weather-forecast,
-.widget-card.span-3 .weather-forecast {
+.widget-card.span-2.weather-forecast,
+.widget-card.span-3.weather-forecast {
     justify-content: center;
 }
 
@@ -703,7 +969,7 @@ button:not(.danger):not(.primary):hover {
     white-space: nowrap;
 }
 
-.weather-error .weather-retry-btn,
+.weather-error.weather-retry-btn,
 .weather-empty button {
     display: flex;
     gap: 8px;
@@ -766,7 +1032,7 @@ textarea.search-input::placeholder {
 
 .stock-row {
     display: grid;
-    /* T5 — three columns when a sparkline is present; the sparkline sits between name and price */
+    /* three columns when a sparkline is present; the sparkline sits between name and price */
     grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 8px;
@@ -776,7 +1042,7 @@ textarea.search-input::placeholder {
 }
 
 /* When no sparkline is rendered the middle cell collapses; keep layout tidy */
-.stock-row .stock-sparkline {
+.stock-row.stock-sparkline {
     display: block;
     flex-shrink: 0;
 }
@@ -798,7 +1064,7 @@ textarea.search-input::placeholder {
     font-size: 0.85rem;
 }
 
-/* T14: Clickable stock name link */
+/* Clickable stock name link */
 a.stock-link {
     color: inherit;
     opacity: 0.7;
@@ -874,7 +1140,7 @@ a.stock-link:hover {
     border-color: var(--accent-color);
 }
 
-.list-item.overdue .list-due-chip {
+.list-item.overdue.list-due-chip {
     color: var(--color-danger);
     border-color: rgba(214, 87, 51, 0.4);
     background: rgba(214, 87, 51, 0.1);
@@ -963,7 +1229,7 @@ a.stock-link:hover {
     color: inherit;
 }
 
-/* T20: per-item delete (×) + bottom Add button — theme-aware so they're not
+/* per-item delete (×) + bottom Add button — theme-aware so they're not
    solid black in dark mode. Compact, match the panel fill. */
 .delete-list-btn {
     flex: 0 0 auto;
@@ -1050,7 +1316,7 @@ a.stock-link:hover {
     min-width: 0;
 }
 
-.shortcut-item:hover .shortcut-label { color: var(--accent-color); }
+.shortcut-item:hover.shortcut-label { color: var(--accent-color); }
 
 /* Favicon (auto-fetched from Google s2) with letter-avatar fallback */
 .shortcut-icon {
@@ -1074,8 +1340,8 @@ a.stock-link:hover {
     justify-content: center;
 }
 
-.shortcut-favicon-wrap .shortcut-favicon { position: absolute; inset: 0; }
-.shortcut-favicon-wrap .shortcut-icon-fallback { z-index: 0; }
+.shortcut-favicon-wrap.shortcut-favicon { position: absolute; inset: 0; }
+.shortcut-favicon-wrap.shortcut-icon-fallback { z-index: 0; }
 .shortcut-favicon-wrap img { z-index: 1; background: transparent; }
 
 /* Letter avatar used when no URL is available */
@@ -1144,7 +1410,7 @@ a.stock-link:hover {
 .clock-day-badge.yesterday { background: rgba(214, 87, 51, 0.18); }
 
 /* ── Search widget (stacked layout: provider row + multi-line query) ───
-   C3: class renamed from .perplexity-* to .search-* to match the new type id. */
+ class renamed from.perplexity-* to.search-* to match the new type id. */
 .search-widget {
     display: flex;
     flex-direction: column;
@@ -1197,7 +1463,7 @@ textarea.search-input {
     resize: vertical;
 }
 
-.search-input:focus, .engine-select:focus {
+.search-input:focus,.engine-select:focus {
     outline: none;
     border-color: var(--accent-color);
 }
@@ -1258,7 +1524,7 @@ textarea.search-input {
 
 /* Stock status / hint lines */
 .stock-status { margin-top: 8px; font-size: 0.85rem; line-height: 1.4; min-height: 0; }
-.stock-status-key, .stock-status-err, .stock-status-loading, .stock-status-cached {
+.stock-status-key,.stock-status-err,.stock-status-loading,.stock-status-cached {
     padding: 8px 10px;
     border-radius: 8px;
     background: rgba(127, 127, 127, 0.06);
@@ -1291,7 +1557,7 @@ textarea.search-input {
 .countdown-row.past { opacity: 0.6; }
 
 .countdown-label {
-    font-weight: 700;
+    font-weight: 500;
     min-width: 80px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1300,8 +1566,8 @@ textarea.search-input {
 
 .countdown-value {
     margin-left: auto;          /* right-align the d/h/m/s value */
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 300;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
 }
@@ -1324,7 +1590,7 @@ textarea.search-input {
     font-size: 0.9rem;
 }
 
-/* ── Pomodoro / Focus Timer Widget (T7) ───────────────
+/* ── Pomodoro / Focus Timer Widget ───────────────
    Compact focus timer with mode label, big tabular-numeral clock,
    a progress bar that drains as the session runs, and Start/Pause + Reset.
    ------------------------------------------------------------------------ */
@@ -1401,7 +1667,7 @@ textarea.search-input {
     outline-offset: 2px;
 }
 
-/* ── Currency Converter Widget (T7) — multi-currency rate board ─────
+/* ── Currency Converter Widget — multi-currency rate board ─────
    One row per chosen foreign currency. Each shows the $1 base → code
    rate and links out to XE.com's chart for that pair. High-contrast,
    readable text in both light and dark themes.
@@ -1456,7 +1722,7 @@ a.currency-row:focus-visible {
 
 /* Currency code (left). Bold + primary text color for clear readability. */
 .currency-code {
-    font-weight: 700;
+    font-weight: 100;
     letter-spacing: 0.03em;
     color: var(--text-color);
 }
@@ -1464,7 +1730,7 @@ a.currency-row:focus-visible {
 /* Numeric rate (right). Tabular figures, full-strength theme text color. */
 .currency-rate {
     font-variant-numeric: tabular-nums;
-    font-weight: 600;
+    font-weight: 400;
     color: var(--text-color);           /* was a low-contrast accent — now readable */
 }
 
@@ -1487,7 +1753,7 @@ a.currency-row:focus-visible {
     font-size: 0.9rem;
 }
 
-/* ── Habit Tracker Widget (T7) ───────────────────────
+/* ── Habit Tracker Widget ───────────────────────
    A compact grid: habit names on the left, a 7-day streak row per habit.
    Only today's cell is interactive; past days show as read-only indicators.
    ------------------------------------------------------------------------ */
@@ -1598,7 +1864,7 @@ a.currency-row:focus-visible {
 .habit-remove-entry:hover { background: rgba(198, 40, 40, 0.2); }
 
 /* ── Command palette (⌘K / Ctrl+K) ───────────────────
-   A separate overlay from .modal-overlay so it doesn't fight the existing
+   A separate overlay from.modal-overlay so it doesn't fight the existing
    Escape/focus-trap handlers. Mirrors the modal's visual language and uses
    the same theme variables, so light/dark/system themes all work out of box.
    ------------------------------------------------------------------------ */
@@ -1613,7 +1879,7 @@ a.currency-row:focus-visible {
     justify-content: center;
     align-items: flex-start; /* anchor near the top like a real command palette */
     padding-top: 12vh;
-    z-index: 1100; /* above .modal-overlay (1000) so it can layer over an open dialog if needed */
+    z-index: 1100; /* above.modal-overlay (1000) so it can layer over an open dialog if needed */
 }
 
 .palette-overlay[hidden] {
@@ -1716,7 +1982,7 @@ a.currency-row:focus-visible {
 }
 
 /* Flash highlight when a widget is jumped to from the palette.
-   Applied via .widget-card.palette-flash; removed after animationend so it can re-trigger. */
+   Applied via.widget-card.palette-flash; removed after animationend so it can re-trigger. */
 @keyframes paletteFlash {
     0%   { box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 0 0 3px var(--accent-color); }
     100% { box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 0 0 3px transparent; }
@@ -1727,7 +1993,7 @@ a.currency-row:focus-visible {
     outline: none;
 }
 
-/* ── Undo toasts (T3) ───────────────────────────────
+/* ── Undo toasts ───────────────────────────────
    A fixed bottom-right stack of transient notifications. Each toast has a label,
    an optional "Undo" button, and a dismiss ×. Auto-dismisses after ~6s unless
    hovered; the visible stack is capped at 5 by app/toasts.js.
@@ -1736,7 +2002,7 @@ a.currency-row:focus-visible {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    /* P3-3: clear the notch on devices with viewport-fit=cover. */
+    /* clear the notch on devices with viewport-fit=cover. */
     bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     right: calc(20px + env(safe-area-inset-right, 0px));
     display: flex;
@@ -1888,7 +2154,7 @@ a.currency-row:focus-visible {
     margin-top: 1px;
 }
 
-.rss-status, .rss-error, .rss-empty { font-size: 0.85rem; }
+.rss-status,.rss-error,.rss-empty { font-size: 0.85rem; }
 .rss-error { color: var(--color-danger); }
 
 /* RSS feeds editor (inside the edit modal) */
@@ -1949,25 +2215,25 @@ button.danger:hover { background: rgba(198, 40, 40, 0.1); }
 
 /* Responsive Grid */
 @media (max-width: 768px) {
-    .dashboard-grid {
+.dashboard-grid {
         grid-template-columns: 1fr;
     }
 
     /* Spans are no-ops in a single-column layout. */
-    .widget-card.span-2,
-    .widget-card.span-3 {
+.widget-card.span-2,
+.widget-card.span-3 {
         grid-column: auto;
     }
 }
 
-/* P3-3: respect the user's reduced-motion preference. Disable the palette
+/* respect the user's reduced-motion preference. Disable the palette
    flash highlight and toast slide-in animations for users who have asked
    their OS/browser to reduce motion. */
 @media (prefers-reduced-motion: reduce) {
-    .widget-card.palette-flash {
+.widget-card.palette-flash {
         animation: none;
     }
-    .toast {
+.toast {
         animation: none;
     }
 }

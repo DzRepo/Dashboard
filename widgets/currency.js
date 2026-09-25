@@ -1,5 +1,5 @@
 /**
- * currency — widget renderer. Part of the widgets/ split (P2-10).
+ * currency — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -10,7 +10,7 @@ function renderCurrency(widget, container) {
     const fromCode = (cfg.from || 'USD').toUpperCase();
 
     // Target currencies: prefer the new list; fall back to a legacy single `to` code.
-    let targets = Array.isArray(cfg.toCodes) ? cfg.toCodes.slice() : [];
+    let targets = Array.isArray(cfg.toCodes) ? cfg.toCodes.slice(): [];
     if (!targets.length && typeof cfg.to === 'string' && /^[A-Z]{3}$/.test((cfg.to || '').toUpperCase())) {
         targets.push(cfg.to.toUpperCase());
     }
@@ -18,8 +18,8 @@ function renderCurrency(widget, container) {
     // Normalise + de-dupe (case-insensitive), drop the base code, cap at a sane number.
     const seen = new Set();
     targets = targets.map(c => String(c).trim().toUpperCase())
-                     .filter((c) => /^[A-Z]{3}$/.test(c) && c !== fromCode && !seen.has(c) && (seen.add(c), true))
-                     .slice(0, 24);
+.filter((c) => /^[A-Z]{3}$/.test(c) && c !== fromCode && !seen.has(c) && (seen.add(c), true))
+.slice(0, 24);
     if (!targets.length) targets = ['EUR', 'GBP']; // sensible default so the board is never empty
 
     container.innerHTML = '';
@@ -34,7 +34,7 @@ function renderCurrency(widget, container) {
     // Human-readable currency names. The frankfurter.dev v1 API does not include
     // them, so we fall back to the browser's built-in Intl data (available in every
     // modern engine); if that is unavailable we just show the 3-letter code.
-    // I3: lookups are cached at module scope so repeated renders don't re-construct
+    // lookups are cached at module scope so repeated renders don't re-construct
     // Intl.DisplayNames for the same locale+code pair.
     const NAME_LOCALES = ['en-US', 'en'];
     function currencyName(code) {
@@ -70,17 +70,16 @@ function renderCurrency(widget, container) {
                 // Show the human-readable name (e.g. "Euro") when available,
                 // keeping the code in parentheses for clarity; otherwise just the code.
                 const name = currencyName(code);
-                const codeLabel = (name && name !== code) ? `${escapeHtml(name)} (${code})` : escapeHtml(code);
                 return `
                     <a class="currency-row" href="${xeUrl}" target="_blank" rel="noopener noreferrer"
                        title="$1 ${escapeHtml(fromCode)} = ${fmtRate(rate)} ${escapeHtml(code)} — open chart on XE.com">
-                        <span class="currency-code">${codeLabel}</span>
+                        <span class="currency-code">${name}</span>
                         <span class="currency-rate">${fmtRate(rate)}</span>
                     </a>`;
             }).join('');
 
             bodyHtml = `
-                ${widget.data.error ? `<p class="currency-error currency-partial">${escapeHtml(widget.data.error)}</p>` : ''}
+                ${widget.data.error ? `<p class="currency-error currency-partial">${escapeHtml(widget.data.error)}</p>`: ''}
                 <div class="currency-rows" aria-live="polite">
                     <span class="currency-base-note">$1 ${escapeHtml(fromCode)} →</span>
                     ${rows}
@@ -99,7 +98,7 @@ function renderCurrency(widget, container) {
         widget.data.error = null;
         if (!widget.data.rates || Object.keys(widget.data.rates).length === 0) renderState(); // loading
         try {
-            // T15: Use the current frankfurter.dev v1 endpoint.
+            // Use the current frankfurter.dev v1 endpoint.
             // Note: v1 uses base + symbols params (not from/to).
             const url = `https://api.frankfurter.dev/v1/latest?base=${encodeURIComponent(fromCode)}&symbols=${encodeURIComponent(targets.join(','))}`;
             const res = await Dashboard.fetchWithTimeout(url, 10000);
@@ -107,8 +106,8 @@ function renderCurrency(widget, container) {
             const json = await res.json();
 
             // frankfurter.app response shape:
-            //   { "amount": 1.0, "base": "USD", "date": "2026-…",
-            //     "rates": { "EUR": 0.9234 } }
+            // { "amount": 1.0, "base": "USD", "date": "2026-…",
+            // "rates": { "EUR": 0.9234 } }
             const rates = {};
             let gotAny = false;
             for (const code of targets) {
@@ -126,12 +125,12 @@ function renderCurrency(widget, container) {
                 Dashboard.announceStatus(`Currency rates updated: $1 ${fromCode} → ${sample}.`);
             }
         } catch (err) {
-            // T15: Include the error detail for easier diagnosis.
+            // Include the error detail for easier diagnosis.
             // Appendix A: mention ECB/Frankfurter coverage so users don't assume
             // a network fault when an exotic currency simply isn't in the reference set.
             const msg = err && err.name === 'AbortError'
                 ? 'Request timed out. Check your connection.'
-                : 'Could not load exchange rate (' + (err.message || err.name || 'unknown') + '). Note: Frankfurter v1 uses ECB reference rates — some currencies may not be covered.';
+: 'Could not load exchange rate (' + (err.message || err.name || 'unknown') + '). Note: Frankfurter v1 uses ECB reference rates — some currencies may not be covered.';
             widget.data.error = msg;
             console.warn('[Currency] fetchRates failed:', err);
             renderState();
@@ -139,10 +138,10 @@ function renderCurrency(widget, container) {
     }
 
     // ── Button wiring ──────────────────────────────────────────────
-    // Convention: the error state (and its Retry button) is rendered by renderState()
-    // *after* mount, so wiring it here at once would orphan the listener (P1-4).
+    // Convention: the error state (and its Retry button) is rendered by renderState
+    // *after* mount, so wiring it here at once would orphan the listener.
     // Expose fetchRates on the widget and let app/grid.js's delegated click
-    // handler dispatch .currency-retry clicks — same pattern as weather above.
+    // handler dispatch.currency-retry clicks — same pattern as weather above.
     widget.__currencyRetry = fetchRates;
 
     // Fetch on mount (or use cached rates if fresh — < 1 hour old).
@@ -154,7 +153,7 @@ function renderCurrency(widget, container) {
 }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderCurrency = renderCurrency;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

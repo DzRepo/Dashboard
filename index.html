@@ -7,7 +7,7 @@
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.webmanifest">
-    <!-- C13: default (light) accent; app/boot.js updates this per-theme at runtime. -->
+    <!-- Default (light) accent; app/boot.js updates this per-theme at runtime. -->
     <meta id="meta-theme-color" name="theme-color" content="#007AFF">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -21,7 +21,7 @@
 
     <!-- Accessibility: skip link target is the main grid. -->
     <style>
-        .visually-hidden {
+.visually-hidden {
             position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
             overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
         }
@@ -38,7 +38,7 @@
             <h1 id="dashboard-title">My Dashboard</h1>
             <div class="header-actions" role="toolbar" aria-label="Dashboard actions">
                 <button id="add-widget-btn" type="button" aria-label="Add a new widget" title="Add Widget"><span aria-hidden="true">＋</span></button>
-                <button id="settings-btn" type="button" aria-label="Open settings" title="Settings"><svg class="icon-gear" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span class="visually-hidden">Settings</span></button>
+                <button id="settings-btn" type="button" aria-label="Open settings" title="Settings"><svg class="icon-gear" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0.33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0.33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span class="visually-hidden">Settings</span></button>
             </div>
         </header>
 
@@ -72,8 +72,8 @@
         <!-- Live region for status announcements (e.g. "Weather updated", "Saved"). -->
         <div id="status-live-region" class="visually-hidden" role="status" aria-live="polite"></div>
     </div>
-    <!-- P2-10: widgets split into per-type files. Load shared helpers first, then each renderer.
-         All are classic scripts sharing the global scope; namespace footers publish to Dashboard. -->
+    <!-- Widgets: shared helpers first, then each renderer. Classic scripts share
+         the global scope; namespace footers publish to Dashboard. -->
     <script src="storage.js"></script>
     <script src="widgets/shared/helpers.js"></script>
     <script src="widgets/shortcuts.js"></script>
@@ -89,8 +89,7 @@
     <script src="widgets/currency.js"></script>
     <script src="widgets/habits.js"></script>
     <script src="registry.js"></script>
-    <!-- P2-10: app split into app/ (loaded in dependency order; boot.js last — it wires
-         listeners, calls Dashboard.init(), and publishes the shared globals). -->
+    <!-- App modules in dependency order; boot.js last (wires listeners, calls init). -->
     <script src="app/state.js"></script>
     <script src="app/toasts.js"></script>
     <script src="app/dnd.js"></script>

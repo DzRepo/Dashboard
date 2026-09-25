@@ -1,5 +1,5 @@
 /**
- * notes — widget renderer. Part of the widgets/ split (P2-10).
+ * notes — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -11,7 +11,7 @@ function renderNotes(widget, container) {
     ta.placeholder = 'Jot something down… (autosaves as you type)';
     ta.value = widget.data.text || '';
 
-    // P3-10: debounce with a local setTimeout; flush via widget.__notesFlush
+    // debounce with a local setTimeout; flush via widget.__notesFlush
     // (called from renderDashboard before the grid is wiped, and from createWidgetElement).
     // clearWidgetTimer only clears intervals — it does not participate in notes saves.
     let saveTimer = null;
@@ -64,7 +64,7 @@ function renderNotes(widget, container) {
 }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderNotes = renderNotes;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

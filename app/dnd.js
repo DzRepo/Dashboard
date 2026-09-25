@@ -3,7 +3,7 @@
  * header; a dashed drop indicator shows the target slot, and dropping into empty grid
  * area moves the card to the end. Also provides keyboard reordering (arrow keys on the
  * handle) as the accessible alternative. Reorders mutate state.widgets and persist via
- * Storage, then re-render through renderDashboard().
+ * Storage, then re-render through renderDashboard.
  */
 
 let draggingCard = null;
@@ -37,7 +37,7 @@ function handleDragOver(e, card) {
 function handleDrop(e, card) {
     e.preventDefault();
     e.stopPropagation();
-    const draggedId = draggingCard ? draggingCard.dataset.id : null;
+    const draggedId = draggingCard ? draggingCard.dataset.id: null;
     clearDropIndicator();
     if (!draggedId || card === draggingCard) return;
     commitReorder(draggedId, card.dataset.id, getDropPosition(e, card));
@@ -52,9 +52,9 @@ function getDropPosition(e, card) {
     const vOverlap = Math.min(rect.bottom, e.clientY) - Math.max(rect.top, e.clientY);
     const hOverlap = Math.min(rect.right, e.clientX) - Math.max(rect.left, e.clientX);
     if (hOverlap > vOverlap) {
-        return e.clientX < rect.left + rect.width / 2 ? 'before' : 'after';
+        return e.clientX < rect.left + rect.width / 2 ? 'before': 'after';
     }
-    return e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+    return e.clientY < rect.top + rect.height / 2 ? 'before': 'after';
 }
 
 function ensureDropIndicator() {

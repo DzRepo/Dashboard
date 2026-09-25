@@ -1,28 +1,25 @@
 /**
- * rss — widget renderer + RSS fetch pipeline. Part of the widgets/ split (P2-10).
+ * rss — widget renderer + RSS fetch pipeline. One renderer per widget type.
  * Classic script: top-level functions become globals.
- *
- * P1-7 (2026-09): the fetch pipeline was reworked so a feed fails fast (~5 s per
+ * 7 (2026-09): the fetch pipeline was reworked so a feed fails fast (~5 s per
  * attempt, no 45 s worst case) and third-party public proxies are opt-in behind a
  * Settings checkbox (default off). The per-feed error names which strategy failed.
  */
 
-// P1-7: pure, exported proxy-strategy builder. Extracted from the render closure so
+// pure, exported proxy-strategy builder. Extracted from the render closure so
 // its placeholder handling ({url} / {URL}, trailing "?", path prefix) is unit-testable.
-//
 // Returns an ordered array of { label, url } attempts. The caller prepends the
 // direct feed URL as its first attempt.
-//
-//   settings.corsProxyUrl        — user's own proxy endpoint ("{url}" placeholder or
-//                                  trailing "?"/path-prefix conventions supported).
-//   settings.rssAllowPublicProxies — opt-in flag; when true, well-known public
-//                                  proxies are appended after the user proxy.
+// settings.corsProxyUrl — user's own proxy endpoint ("{url}" placeholder or
+// trailing "?"/path-prefix conventions supported).
+// settings.rssAllowPublicProxies — opt-in flag; when true, well-known public
+// proxies are appended after the user proxy.
 function buildProxyStrategies(feedUrl, settings) {
     const enc = encodeURIComponent(feedUrl);
     const strategies = [];
 
     // 1. User-configured proxy (highest priority). Supports the two common
-    //    placeholder conventions: {url} / {URL}, or a trailing "?" for append.
+    // placeholder conventions: {url} / {URL}, or a trailing "?" for append.
     let userProxy = '';
     if (settings && typeof settings === 'object') {
         userProxy = String(settings.corsProxyUrl || '').trim();
@@ -45,10 +42,10 @@ function buildProxyStrategies(feedUrl, settings) {
         strategies.push({ label: 'custom', url: proxied });
     }
 
-    // 2. Public fallback proxies — OPT-IN (P1-7). Default off: routing a user's feed
-    //    URL through strangers' public proxies is flaky and a mild privacy smell. The
-    //    README's own recommendation is "run your own worker"; the user proxy above is
-    //    the first-party path. Only when the user explicitly opts in do we fall back.
+    // 2. Public fallback proxies — OPT-IN. Default off: routing a user's feed
+    // URL through strangers' public proxies is flaky and a mild privacy smell. The
+    // README's own recommendation is "run your own worker"; the user proxy above is
+    // the first-party path. Only when the user explicitly opts in do we fall back.
     if (settings && settings.rssAllowPublicProxies) {
         strategies.push(
             { label: 'allorigins',  url: 'https://api.allorigins.win/raw?url=' + enc },
@@ -72,10 +69,10 @@ function renderRss(widget, container) {
     function parseDate(str) {
         if (!str) return null;
         const d = new Date(str);
-        return isNaN(d.getTime()) ? null : d;
+        return isNaN(d.getTime()) ? null: d;
     }
 
-    // P1-7: per-attempt timeout cut from 9 s to 5 s so a fully blocked feed fails
+    // per-attempt timeout cut from 9 s to 5 s so a fully blocked feed fails
     // in ~10–15 s (direct + user proxy) instead of the old 45+ s worst case.
     const ATTEMPT_TIMEOUT_MS = 5000;
 
@@ -84,13 +81,13 @@ function renderRss(widget, container) {
         return Dashboard.fetchWithTimeout(targetUrl, ms || ATTEMPT_TIMEOUT_MS, { mode: 'cors' });
     }
 
-    // P1-7: returns { ok, items } on success or throws an Error whose message names
+    // returns { ok, items } on success or throws an Error whose message names
     // the failing strategy (e.g. "direct", "custom proxy") so the card can tell the
     // user which path to debug.
     async function fetchFeed(url, maxItems) {
         const settings = (Dashboard.state && Dashboard.state.settings) || {};
         // Try the feed directly first; then rotate through proxy strategies.
-        const attempts = [{ label: 'direct', url }, ...buildProxyStrategies(url, settings)];
+        const attempts = [{ label: 'direct', url },...buildProxyStrategies(url, settings)];
         let lastErr = null;
         for (const attempt of attempts) {
             try {
@@ -126,7 +123,7 @@ function renderRss(widget, container) {
                 lastErr = new Error('No readable items found');
             } catch (e) {
                 // Tag the error with which strategy failed so the card can name it.
-                lastErr = new Error((e && e.message ? e.message : 'fetch failed') + ' [via: ' + attempt.label + ']');
+                lastErr = new Error((e && e.message ? e.message: 'fetch failed') + ' [via: ' + attempt.label + ']');
             }
         }
         throw lastErr || new Error('Failed to fetch feed');
@@ -198,14 +195,14 @@ function renderRss(widget, container) {
                 const result = await fetchFeed(f.url, f.maxItems || 8);
                 states[f.url] = { loading: false, items: result.items, error: '' };
             } catch (e) {
-                // P1-7: build a clear, actionable message and name the failing
+                // build a clear, actionable message and name the failing
                 // strategy (the [via: …] tag that fetchFeed appends) so the user can
                 // debug their proxy from the card. Most failures are browser CORS
                 // blocks on the feed host — point to the optional proxy setting.
-                const base = e && e.message ? e.message : 'Failed to load';
+                const base = e && e.message ? e.message: 'Failed to load';
                 // Extract the strategy label from the [via: …] tag, if present.
                 const viaMatch = base.match(/\[via:\s*([^\]]+)\]\s*$/);
-                const via = viaMatch ? viaMatch[1].trim() : '';
+                const via = viaMatch ? viaMatch[1].trim(): '';
                 // Strip the tag from the base message for cleaner display.
                 const cleanBase = base.replace(/\s*\[via:\s*[^\]]+\]\s*$/, '');
                 let msg;
@@ -216,7 +213,7 @@ function renderRss(widget, container) {
                 } else if (/HTTP \d{3}/i.test(cleanBase)) {
                     msg = cleanBase + ' (via "' + (via || 'direct') + '").';
                 } else {
-                    msg = cleanBase + (via ? ' (via "' + via + '").' : '.');
+                    msg = cleanBase + (via ? ' (via "' + via + '").': '.');
                 }
                 states[f.url] = { loading: false, items: [], error: msg };
             }
@@ -232,14 +229,14 @@ function renderRss(widget, container) {
     container.appendChild(actions);
 
     loadAll();
-    // Expose refresh for header ↻ and grid-delegated .rss-refresh-btn clicks.
+    // Expose refresh for header ↻ and grid-delegated.rss-refresh-btn clicks.
     widget.__rssRefresh = () => { bodyEl.innerHTML = '<p class="rss-status">Loading…</p>'; loadAll(); };
 }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderRss = renderRss;
-// P1-7: publish the pure proxy-strategy builder so Node tests can unit-test it.
+// publish the pure proxy-strategy builder so Node tests can unit-test it.
 Dashboard.buildProxyStrategies = buildProxyStrategies;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

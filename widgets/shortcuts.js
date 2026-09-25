@@ -1,5 +1,5 @@
 /**
- * shortcuts — widget renderer. Part of the widgets/ split (P2-10).
+ * shortcuts — widget renderer. One renderer per widget type.
  * Classic script: top-level functions become globals.
  */
 
@@ -39,7 +39,7 @@ function renderShortcuts(widget, container) {
     // ── List of links ───────────────────────────────────────────────────
     const list = document.createElement('div');
     list.className = 'shortcuts-list';
-    
+
     // Map each displayed item back to its real position in widget.data.items so
     // per-item actions (move / new-tab / delete) target the correct entry even when
     // "most used" sort has reordered the display.
@@ -57,7 +57,7 @@ function renderShortcuts(widget, container) {
         } else {
             const domain = safeDomainForFavicon(item.url);
             if (domain) {
-                faviconHtml = `<span class="shortcut-favicon-wrap"><img class="shortcut-icon shortcut-favicon" src="${escapeAttr(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`)}" alt="" width="18" height="18" loading="lazy" data-domain="${escapeAttr(domain)}"><span class="shortcut-icon-fallback">${escapeHtml((item.label || '?').trim().charAt(0).toUpperCase())}</span></span>`;
+                faviconHtml = `<span class="shortcut-favicon-wrap"><img class="shortcut-icon shortcut-favicon" src="${escapeAttr(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`)}" alt="" width="18" height="18" loading="lazy" data-domain="${escapeAttr(domain)}"></span>`;
             } else {
                 faviconHtml = `<span class="shortcut-icon shortcut-letter-avatar">${escapeHtml((item.label || '?').trim().charAt(0).toUpperCase())}</span>`;
             }
@@ -65,14 +65,14 @@ function renderShortcuts(widget, container) {
 
         const a = document.createElement('a');
         a.className = 'shortcut-item';
-        // P3-9: defense in depth — only set href when the URL is http(s).
+        // defense in depth — only set href when the URL is http(s).
         // URLs are validated on import (registry sanitize) and in the Edit form,
         // but a hand-edited/corrupted localStorage state could carry a
         // javascript: URL straight into an anchor. Render as non-clickable text instead.
         const isSafeUrl = /^https?:\/\//i.test(item.url || '');
         if (isSafeUrl) {
             a.href = item.url;
-            a.target = item.openInNewTab ? '_blank' : '_self';
+            a.target = item.openInNewTab ? '_blank': '_self';
             if (item.openInNewTab) a.rel = 'noopener noreferrer';
         }
         a.innerHTML = `
@@ -113,7 +113,7 @@ function renderShortcuts(widget, container) {
 }
 
 
-// P2-9: publish on the shared namespace.
+// Publish on the shared Dashboard namespace.
 Dashboard.renderShortcuts = renderShortcuts;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

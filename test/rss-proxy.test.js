@@ -3,7 +3,7 @@ const { Dashboard: D } = require('./setup');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-// P1-7: buildProxyStrategies is a pure function published on the Dashboard namespace.
+// buildProxyStrategies is a pure function published on the Dashboard namespace.
 // It returns an ordered array of { label, url } proxy attempts (the caller prepends
 // the direct feed URL as its first attempt).
 
