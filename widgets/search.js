@@ -58,9 +58,8 @@ function renderSearch(widget, container) {
     // (see handleGridClick / handleGridKeypress in app/grid.js).
 }
 
-// P2-9: publish on the shared namespace (legacy alias kept for older call sites).
+// P2-9: publish on the shared namespace.
 Dashboard.renderSearch = renderSearch;
-Dashboard.renderPerplexity = renderSearch;
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = globalThis.Dashboard;

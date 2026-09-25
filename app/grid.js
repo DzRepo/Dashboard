@@ -415,4 +415,3 @@ Dashboard.handleGridChange = handleGridChange;
 Dashboard.handleGridKeypress = handleGridKeypress;
 Dashboard.handleGlobalShortcuts = handleGlobalShortcuts;
 Dashboard.runSearch = runSearch;
-Dashboard.runPerplexitySearch = runSearch; // legacy alias

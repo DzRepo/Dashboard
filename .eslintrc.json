@@ -80,7 +80,7 @@
     "handleGridChange": "readonly",
     "handleGridKeypress": "readonly",
     "handleGlobalShortcuts": "readonly",
-    "runPerplexitySearch": "readonly",
+    "runSearch": "readonly",
 
     // widget-card.js (used by boot.js renderDashboard).
     "createWidgetElement": "readonly",
