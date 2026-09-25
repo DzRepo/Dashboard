@@ -145,50 +145,50 @@
 
 ## Phase 5 — Ship it (hygiene, dead code, docs)
 
-### ☐ 5.1 · P3-1 — Dead-code inventory
+### ✔ 5.1 · P3-1 — Dead-code inventory
 **Change:** delete the verified-unused items listed in CodeReview.md §P3-1: `promptDueDate()` (widgets.js ≈L116–133); weather `lastTemperature`/`lastFetchedAt` writes (≈L709–713); `<textarea type="text">` invalid attribute (≈L1723); dead `timesHtml` variable + archaeology comment (app.js ≈L1106–1108). The four dead paths from P2-8 should already be gone if 3.2 was done correctly — verify and note any that remain (e.g., `createWidgetContent` fallback switch: decide deliberately keep-as-safety-net vs delete).
 **Validate:** app works identically via `file://` after deletions; grep confirms each removed symbol is no longer referenced.
 
-### ☐ 5.2 · P3-2 — Dead CSS
+### ✔ 5.2 · P3-2 — Dead CSS
 **File:** [style.css](style.css)
 **Change:** remove the verified-dead selectors from §P3-2: all 9 `[data-theme="system"]` rules; `<body class="theme-system">` in [index.html](index.html); `.weather-actions`; `.stock-symbol`; `.stocks-actions`; `.shortcut-add-wrap`/`.shortcut-add-toggle`; `.clock-add-row`/`.clock-add-btn`. Consolidate the duplicate rules (`.shortcut-item`, `.clock-label-wrap`, second `.habit-remove-entry` color) and remove the no-op `background-image` transition on `#background-overlay`.
 **Validate:** visual pass over every widget type and both themes — no styling regressions. No orphaned selectors remain (spot-check with devtools).
 
-### ☐ 5.3 · P3-3 — UI consistency nits
+### ✔ 5.3 · P3-3 — UI consistency nits
 **Files:** [style.css](style.css), [app.js](app.js) `applySettings`, [index.html](index.html)
 **Change:** scope the global `button:hover` accent (or give danger/neutral buttons explicit hovers); pick one overlay-opacity mechanism (keep `--overlay-opacity`, drop the inline style) so 0% opacity also affects the palette scrim; add a `prefers-reduced-motion` media query disabling the palette flash + toast slide-in; add `env(safe-area-inset-*)` padding to `#app` and `.toast-region`; align the UI-scale range between README (50–200%) and slider (`min="75" max="125"`), and grid columns between code (2–8) and Settings select (auto/3–6); document existing keyboard reordering in the README.
 **Validate:** danger button hover isn't accent-blue; overlay opacity 0% makes the palette backdrop transparent too (or matches chosen mechanism); with reduced motion enabled, animations are disabled; on a notched device (emulated), header/toasts clear the notch.
 
-### ☐ 5.4 · P3-4 — Change-history noise → CHANGELOG.md; gate console output
+### ✔ 5.4 · P3-4 — Change-history noise → CHANGELOG.md; gate console output
 **Change:** create `CHANGELOG.md` capturing the entries worth keeping (SW v1→v2 stale-cache incident, C2 timer-leak fix, I4 cache-key dedup). Delete task-tag (`T#`/`C#`/`B#`) bookkeeping comments; keep "why" comments. Gate the `console.info` in [registry.js:765](registry.js#L765) and migration log in [storage.js:145](storage.js#L145) behind a debug flag (e.g., `?debug=1`).
 **Validate:** normal loads are quiet in the console; appending `?debug=1` shows the diagnostics. CHANGELOG.md exists and is accurate.
 
-### ☐ 5.5 · P3-6 — Service-worker deploy discipline
+### ✔ 5.5 · P3-6 — Service-worker deploy discipline
 **Files:** [README.md](README.md), [sw.js](sw.js) (≈L17 `CACHE_NAME`)
 **Change:** promote the "bump CACHE_NAME on every release" rule to an explicit **Deploy checklist** section in the README (bump → deploy → hard-refresh once). Consider stale-while-revalidate for JS/CSS so a missed bump degrades gracefully. Keep navigate network-first as-is.
 **Validate:** README checklist exists and matches sw.js behavior; (http(s)) a missed cache bump no longer serves stale JS after the SW update.
 
-### ☐ 5.6 · P3-7 — Weather "current hour" timezone assumption
+### ✔ 5.6 · P3-7 — Weather "current hour" timezone assumption
 **File:** [widgets.js](widgets.js) hourly-strip matching (≈L806–812)
 **Change:** either pass an explicit `timezone` parameter derived from the widget's coordinates (server-side alignment), or add a tooltip on the strip: "hours shown in your local time."
 **Validate:** chosen behavior is visible/documented; hourly strip still renders correctly for a widget whose location TZ differs from the viewer's.
 
-### ☐ 5.7 · P3-8 — Import from a newer version passes through unmigrated
+### ✔ 5.7 · P3-8 — Import from a newer version passes through unmigrated
 **File:** [storage.js](storage.js) `importData` (≈L295–300)
 **Change:** if the imported `version > CURRENT_VERSION`, warn ("this export is from a newer version; some features may not work") or reject — don't silently accept.
 **Validate:** importing a payload with `version: 99` shows the warning (or is rejected) instead of passing through; normal same-version imports unaffected.
 
-### ☐ 5.8 · P3-9 — Shortcut `href` trusted at render time (defense in depth)
+### ✔ 5.8 · P3-9 — Shortcut `href` trusted at render time (defense in depth)
 **File:** [widgets.js](widgets.js) `renderShortcuts` (`a.href = item.url`)
 **Change:** at render, only set `href` when `/^https?:\/\//i` matches; otherwise render the row without a link.
 **Validate:** a hand-edited localStorage state containing a `javascript:` shortcut URL renders as non-clickable text; normal http(s) shortcuts still open correctly.
 
-### ☐ 5.9 · P3-10 — Notes: debounced save lost if a re-render lands in the 300 ms window
+### ✔ 5.9 · P3-10 — Notes: debounced save lost if a re-render lands in the 300 ms window
 **File:** [widgets.js](widgets.js) `renderNotes` (`scheduleSave`)
 **Change:** flush the pending value on `blur` (already done) **and** register/clear the debounce with the shared timer registry, or read `ta.value` in a re-render hook.
 **Validate:** type into Notes → immediately drag the card (forcing a re-render within 300 ms) → reload → the typed text is persisted.
 
-### ☐ 5.10 · Final pass — README accuracy + full regression
+### ✔ 5.10 · Final pass — README accuracy + full regression
 **Change:** align all remaining doc/code mismatches found during the phases above; re-read README against actual behavior.
 **Validate (full regression):** fresh `file://` load in Chrome, Edge, Firefox, Safari — every widget type renders and its core interaction works (add/edit/save/delete each); palette (`⌘K`), search, drag-and-drop + arrow-key reorder, toasts/undo, modals (Esc/backdrop/focus trap), settings (theme/overlay/grid/scale/reset/import/export) all work. Console clean on normal load. Lint + unit tests pass. `git log` shows one commit per plan item.
 
