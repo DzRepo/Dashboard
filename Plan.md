@@ -106,7 +106,7 @@
 
 ## Phase 4 — Reliability & accessibility
 
-### ☐ 4.1 · P1-7 — RSS: ~45 s worst-case dead time; third-party proxies by default
+### ✔ 4.1 · P1-7 — RSS: ~45 s worst-case dead time; third-party proxies by default
 **File:** [widgets.js](widgets.js) `buildProxyStrategies`, `fetchWithTimeout`, `fetchFeed` (≈L1358–1425)
 **Change:**
 - Extract `buildProxyStrategies(feedUrl, settings)` to a pure exported function (unit-test placeholder/ordering logic — add tests in 3.1's runner).
@@ -116,27 +116,27 @@
 - Optional: cache last-good payload + timestamp per feed, rendered with a "cached HH:MM" badge.
 **Validate:** with no proxy configured and the network blocked, an RSS card shows its error in ~5–10 s (not 45+). With the opt-in checkbox enabled, public proxies are tried after user proxy. The card names which strategy failed. Existing working feeds (direct or via the README's Cloudflare worker) still load normally from both `file://` and http(s).
 
-### ☐ 4.2 · P2-6 — Service-worker install is all-or-nothing
+### ✔ 4.2 · P2-6 — Service-worker install is all-or-nothing
 **File:** [sw.js](sw.js) (≈L47–51)
 **Change:** cache items individually — `Promise.all(APP_SHELL.map(u => cache.add(u).catch(warn)))` — so one missing asset degrades to "missing icon" instead of killing the whole offline shell.
 **Validate:** (http(s) only — SW doesn't run on `file://`) temporarily rename an icon file → app still installs and works offline with only that asset missing; console shows the per-asset warning, not a total install failure.
 
-### ☐ 4.3 · P2-7 — Stock watchlist vs Twelve Data free-tier math
+### ✔ 4.3 · P2-7 — Stock watchlist vs Twelve Data free-tier math
 **File:** [widgets.js](widgets.js) `fetchQuotes` (≈L1095–1180)
 **Change:** pick one: skip `time_series` on automatic refreshes (sparkline only on manual ↻), insert a short delay between chunks, or make sparklines opt-in. Also distinguish "rate limited" from other failures in the status line.
 **Validate:** a 4-ticker watchlist auto-refreshes without rate-limit failures; the status line says "rate limited, wait a minute" (or equivalent) when that's actually what happened. Sparkline behavior matches the chosen option.
 
-### ☐ 4.4 · P2-1 — Modal accessible name is never set (always "Dialog")
+### ✔ 4.4 · P2-1 — Modal accessible name is never set (always "Dialog")
 **File:** [index.html](index.html) (`#modal-container` … `aria-labelledby="modal-title"`, hidden `<h2 id="modal-title">Dialog</h2>`)
 **Change:** set `modal-title`'s text when opening each modal (one line in the three open functions), or point `aria-labelledby` at the per-modal `<h3>` (give it a stable id).
 **Validate:** with a screen reader, opening Settings / Edit Widget / Add Widget announces the correct name (not "Dialog").
 
-### ☐ 4.5 · P2-2 — Focus trap excludes the modal's close button
+### ✔ 4.5 · P2-2 — Focus trap excludes the modal's close button
 **File:** [app.js](app.js) `_trapModalFocus` (≈L2035–2047)
 **Change:** query focusables from `modalContainer` instead of `modalBody`, so `.modal-close` (×) is included in Tab cycling.
 **Validate:** open a modal → Tab cycles through body controls *and* the × button; Shift+Tab wraps back. Esc and backdrop-click close still work (no regression).
 
-### ☐ 4.6 · P2-3 — Toast "pause on hover" doesn't survive a quick re-hover
+### ✔ 4.6 · P2-3 — Toast "pause on hover" doesn't survive a quick re-hover
 **File:** [app.js](app.js) `showUndoToast` (≈L2397–2402)
 **Change:** store the leave timer in a variable (`let leaveTimer`); clear it on `mouseenter` and in `dismiss()`.
 **Validate:** trigger the undo toast → hover it, leave within 2 s, re-hover quickly → toast stays visible while hovered. Repeated quick leave/enter cycles don't stack timers (toast dismisses exactly once after the final 2 s of no hover).
