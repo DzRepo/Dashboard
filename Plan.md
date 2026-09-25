@@ -78,26 +78,26 @@
 
 > Order matters: tests **before** restructuring; P2-8 before P2-9 and P2-10.
 
-### ☐ 3.1 · Tests + ESLint (dev-only) — prerequisite for restructuring
+### ✔ 3.1 · Tests + ESLint (dev-only) — prerequisite for restructuring
 **Change:** add `package.json` with dev-only ESLint + a unit runner (e.g., Node's built-in `node:test`). Cover the pure helpers: `hexToRgb`, `adjustFillForTheme`, `buildSearchUrl`, registry `sanitize()`s, `pruneHabitsLog` (and the proxy-strategy builder once extracted in 4.1).
 **Validate:** `npm test` and lint pass on the current codebase; no runtime files are loaded by the page (dev tooling stays out of `file://` loading).
 
-### ☐ 3.2 · P2-8 — Finish making the registry the single source of truth
+### ✔ 3.2 · P2-8 — Finish making the registry the single source of truth
 **Files:** [app.js](app.js) (dead field-render branches ≈L1069–1104; dead `addWidget` fallbacks ≈L2071–2083; per-type save branches in the edit-modal Save handler ≈L1450–1620), [widgets.js](widgets.js) fallback switch (≈L156–170), [storage.js](storage.js) duplicate allow-list (≈L245–260), [registry.js](registry.js)
 **Change:** extend the registry entry contract with `applyEdit(widget, formEl)` so each type owns defaults → render → edit UI → save/validate. Make the modal generic (shell + `entry.editFields()` body + danger zone; Save calls `entry.applyEdit`). Delete the per-type save branches and all four dead paths listed in the review.
 **Validate (acceptance test from the review):** add a brand-new widget type by touching **only** registry.js (+ its render function). If app.js needs an edit, not done. All 12 existing widget types: add → edit every field of each type in the modal → save → data persists correctly.
 
-### ☐ 3.3 · P2-9 — Kill global-scope coupling (namespace pattern, NOT ES modules)
+### ✔ 3.3 · P2-9 — Kill global-scope coupling (namespace pattern, NOT ES modules)
 **Files:** all four `<script>` tags in [index.html](index.html); `window.state` ([app.js:4](app.js#L4)), `window.saveFullState` (≈L846), bare cross-file calls
 **Change:** keep classic `<script>` tags (ES modules break `file://` in Chrome/Edge — do not convert). Wrap each file in an IIFE publishing a single namespace: `window.Dashboard` created by the first-loaded file (storage.js), then `Dashboard.Storage`, `Dashboard.WidgetRegistry` (+ `buildSearchUrl`, `genWidgetId`), renderers + shared helpers, and the boot function. Replace every bare global call with a namespaced reference. Keep `window.state` only if something still needs it (after 3.2, nothing should). Add UMD-style footers (`module.exports` guard + `typeof window !== 'undefined' ? window : globalThis`) so the same files are `require()`-able in Node tests.
 **Validate:** app loads and works identically via double-click `file://` in Chrome, Edge, Firefox, and Safari. Unit tests from 3.1 still pass (now `require()`-ing the namespaced files). No bare globals remain in cross-file call sites.
 
-### ☐ 3.4 · P2-10 — Split the two god-files (after 3.2/3.3)
+### ✔ 3.4 · P2-10 — Split the two god-files (after 3.2/3.3)
 **Files:** [app.js](app.js) ≈2,407 lines; [widgets.js](widgets.js) ≈2,027 lines
 **Change:** split into `app/` (`boot.js`, `state.js`, `modals/edit-widget.js`, `modals/settings.js`, `palette.js`, `dnd.js`, `toasts.js`) and `widgets/` (one file per widget + `shared/helpers.js`, `shared/timers.js`; RSS pipeline already extracted in 4.1). Update [index.html](index.html) `<script>` tags to load them in dependency order (still classic scripts). Target: no file over ~500 lines; one-line purpose comment at the top of each.
 **Validate:** full app works via `file://` after the split (all widget types, modals, palette, drag-and-drop, toasts). Lint + tests still pass. No file exceeds ~500 lines.
 
-### ☐ 3.5 · P2-11 — Default settings defined in three places
+### ✔ 3.5 · P2-11 — Default settings defined in three places
 **Files:** [storage.js](storage.js) `DEFAULT_STATE` (≈L15–46), v2→v3 migration backfill (≈L160–172); [app.js](app.js) inline object in Reset handler (≈L1935–1940)
 **Change:** expose `Storage.defaultSettings()` (clone of the canonical object); use it in all three places. Make `Storage.reset()` return/apply that same shape so the Reset handler stops re-declaring it.
 **Validate:** Settings → **Reset** produces a state identical to first-run defaults (including `gridColumns`/`uiScale`, which the inline copy was missing). Migration path for v2 data still backfills correctly.
