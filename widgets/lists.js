@@ -47,7 +47,7 @@ function renderLists(widget, container) {
     list.className = 'lists-container';
     list.setAttribute('role', 'list');
 
-    visible.forEach((item, visibleIndex) => {
+    visible.forEach((item) => {
         const realIndex = items.indexOf(item);
 
         // Overdue: has a due date in the past and is not yet completed.
@@ -161,11 +161,6 @@ function renderLists(widget, container) {
     container.appendChild(inputArea);
 }
 
-/**
- * World Clock Widget
- * A single widget that displays multiple times.
- * Each entry has its own label and timezone.
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.renderLists = renderLists;

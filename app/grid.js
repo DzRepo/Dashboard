@@ -4,7 +4,7 @@
  * element's class, so re-rendering widget content (or the whole dashboard) can never
  * stack duplicate handlers. Covers: click (widget actions + per-type content), live
  * input/change, keypress (Enter/Esc in inputs), global shortcuts (/ and Alt+P), and the
- * shared Perplexity search runner. Published to Dashboard for boot.js's init().
+ * shared search runner. Published to Dashboard for boot.js's init().
  */
 
 /**
@@ -161,7 +161,7 @@ function handleGridClick(e) {
         const inputEl = contentContainer.querySelector('.search-input');
         const query = inputEl.value.trim();
         if (query) {
-            runPerplexitySearch(widget, query);
+            runSearch(widget, query);
         }
         return;
     }
@@ -172,7 +172,7 @@ function handleGridClick(e) {
         if (!q) return;
         const inputEl = contentContainer.querySelector('.search-input');
         if (inputEl) inputEl.value = q;
-        runPerplexitySearch(widget, q);
+        runSearch(widget, q);
         return;
     }
 
@@ -255,7 +255,7 @@ function handleGridChange(e) {
         widget.config = widget.config || {};
         widget.config.engine = target.value;
         saveFullState();
-        Dashboard.renderPerplexity(widget, card.querySelector('.widget-content'));
+        Dashboard.renderSearch(widget, card.querySelector('.widget-content'));
         return;
     }
 
@@ -337,7 +337,7 @@ function handleGridKeypress(e) {
         // Perplexity search (Enter in the query box)
         const query = e.target.value.trim();
         if (!query) return;
-        runPerplexitySearch(widget, query);
+        runSearch(widget, query);
     }
 }
 
@@ -382,7 +382,7 @@ function handleGlobalShortcuts(e) {
  * record it in recent queries (local), and open it. Shared by the Search button,
  * Enter key, and recent-query chips.
  */
-function runPerplexitySearch(widget, query) {
+function runSearch(widget, query) {
     const config = widget.config || {};
     const engine = ['perplexity', 'google', 'bing', 'ddg'].includes(config.engine) ? config.engine : 'perplexity';
 
@@ -404,7 +404,7 @@ function runPerplexitySearch(widget, query) {
     const card = dashboardGrid.querySelector(`.widget-card[data-id="${widget.id}"]`);
     if (card) {
         const cc = card.querySelector('.widget-content');
-        Dashboard.renderPerplexity(widget, cc);
+        Dashboard.renderSearch(widget, cc);
     }
 }
 
@@ -414,4 +414,5 @@ Dashboard.handleGridInput = handleGridInput;
 Dashboard.handleGridChange = handleGridChange;
 Dashboard.handleGridKeypress = handleGridKeypress;
 Dashboard.handleGlobalShortcuts = handleGlobalShortcuts;
-Dashboard.runPerplexitySearch = runPerplexitySearch;
+Dashboard.runSearch = runSearch;
+Dashboard.runPerplexitySearch = runSearch; // legacy alias

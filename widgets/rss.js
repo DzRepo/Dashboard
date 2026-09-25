@@ -236,16 +236,6 @@ function renderRss(widget, container) {
     widget.__rssRefresh = () => { bodyEl.innerHTML = '<p class="rss-status">Loading…</p>'; loadAll(); };
 }
 
-/**
- * T7 — Pomodoro / Focus Timer Widget
- *
- * Data shape:
- *   config: { focusMin: 25, shortBreakMin: 5, longBreakMin: 15, sessionsUntilLong: 4 }
- *   data:   { running: false, mode: 'focus'|'short'|'long', remainingSec: <number>,
- *             completedSessions: <number> }
- *
- * C2: timer bookkeeping uses the shared widgetTimers registry (see top of this file).
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.renderRss = renderRss;

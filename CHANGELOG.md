@@ -37,3 +37,12 @@ All notable changes to Personal Dashboard are documented here.
 - **Grid delegation:** Habit cell toggles and RSS refresh use `handleGridClick` (no per-render listeners).
 - **APP_SHELL sync:** New test `test/app-shell-sync.test.js` asserts `index.html` scripts match `sw.js` APP_SHELL.
 - **Deferred:** Full per-type `registry.js` split left for a follow-up (high churn / conflict risk).
+
+### Step 5 — Hygiene
+
+- **Search rename:** `renderSearch` / `runSearch` are canonical; legacy Perplexity aliases kept.
+- **Orphaned footers:** Removed leftover “next widget” comment blocks from split widget files.
+- **README:** Points at `app/boot.js`; support matrix for file:// vs HTTP; clarifies runtime vs dev deps.
+- **SW:** Cache bumped to `personal-dashboard-v4`; `skipWaiting` + `clients.claim`; network-first for navigations and `*.js`.
+- **Tests:** `escape-shell.test.js` covers escaping, `applyWidgetShell`, and toast TDZ smoke.
+- **Lists:** Dropped unused `visibleIndex`.

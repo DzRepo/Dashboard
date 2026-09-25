@@ -154,7 +154,7 @@ function _paletteActivate(index) {
         }
         if (/^https?:\/\//i.test(url)) {
             // Shortcut items carry their own per-item flag; fall back to the widget config,
-            // which defaults to "new tab" when unset (consistent with runPerplexitySearch).
+            // which defaults to "new tab" when unset (consistent with runSearch).
             const openInNewTab = match ? !!match.openInNewTab : (widget?.config?.openInNewTab !== false);
             window.open(url, openInNewTab ? '_blank' : '_self', 'noopener,noreferrer');
         }

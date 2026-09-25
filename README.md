@@ -2,7 +2,7 @@
 
 A local-first, installable (PWA) dashboard for your daily life: shortcuts, todo lists, world clock, weather, notes, stock watchlist, search launcher, countdowns, **RSS feeds**, Pomodoro timer, currency rates, and habit tracking.
 
-- **No build step, no dependencies** — it's a static site you can host anywhere.
+- **No build step** — it's a static site you can host anywhere (runtime has no npm dependencies; eslint/tests are optional and for development only).
 - **Local-first** — all data lives in your browser (localStorage + IndexedDB). Nothing is sent to any server except the public APIs each widget uses.
 - **Installable PWA** — add it to your home screen / desktop once served over HTTP(S).
 
@@ -27,7 +27,16 @@ npx serve .
 
 Then open **http://localhost:8080** in your browser.
 
-> **Why not just double-click `index.html`?** The app *works* from `file://`, but browsers refuse to register a service worker without a secure context, so the PWA/offline features are skipped (see [app.js](app.js), SW registration guard). Serving over HTTP(S) is the supported path.
+> **Why not just double-click `index.html`?** The app *works* from `file://`, but browsers refuse to register a service worker without a secure context, so the PWA/offline features are skipped (see [app/boot.js](app/boot.js), SW registration guard). Serving over HTTP(S) is the supported path for installable / offline use.
+
+**Support matrix**
+
+| Mode | Core UI | PWA / offline shell | Live widgets (weather, stocks, RSS…) |
+|---|---|---|---|
+| Open `index.html` (`file://`) | Yes | No (SW skipped) | Yes, subject to browser CORS |
+| `http://localhost` / hosted HTTPS | Yes | Yes | Yes |
+
+Runtime has **zero npm dependencies**. Dev tooling (`eslint`, `node --test`) is optional and never loaded by the page.
 
 ### Installing as an app (PWA)
 

@@ -182,15 +182,6 @@ function clockDayOffset(timezone, now) {
 /** C2: thin alias over the shared registry — kept so existing call-sites read naturally. */
 function clearClockTimer(widgetId) { return clearWidgetTimer(widgetId); }
 
-/**
- * Weather Widget (Open-Meteo, keyless)
- *
- * Data: { lat, lon, city }
- * Config: { units: 'metric' | 'imperial', showForecast: boolean }
- *
- * Uses the free Open-Meteo API. When no coordinates are set it falls back to
- * browser geolocation (with a graceful message if denied).
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.renderClock = renderClock;

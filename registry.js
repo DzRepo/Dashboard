@@ -266,7 +266,7 @@ WidgetRegistry['search'] = {
             data: { recentQueries: [] }
         };
     },
-    render: (widget, container) => root.Dashboard.renderPerplexity(widget, container),
+    render: (widget, container) => root.Dashboard.renderSearch(widget, container),
     applyEdit(widget, modalBody) {
         // Title comes from the shared #edit-widget-title field (handled by the generic
         // Save handler), so only the engine + new-tab flag are persisted here.

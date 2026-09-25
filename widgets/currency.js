@@ -153,18 +153,6 @@ function renderCurrency(widget, container) {
     }
 }
 
-/**
- * T7 — Habit Tracker Widget
- *
- * Data shape:
- *   data: {
- *     habits: [{ id, label }],          // the habit list (managed via edit modal)
- *     log:    { "YYYY-MM-DD": [habitId, …] }  // completion log keyed by local date
- *   }
- *
- * Renders a row per habit with a 7-day streak grid (Mon–Sun or last-7-days).
- * Clicking today's cell toggles that habit for the current day.
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.renderCurrency = renderCurrency;

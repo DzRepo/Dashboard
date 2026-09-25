@@ -216,9 +216,6 @@ function renderPomodoro(widget, container) {
 /** C2: thin alias over the shared registry — kept so existing call-sites read naturally. */
 function clearPomodoroTimer(widgetId) { return clearWidgetTimer(widgetId); }
 
-/**
- * Search Widget (multi-engine: Perplexity, Google, Bing, DuckDuckGo)
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.renderPomodoro = renderPomodoro;

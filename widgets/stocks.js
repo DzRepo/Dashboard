@@ -270,11 +270,6 @@ function renderStocks(widget, container) {
     widget.__stocksRefresh = () => { setStatus('<p class="stock-status-loading">Loading…</p>'); fetchQuotes(true); };
 }
 
-/**
- * Countdown Widget — counts down to one or more future dates/times.
- *
- * Data: { events: [{ label, when }] }  (when = ISO string or epoch ms)
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.getTwelveDataKey = getTwelveDataKey;

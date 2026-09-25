@@ -63,21 +63,6 @@ function renderNotes(widget, container) {
     container.appendChild(ts);
 }
 
-/**
- * Stock Watchlist Widget
- *
- * Data: { symbols: [{ symbol, name, lastPrice }] }
- *
- * Quotes come from the Twelve Data API using the key stored in Settings; each
- * ticker is queried individually (the free tier allows one quote call per request).
- *
- * Pricing data is cached locally on widget.data and served from there instead of
- * hitting the API every time. A fetch only happens when the cache is older than
- * 15 minutes or when the user clicks "Refresh quotes" manually.
- *
- * If no key is set, a call fails, or the network is down, cached prices are shown
- * and a hint points to Settings → Stocks & APIs. Errors never break the render.
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.renderNotes = renderNotes;

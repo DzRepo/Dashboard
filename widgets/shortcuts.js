@@ -112,9 +112,6 @@ function renderShortcuts(widget, container) {
     container.appendChild(list);
 }
 
-/**
- * Lists Widget
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.renderShortcuts = renderShortcuts;

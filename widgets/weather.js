@@ -309,11 +309,6 @@ function renderWeather(widget, container) {
     }
 }
 
-/**
- * Notes / Scratchpad Widget
- *
- * Data: { text, updatedAt }
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.renderWeather = renderWeather;

@@ -17,7 +17,9 @@
 // Bumped v2→v3 on 2026-09-24: P2-10 split widgets.js into per-type files under
 // widgets/ and will split app.js into app/ — the asset list below changed, so a
 // cache bump is required (see README Deploy checklist).
-const CACHE_NAME = 'personal-dashboard-v3';
+const CACHE_NAME = 'personal-dashboard-v4';
+// RELEASE CHECKLIST: bump CACHE_NAME whenever index.html / app shell JS/CSS change.
+// APP_SHELL must stay in sync with <script src> tags in index.html (see test/app-shell-sync.test.js).
 // I4: kept a single canonical key ('./index.html') — the bare './' entry was
 // redundant and caused duplicate cache entries. The navigate handler below also
 // uses './index.html' as its put() target, so all paths agree on one key.
@@ -73,6 +75,8 @@ const APP_SHELL = [
 // offline shell at all. Caching each URL independently means one missing icon
 // degrades to "missing icon" instead of killing the whole offline mode.
 self.addEventListener('install', (event) => {
+    // Activate this worker immediately so deploys aren't stuck behind old tabs.
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) =>
             Promise.all(APP_SHELL.map(u =>
@@ -87,7 +91,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => Promise.all(
             keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-        ))
+        )).then(() => self.clients.claim())
     );
 });
 
@@ -118,17 +122,24 @@ self.addEventListener('fetch', (event) => {
     const req = event.request;
     if (!isCacheableRequest(req)) return; // let the browser handle it normally
 
-    // Navigation requests: network-first so users always get a fresh shell,
-    // falling back to cache when offline.
-    if (req.mode === 'navigate') {
+    // Navigation + JS: network-first so deploys aren't stuck on stale cached scripts.
+    // CSS/images stay cache-first below.
+    const isJs = (() => {
+        try { return new URL(req.url).pathname.endsWith('.js'); } catch (_) { return false; }
+    })();
+    if (req.mode === 'navigate' || isJs) {
         event.respondWith(
             fetch(req)
                 .then(res => {
-                    const copy = res.clone();
-                    caches.open(CACHE_NAME).then(c => c.put('./index.html', copy)).catch(() => {});
+                    if (res && res.ok) {
+                        const copy = res.clone();
+                        const key = req.mode === 'navigate' ? './index.html' : req;
+                        caches.open(CACHE_NAME).then(c => c.put(key, copy)).catch(() => {});
+                    }
                     return res;
                 })
-                .catch(() => caches.match('./index.html').then(r => r || Response.error()))
+                .catch(() => caches.match(req.mode === 'navigate' ? './index.html' : req)
+                    .then(r => r || Response.error()))
         );
         return;
     }

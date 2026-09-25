@@ -83,15 +83,6 @@ function renderCountdown(widget, container) {
 /** C2: thin alias over the shared registry — kept so existing call-sites read naturally. */
 function clearCountdownTimer(widgetId) { return clearWidgetTimer(widgetId); }
 
-/**
- * RSS / News Widget — reads one or more feeds and shows the latest items.
- *
- * Data: { feeds: [{ label, url, maxItems }] }
- *
- * Fetches each feed directly. Many public feeds block cross-origin requests;
- * when that happens we show a per-feed error instead of failing silently. A
- * "via AllOrigins" proxy is attempted as a fallback so more feeds work.
- */
 
 // P2-9: publish on the shared namespace.
 Dashboard.renderCountdown = renderCountdown;
